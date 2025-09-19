@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Users, Copy, QrCode, Share, Play } from "lucide-react"
+import { ArrowLeft, Users, Copy, QrCode, Share, Play, Maximize2 } from "lucide-react"
 import Link from "next/link"
 import { roomManager } from "@/lib/room-manager"
 import { useToast } from "@/hooks/use-toast"
@@ -23,24 +25,31 @@ export default function LobbyPage() {
     questionCount: 10,
   })
   const [gameStarted, setGameStarted] = useState(false)
+  const [copiedCode, setCopiedCode] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
   const { toast } = useToast()
   const { room, loading } = useRoom(roomCode || "")
 
   useEffect(() => {
     const roomCodeParam = searchParams.get("roomCode")
+
+    // Always try to hydrate from localStorage first
+    const hostData = localStorage.getItem("currentHost")
+    if (hostData) {
+      const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = JSON.parse(hostData)
+      setHostId(storedHostId)
+      setQuizId(storedQuizId)
+      if (!roomCodeParam) {
+        setRoomCode(storedRoomCode)
+      }
+    }
+
     if (roomCodeParam) {
       setRoomCode(roomCodeParam)
-    } else {
-      // Try to get from localStorage
-      const hostData = localStorage.getItem("currentHost")
-      if (hostData) {
-        const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = JSON.parse(hostData)
-        setHostId(storedHostId)
-        setRoomCode(storedRoomCode)
-        setQuizId(storedQuizId)
-      } else {
-        router.push("/select-quiz")
-      }
+    } else if (!hostData) {
+      // No URL param and no local storage → back to select quiz
+      router.push("/select-quiz")
     }
   }, [searchParams, router])
 
@@ -51,6 +60,8 @@ export default function LobbyPage() {
   }, [room])
 
   const shareUrl = roomCode ? `${window.location.origin}/join?room=${roomCode}` : ""
+  const smallQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=384x384&data=${encodeURIComponent(shareUrl)}` : ""
+  const largeQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(shareUrl)}` : ""
 
   const copyRoomCode = () => {
     if (!roomCode) return
@@ -59,6 +70,8 @@ export default function LobbyPage() {
       title: "Room code copied!",
       description: "Share this code with your friends",
     })
+    setCopiedCode(true)
+    setTimeout(() => setCopiedCode(false), 1500)
   }
 
   const copyShareLink = () => {
@@ -68,6 +81,8 @@ export default function LobbyPage() {
       title: "Share link copied!",
       description: "Send this link to your friends",
     })
+    setCopiedLink(true)
+    setTimeout(() => setCopiedLink(false), 1500)
   }
 
   const startGame = () => {
@@ -99,9 +114,9 @@ export default function LobbyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+      {/* Edge-aligned header */}
+      <div className="w-full px-4 pt-6">
+        <div className="flex items-center gap-4">
           <Link href="/settings">
             <Button variant="outline" size="sm" className="text-white border-white/20 hover:bg-white/10 hover:border-white/30 bg-white/5">
               <ArrowLeft className="h-4 w-4" />
@@ -112,44 +127,89 @@ export default function LobbyPage() {
             <h1 className="text-2xl font-bold text-white">Lobby</h1>
           </div>
         </div>
+      </div>
 
-        <div className="max-w-4xl mx-auto space-y-6">
+      <div className="mx-auto max-w-7xl px-6 py-6">
+        <div className="mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Room Info */}
           <Card className="bg-white/5 border-white/10">
-            <CardHeader className="text-center">
+            <CardHeader className="text-center md:text-left">
               <CardTitle className="text-2xl text-white">Room Created!</CardTitle>
-              <CardDescription className="text-blue-100">Share the room code or link with your friends</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Room Code */}
-              <div className="text-center">
-                <Label className="text-sm font-medium text-blue-200">Room Code</Label>
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  <div className="text-4xl font-bold font-mono tracking-wider text-blue-400 bg-blue-400/10 px-6 py-3 rounded-lg">
+              {/* Room Code Card */}
+              <div className="relative rounded-xl bg-blue-400/10 border border-white/10 p-6">
+                <button
+                  onClick={copyRoomCode}
+                  aria-label="Copy room code"
+                  className={`absolute top-3 right-3 inline-flex items-center justify-center h-8 w-8 rounded-md border ${copiedCode ? "bg-green-500/20 border-green-500/30 text-green-400" : "bg-white/5 border-white/10 text-white hover:bg-white/10"}`}
+                >
+                  {copiedCode ? <span className="font-semibold">✓</span> : <Copy className="h-4 w-4" />}
+                </button>
+                <div className="text-center">
+                  <div className="text-6xl md:text-7xl font-bold font-mono tracking-wider text-blue-400">
                     {roomCode}
                   </div>
-                  <Button variant="outline" size="icon" onClick={copyRoomCode} className="border-white/20 text-white hover:bg-white/10">
-                    <Copy className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
 
-              {/* Share Options */}
-              <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={copyShareLink} className="border-white/20 text-white hover:bg-white/10">
-                  <Share className="h-4 w-4 mr-2" />
-                  Copy Link
-                </Button>
-                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  Show QR Code
-                </Button>
-              </div>
+              {/* QR Card */}
+              {smallQrUrl && (
+                <div className="relative rounded-xl bg-white/5 border border-white/10 p-4 flex flex-col items-center">
+                  <button
+                    onClick={() => setQrOpen(true)}
+                    aria-label="Enlarge QR"
+                    className="absolute top-3 right-3 inline-flex items-center justify-center h-8 w-8 rounded-md border bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                  </button>
+                  <img
+                    src={smallQrUrl}
+                    alt="Room share QR"
+                    className="rounded-md border border-white/10 bg-white p-2"
+                    width={384}
+                    height={384}
+                  />
+                  {shareUrl && (
+                    <div className="mt-5 relative mx-auto">
+                      <div className="inline-block rounded-xl bg-white text-slate-900 shadow-sm pl-4 pr-12 py-3 text-sm font-medium break-all">
+                        {shareUrl}
+                      </div>
+                      <button
+                        onClick={copyShareLink}
+                        aria-label="Copy share link"
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-9 w-9 rounded-md border ${copiedLink ? "bg-green-500/20 border-green-500/30 text-green-600" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"}`}
+                      >
+                        {copiedLink ? <span className="font-semibold">✓</span> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Share QR Code</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex justify-center py-2">
+                    {largeQrUrl && (
+                      <img
+                        src={largeQrUrl}
+                        alt="Room share QR large"
+                        className="rounded-lg border border-white/10 bg-white/5 p-4"
+                        width={512}
+                        height={512}
+                      />
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
           {/* Players List */}
-          <Card className="bg-white/5 border-white/10">
+          <Card className="bg-white/5 border-white/10 h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
