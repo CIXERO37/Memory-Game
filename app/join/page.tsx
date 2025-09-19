@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Play } from "lucide-react"
 import Link from "next/link"
 import { AvatarSelector } from "@/components/avatar-selector"
-import { WaitingRoom } from "@/components/waiting-room"
+import { WaitingRoom } from "@/app/waiting-room/page"
 import { roomManager } from "@/lib/room-manager"
 
 type JoinStep = "enter-details" | "waiting"
@@ -79,19 +79,19 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link href="/">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Home
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <Play className="h-6 w-6 text-accent" />
-            <h1 className="text-2xl font-bold">Join a Game</h1>
+            <Play className="h-6 w-6 text-blue-400" />
+            <h1 className="text-2xl font-bold text-white">Join a Game</h1>
           </div>
         </div>
 
