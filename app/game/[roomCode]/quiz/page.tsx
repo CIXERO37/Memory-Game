@@ -9,7 +9,6 @@ import { Clock, Trophy, Users, Target } from "lucide-react"
 import { getQuizById, getRandomQuestions, type Question } from "@/lib/quiz-data"
 import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
-import { HostMonitor } from "@/components/host-monitor"
 
 interface QuizPageProps {
   params: {
@@ -88,6 +87,13 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       }, 3000)
     }
   }, [room, isHost, previousRankings])
+
+  // Redirect hosts to the monitor page (host monitor moved to /monitor)
+  useEffect(() => {
+    if (!loading && room && isHost) {
+      window.location.href = `/monitor?roomCode=${params.roomCode}`
+    }
+  }, [loading, room, isHost, params.roomCode])
 
   // Initialize quiz questions
   useEffect(() => {
@@ -228,10 +234,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     )
   }
 
-  if (isHost && !loading && room) {
-    const questionCount = Number.parseInt(searchParams.questionCount || "10")
-    return <HostMonitor roomCode={params.roomCode} totalQuestions={questionCount} />
-  }
+  // Host users will be redirected above; render continues for players
 
   if (!gameStarted || questions.length === 0 || !room) {
     return (
