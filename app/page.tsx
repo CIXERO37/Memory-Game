@@ -9,7 +9,12 @@ export default function HomePage() {
   const dragCardRef = useRef<HTMLDivElement | null>(null)
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+    <div
+      className="min-h-screen relative overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('/background.png')" }}
+    >
+      {/* Overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/60 via-blue-900/50 to-indigo-900/60 pointer-events-none" />
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating Brain Elements */}
@@ -83,7 +88,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 animate-fade-in-up">
-            Memory Quiz
+            <span className="typewriter" onAnimationEnd={(e) => e.currentTarget.classList.add('tw-done')}>Memory Quiz</span>
           </h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-12 animate-fade-in-up-delayed">
             Challenge your mind with memory games and educational quizzes
