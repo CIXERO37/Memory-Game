@@ -2,25 +2,13 @@
 
 import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, FileSearch, BookOpen, Calculator, Globe, Beaker, Palette, Music, Trophy, Zap, Search, Filter } from "lucide-react"
+import { ArrowLeft, FileSearch, Search, Filter } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { quizzes } from "@/lib/quiz-data"
 
-const iconMap = {
-  Calculator,
-  Beaker,
-  Globe,
-  BookOpen,
-  Trophy,
-  Palette,
-  Music,
-  Zap,
-}
 
 export default function SelectQuizPage() {
   const router = useRouter()
@@ -100,7 +88,7 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 justify-items-center">
             {filteredQuizzes.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -109,40 +97,30 @@ export default function SelectQuizPage() {
               </div>
             ) : (
               filteredQuizzes.map((quiz) => {
-                const Icon = iconMap[quiz.icon as keyof typeof iconMap]
                 return (
-                  <Card
+                  <div
                     key={quiz.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/50"
+                    className="quiz-card quiz-card-pixel cursor-pointer transition-all duration-300 hover:-translate-y-1"
                     onClick={() => handleQuizSelect(quiz.id)}
                   >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${quiz.color}`}>
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <Badge
-                          variant={
-                            quiz.difficulty === "Easy"
-                              ? "secondary"
-                              : quiz.difficulty === "Medium"
-                                ? "default"
-                                : "destructive"
-                          }
-                        >
-                          {quiz.difficulty}
-                        </Badge>
+                    {/* Difficulty badge */}
+                    <div className={quiz.difficulty === 'Easy' ? 'pill-easy' : quiz.difficulty === 'Medium' ? 'pill-medium' : 'pill-hard'}>
+                      {quiz.difficulty}
+                    </div>
+                    
+                    {/* Main content */}
+                    <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-6 z-10">
+                      <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-lg">
+                        {quiz.title}
+                      </h3>
+                      <p className="text-sm text-white/90 mb-4 leading-relaxed drop-shadow-md">
+                        {quiz.description}
+                      </p>
+                      <div className="text-xs text-white/80 font-medium drop-shadow-sm">
+                        {quiz.questions.length} questions
                       </div>
-                      <CardTitle className="text-lg">{quiz.title}</CardTitle>
-                      <CardDescription className="text-sm">{quiz.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>{quiz.questions.length} questions</span>
-                        <span>Click to select</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 )
               })
             )}
