@@ -35,21 +35,42 @@ export default function LobbyPage() {
     const roomCodeParam = searchParams.get("roomCode")
 
     // Always try to hydrate from localStorage first
-    const hostData = localStorage.getItem("currentHost")
-    if (hostData) {
-      const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = JSON.parse(hostData)
-      setHostId(storedHostId)
-      setQuizId(storedQuizId)
-      if (!roomCodeParam) {
-        setRoomCode(storedRoomCode)
+    if (typeof window !== 'undefined') {
+      const hostData = localStorage.getItem("currentHost")
+      if (hostData) {
+        try {
+          const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = JSON.parse(hostData)
+          setHostId(storedHostId)
+          setQuizId(storedQuizId)
+          
+          if (!roomCodeParam) {
+            setRoomCode(storedRoomCode)
+          } else if (roomCodeParam === storedRoomCode) {
+            // Room code matches, this is a valid host session
+            setRoomCode(roomCodeParam)
+          } else {
+            // Room code doesn't match, clear old data and treat as new room
+            console.log("Room code mismatch, clearing old host data")
+            localStorage.removeItem("currentHost")
+            setRoomCode(roomCodeParam)
+          }
+        } catch (error) {
+          console.error("Error parsing host data:", error)
+          localStorage.removeItem("currentHost")
+          if (roomCodeParam) {
+            setRoomCode(roomCodeParam)
+          } else {
+            router.push("/select-quiz")
+          }
+        }
+      } else {
+        if (roomCodeParam) {
+          setRoomCode(roomCodeParam)
+        } else {
+          // No URL param and no local storage → back to select quiz
+          router.push("/select-quiz")
+        }
       }
-    }
-
-    if (roomCodeParam) {
-      setRoomCode(roomCodeParam)
-    } else if (!hostData) {
-      // No URL param and no local storage → back to select quiz
-      router.push("/select-quiz")
     }
   }, [searchParams, router])
 
@@ -59,7 +80,8 @@ export default function LobbyPage() {
     }
   }, [room])
 
-  const shareUrl = roomCode ? `${window.location.origin}/join?room=${roomCode}` : ""
+
+  const shareUrl = roomCode && typeof window !== 'undefined' ? `${window.location.origin}/join?room=${roomCode}` : ""
   const smallQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=384x384&data=${encodeURIComponent(shareUrl)}` : ""
   const largeQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(shareUrl)}` : ""
 
@@ -99,15 +121,28 @@ export default function LobbyPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center text-white">Loading room...</div>
+        <div className="text-center text-white">
+          <div className="text-xl">Loading room...</div>
+        </div>
       </div>
     )
   }
 
-  if (!room) {
+  if (!room && !loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center text-white">Room not found</div>
+        <div className="text-center text-white space-y-4">
+          <div className="text-xl">Room not found</div>
+          <div className="text-sm text-gray-300">
+            The room may have been closed or the host left.
+          </div>
+          <Button 
+            onClick={() => router.push("/select-quiz")}
+            className="w-full"
+          >
+            Create New Room
+          </Button>
+        </div>
       </div>
     )
   }
@@ -214,9 +249,9 @@ export default function LobbyPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-blue-400" />
-                  <CardTitle className="text-white">Players ({room.players.length})</CardTitle>
+                  <CardTitle className="text-white">Players ({room?.players.length || 0})</CardTitle>
                 </div>
-                {room.players.length >= 1 && !gameStarted && (
+                {room && room.players.length >= 1 && !gameStarted && (
                   <Button onClick={startGame} className="font-semibold bg-blue-500 hover:bg-blue-600">
                     <Play className="h-4 w-4 mr-2" />
                     Start Quiz
@@ -225,7 +260,7 @@ export default function LobbyPage() {
                 {gameStarted && <Badge variant="secondary">Game Started</Badge>}
               </div>
               <CardDescription className="text-blue-100">
-                {room.players.length === 0
+                {room && room.players.length === 0
                   ? "Waiting for players to join..."
                   : gameStarted
                     ? "Game in progress"
@@ -233,14 +268,14 @@ export default function LobbyPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {room.players.length === 0 ? (
+              {room && room.players.length === 0 ? (
                 <div className="text-center py-8 text-blue-200">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No players yet. Share the room code to get started!</p>
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {room.players.map((player) => (
+                  {room && room.players.map((player) => (
                     <div key={player.id} className="flex items-center gap-3 p-3 bg-white/10 rounded-lg">
                       <div className="text-2xl">{player.avatar}</div>
                       <div className="flex-1">

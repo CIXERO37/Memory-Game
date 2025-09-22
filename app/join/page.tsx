@@ -9,27 +9,67 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Play } from "lucide-react"
 import Link from "next/link"
 import { AvatarSelector } from "@/components/avatar-selector"
-import { WaitingRoom } from "@/app/waiting-room/page"
+import { useRouter } from "next/navigation"
 import { roomManager } from "@/lib/room-manager"
-
-type JoinStep = "enter-details" | "waiting"
 
 export default function JoinPage() {
   const searchParams = useSearchParams()
-  const [currentStep, setCurrentStep] = useState<JoinStep>("enter-details")
+  const router = useRouter()
   const [username, setUsername] = useState("")
   const [roomCode, setRoomCode] = useState("")
   const [selectedAvatar, setSelectedAvatar] = useState("🦄") // Set default avatar
   const [isJoining, setIsJoining] = useState(false)
   const [roomError, setRoomError] = useState("")
-  const [playerId] = useState(() => Math.random().toString(36).substr(2, 9))
+  const [playerId] = useState(() => {
+    // Check if we're on the client side
+    if (typeof window === 'undefined') {
+      return Math.random().toString(36).substr(2, 9)
+    }
+    
+    // Try to get existing player ID from localStorage first
+    const storedPlayer = localStorage.getItem("currentPlayer")
+    if (storedPlayer) {
+      try {
+        const player = JSON.parse(storedPlayer)
+        return player.id || Math.random().toString(36).substr(2, 9)
+      } catch (error) {
+        console.error("Error parsing stored player:", error)
+      }
+    }
+    return Math.random().toString(36).substr(2, 9)
+  })
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")
     if (roomFromUrl) {
       setRoomCode(roomFromUrl.toUpperCase())
     }
-  }, [searchParams])
+
+    // Check if user is already in a waiting room (only on client side)
+    if (typeof window !== 'undefined') {
+      const storedPlayer = localStorage.getItem("currentPlayer")
+      if (storedPlayer) {
+        try {
+          const player = JSON.parse(storedPlayer)
+          if (player.roomCode) {
+            // Check if the room still exists and user is still in it
+            const room = roomManager.getRoom(player.roomCode)
+            if (room && room.players.find(p => p.id === player.id)) {
+              // User is still in the room, redirect to waiting room
+              router.push(`/waiting-room/${player.roomCode}`)
+              return
+            } else {
+              // Room doesn't exist or user is not in it, clear stored data
+              localStorage.removeItem("currentPlayer")
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing stored player info:", error)
+          localStorage.removeItem("currentPlayer")
+        }
+      }
+    }
+  }, [searchParams, router])
 
   const handleJoinRoom = async () => {
     if (!username.trim() || !roomCode.trim()) return
@@ -53,24 +93,29 @@ export default function JoinPage() {
       return
     }
 
-    const success = roomManager.joinRoom(roomCode, {
+    // Always use rejoinRoom to ensure consistent player ID
+    const success = roomManager.rejoinRoom(roomCode, {
+      id: playerId,
       username: username.trim(),
       avatar: selectedAvatar,
     })
 
     if (success) {
-      // Store player info locally
-      localStorage.setItem(
-        "currentPlayer",
-        JSON.stringify({
-          id: playerId,
-          username: username.trim(),
-          avatar: selectedAvatar,
-          roomCode,
-        }),
-      )
+      // Store player info locally (only on client side)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          "currentPlayer",
+          JSON.stringify({
+            id: playerId,
+            username: username.trim(),
+            avatar: selectedAvatar,
+            roomCode,
+          }),
+        )
+      }
 
-      setCurrentStep("waiting")
+      // Redirect to waiting room route
+      router.push(`/waiting-room/${roomCode}`)
     } else {
       setRoomError("Failed to join room. Please try again.")
     }
@@ -95,8 +140,7 @@ export default function JoinPage() {
           </div>
         </div>
 
-        {currentStep === "enter-details" && (
-          <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto">
             <Card>
               <CardHeader className="text-center">
                 <CardTitle className="text-xl">Join Room</CardTitle>
@@ -155,17 +199,7 @@ export default function JoinPage() {
               </CardContent>
             </Card>
           </div>
-        )}
 
-        {currentStep === "waiting" && (
-          <WaitingRoom
-            username={username}
-            avatar={selectedAvatar}
-            roomCode={roomCode}
-            playerId={playerId}
-            onBack={() => setCurrentStep("enter-details")}
-          />
-        )}
       </div>
     </div>
   )
