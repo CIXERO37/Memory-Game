@@ -105,13 +105,38 @@ export interface Player {
         createdAt: new Date().toISOString(),
         gameStarted: false,
       }
-  
-      localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      }
+      this.broadcast("room-updated", roomCode)
+      return room
+    }
+
+    createRoomWithCode(roomCode: string, hostId: string, settings: Room["settings"]): Room {
+      const room: Room = {
+        code: roomCode,
+        hostId,
+        players: [],
+        settings,
+        status: "waiting",
+        createdAt: new Date().toISOString(),
+        gameStarted: false,
+      }
+
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      }
       this.broadcast("room-updated", roomCode)
       return room
     }
   
     getRoom(roomCode: string): Room | null {
+      // Check if we're on the client side
+      if (typeof window === 'undefined') return null
+      
       const roomData = localStorage.getItem(`room-${roomCode}`)
       return roomData ? JSON.parse(roomData) : null
     }
@@ -119,7 +144,7 @@ export interface Player {
     joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost">): boolean {
       const room = this.getRoom(roomCode)
       if (!room || room.gameStarted) return false
-  
+
       const newPlayer: Player = {
         ...player,
         id: Math.random().toString(36).substr(2, 9),
@@ -127,10 +152,49 @@ export interface Player {
         isReady: true,
         isHost: false,
       }
-  
+
       room.players.push(newPlayer)
-      localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      }
       this.broadcast("player-joined", roomCode, { player: newPlayer })
+      return true
+    }
+
+    rejoinRoom(roomCode: string, player: Omit<Player, "joinedAt" | "isReady" | "isHost">): boolean {
+      const room = this.getRoom(roomCode)
+      if (!room || room.gameStarted) return false
+
+      // Check if player with this ID already exists
+      const existingPlayer = room.players.find(p => p.id === player.id)
+      if (existingPlayer) {
+        // Player already exists, just update their info and return success
+        existingPlayer.username = player.username
+        existingPlayer.avatar = player.avatar
+        existingPlayer.isReady = true
+        // Check if we're on the client side
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+        }
+        this.broadcast("room-updated", roomCode)
+        return true
+      }
+
+      // Player doesn't exist, add them with the provided ID
+      const rejoinedPlayer: Player = {
+        ...player,
+        joinedAt: new Date().toISOString(),
+        isReady: true,
+        isHost: false,
+      }
+
+      room.players.push(rejoinedPlayer)
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      }
+      this.broadcast("player-joined", roomCode, { player: rejoinedPlayer })
       return true
     }
   
@@ -143,8 +207,11 @@ export interface Player {
   
       if (quizScore !== undefined) player.quizScore = quizScore
       if (memoryScore !== undefined) player.memoryScore = memoryScore
-  
-      localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      }
       this.broadcast("room-updated", roomCode)
       return true
     }
@@ -159,7 +226,10 @@ export interface Player {
   
       room.gameStarted = true
       room.status = "quiz"
-      localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      }
       this.broadcast("game-started", roomCode)
       return true
     }
@@ -169,7 +239,10 @@ export interface Player {
       if (!room) return false
   
       room.status = status
-      localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
+      }
       this.broadcast("room-updated", roomCode)
       return true
     }
@@ -177,16 +250,30 @@ export interface Player {
     leaveRoom(roomCode: string, playerId: string): boolean {
       const room = this.getRoom(roomCode)
       if (!room) return false
-  
+
       room.players = room.players.filter((p) => p.id !== playerId)
-  
-      if (room.players.length === 0) {
-        localStorage.removeItem(`room-${roomCode}`)
-      } else {
+
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        // Always save the room, even if no players left
+        // The host should still be able to access the room
         localStorage.setItem(`room-${roomCode}`, JSON.stringify(room))
       }
-  
+
       this.broadcast("room-updated", roomCode)
+      return true
+    }
+
+    deleteRoom(roomCode: string, hostId: string): boolean {
+      const room = this.getRoom(roomCode)
+      if (!room || room.hostId !== hostId) return false
+
+      // Check if we're on the client side
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(`room-${roomCode}`)
+      }
+
+      this.broadcast("room-deleted", roomCode)
       return true
     }
   
