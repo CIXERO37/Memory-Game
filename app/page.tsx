@@ -1,18 +1,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Users, Play, Brain, Lightbulb, HelpCircle } from "lucide-react"
+import { Users, Play, Brain, Lightbulb, HelpCircle, Server } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export default function HomePage() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return null
+  const dragCardRef = useRef<HTMLDivElement | null>(null)
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
@@ -58,6 +52,9 @@ export default function HomePage() {
             <circle cx="800" cy="450" r="4" fill="#8b5cf6" className="animate-ping" style={{ animationDelay: '3.5s' }} />
           </g>
         </svg>
+
+        {/* Falling + Draggable Playing Cards */}
+        <FallingRemiCards />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8 min-h-screen flex flex-col justify-center">
@@ -72,11 +69,7 @@ export default function HomePage() {
                 <div className="relative w-full h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
                   <Brain className="w-16 h-16 text-white" />
                 </div>
-                {/* Neural dots */}
-                <div className="absolute top-2 left-4 w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-                <div className="absolute top-6 right-6 w-2 h-2 bg-green-400 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
-                <div className="absolute bottom-4 left-6 w-2 h-2 bg-green-400 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
-                <div className="absolute bottom-6 right-4 w-2 h-2 bg-green-400 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
+                {/* Removed green dots as requested */}
               </div>
               
               {/* Card */}
@@ -100,28 +93,103 @@ export default function HomePage() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-6 max-w-md mx-auto animate-fade-in-up-delayed-2">
           <Link href="/select-quiz" className="flex-1">
-            <Button 
-              size="lg" 
-              className="w-full h-16 text-lg font-semibold bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              <Users className="w-6 h-6 mr-2" />
-              Host Game
-            </Button>
+            <button className="btn-host w-full h-20 text-xl">
+              <Server className="w-7 h-7" />
+              Host
+            </button>
           </Link>
           
           <Link href="/join" className="flex-1">
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="w-full h-16 text-lg font-semibold bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 transition-all duration-300 hover:scale-105"
-            >
-              <Play className="w-6 h-6 mr-2" />
-              Join Game
-            </Button>
+            <button className="btn-join w-full h-20 text-xl">
+              <Play className="w-7 h-7" />
+              JOIN
+            </button>
           </Link>
         </div>
       </div>
 
+    </div>
+  )
+}
+
+function FallingRemiCards() {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const stream: Array<{ id: string; label: string; color: 'pc-red' | 'pc-black'; x: string; delay: string; dur: string; rot: string; w?: string; h?: string; }> = [
+    { id: 'AS', label: 'A♠', color: 'pc-black', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
+    { id: 'KH', label: 'K♥', color: 'pc-red', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
+    { id: 'QD', label: 'Q♦', color: 'pc-red', x: '20%', delay: '1.1s', dur: '13s', rot: '2deg' },
+    { id: 'JC', label: 'J♣', color: 'pc-black', x: '28%', delay: '3.6s', dur: '12.2s', rot: '-10deg' },
+    { id: '7H', label: '7♥', color: 'pc-red', x: '36%', delay: '0.7s', dur: '14s', rot: '0deg' },
+    { id: '9S', label: '9♠', color: 'pc-black', x: '44%', delay: '2.1s', dur: '11.8s', rot: '6deg' },
+    { id: '3D', label: '3♦', color: 'pc-red', x: '52%', delay: '4.1s', dur: '12.6s', rot: '-4deg' },
+    { id: '5C', label: '5♣', color: 'pc-black', x: '60%', delay: '1.5s', dur: '13.4s', rot: '3deg' },
+    { id: 'AH', label: 'A♥', color: 'pc-red', x: '68%', delay: '3.2s', dur: '12.1s', rot: '-8deg' },
+    { id: 'QS', label: 'Q♠', color: 'pc-black', x: '76%', delay: '0.3s', dur: '10.9s', rot: '5deg' },
+    { id: 'JD', label: 'J♦', color: 'pc-red', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
+    { id: 'KC', label: 'K♣', color: 'pc-black', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
+  ]
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const els = Array.from(container.querySelectorAll('.playing-card')) as HTMLDivElement[]
+
+    els.forEach((el, i) => {
+      // initially falling; left set by CSS variable --x
+      el.style.top = '-20vh'
+
+      let startX = 0, startY = 0, origX = 0, origY = 0
+      const onPointerDown = (e: PointerEvent) => {
+        el.setPointerCapture(e.pointerId)
+        startX = e.clientX
+        startY = e.clientY
+        const rect = el.getBoundingClientRect()
+        origX = rect.left - (container.getBoundingClientRect().left)
+        origY = rect.top - (container.getBoundingClientRect().top)
+        el.style.transition = 'none'
+        ;(el as HTMLElement).style.zIndex = '20'
+        // stop falling when grabbed
+        el.classList.remove('falling')
+        el.style.animation = 'none'
+      }
+      const onPointerMove = (e: PointerEvent) => {
+        if (!(el as any).hasPointerCapture?.(e.pointerId)) return
+        const dx = e.clientX - startX
+        const dy = e.clientY - startY
+        el.style.left = origX + dx + 'px'
+        el.style.top = origY + dy + 'px'
+      }
+      const onPointerUp = (e: PointerEvent) => {
+        try { el.releasePointerCapture(e.pointerId) } catch {}
+        el.style.transition = ''
+        ;(el as HTMLElement).style.zIndex = '10'
+      }
+      el.addEventListener('pointerdown', onPointerDown)
+      el.addEventListener('pointermove', onPointerMove)
+      el.addEventListener('pointerup', onPointerUp)
+    })
+
+    return () => {
+      const els = Array.from(container.querySelectorAll('.playing-card')) as HTMLDivElement[]
+      els.forEach((el) => {
+        el.replaceWith(el.cloneNode(true))
+      })
+    }
+  }, [])
+
+  return (
+    <div ref={containerRef} className="absolute inset-0 z-0">
+      {stream.map((c) => (
+        <div
+          key={c.id}
+          className="playing-card falling"
+          style={{ ['--x' as any]: c.x, ['--delay' as any]: c.delay, ['--dur' as any]: c.dur, ['--rot' as any]: c.rot, ['--w' as any]: c.w ?? '88px', ['--h' as any]: c.h ?? '124px' }}
+        >
+          <div className={`pc-corner ${c.color}`}>{c.label}</div>
+          <div className={`pc-corner bottom ${c.color}`}>{c.label}</div>
+          <div className={`pc-inner ${c.color}`}>{c.label.replace(/[^A-Z0-9♥♦♣♠]/g, '')}</div>
+        </div>
+      ))}
     </div>
   )
 }
