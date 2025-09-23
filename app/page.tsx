@@ -11,7 +11,7 @@ export default function HomePage() {
   return (
     <div
       className="min-h-screen relative overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('/background.png')" }}
+      style={{ backgroundImage: "url('/background3.png')" }}
     >
       {/* Overlay for readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950/60 via-blue-900/50 to-indigo-900/60 pointer-events-none" />
