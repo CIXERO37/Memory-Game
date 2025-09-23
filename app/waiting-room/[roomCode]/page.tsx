@@ -50,29 +50,39 @@ export default function WaitingRoomPage() {
 
   // Rejoin room if player info is available
   useEffect(() => {
-    if (playerInfo && room) {
-      // Check if player is already in the room
-      const existingPlayer = room.players.find(p => p.id === playerInfo.playerId)
-      
-      if (!existingPlayer) {
-        // Player not found, try to rejoin with the same ID
-        const success = roomManager.rejoinRoom(roomCode, {
-          id: playerInfo.playerId,
-          username: playerInfo.username,
-          avatar: playerInfo.avatar,
-        })
+    const handleRejoin = async () => {
+      if (playerInfo && room) {
+        // Check if player is already in the room
+        const existingPlayer = room.players.find(p => p.id === playerInfo.playerId)
         
-        if (!success) {
-          // If rejoin fails, redirect to join page
-          router.push(`/join?room=${roomCode}`)
+        if (!existingPlayer) {
+          // Player not found, try to rejoin with the same ID
+          console.log("[WaitingRoom] Player not found, attempting to rejoin:", playerInfo)
+          try {
+            const success = await roomManager.rejoinRoom(roomCode, {
+              id: playerInfo.playerId,
+              username: playerInfo.username,
+              avatar: playerInfo.avatar,
+            })
+            
+            if (!success) {
+              // If rejoin fails, redirect to join page
+              console.log("[WaitingRoom] Rejoin failed, redirecting to join page")
+              router.push(`/join?room=${roomCode}`)
+            }
+          } catch (error) {
+            console.error("[WaitingRoom] Error rejoining room:", error)
+            router.push(`/join?room=${roomCode}`)
+          }
+        } else {
+          // Player exists, just ensure they're marked as ready
+          console.log("[WaitingRoom] Player found, marking as ready:", existingPlayer)
+          existingPlayer.isReady = true
         }
-      } else {
-        // Player exists, just update their info to ensure consistency
-        existingPlayer.username = playerInfo.username
-        existingPlayer.avatar = playerInfo.avatar
-        existingPlayer.isReady = true
       }
     }
+
+    handleRejoin()
   }, [playerInfo, room, roomCode, router])
 
   useEffect(() => {
@@ -94,9 +104,46 @@ export default function WaitingRoomPage() {
     }
   }, [room?.gameStarted, gameStarting, roomCode])
 
-  const handleLeaveRoom = () => {
+  // Periodic rejoin to ensure player stays in room
+  useEffect(() => {
+    if (!playerInfo || !room) return
+
+    const rejoinInterval = setInterval(async () => {
+      try {
+        const currentRoom = await roomManager.getRoom(roomCode)
+        if (currentRoom) {
+          const existingPlayer = currentRoom.players.find(p => p.id === playerInfo.playerId)
+          if (!existingPlayer) {
+            console.log("[WaitingRoom] Periodic rejoin - player not found, rejoining")
+            try {
+              await roomManager.rejoinRoom(roomCode, {
+                id: playerInfo.playerId,
+                username: playerInfo.username,
+                avatar: playerInfo.avatar,
+              })
+            } catch (error) {
+              console.error("[WaitingRoom] Error in periodic rejoin:", error)
+            }
+          } else {
+            // Player exists, just ensure they're marked as ready
+            existingPlayer.isReady = true
+          }
+        }
+      } catch (error) {
+        console.error("[WaitingRoom] Error in periodic room check:", error)
+      }
+    }, 5000) // Check every 5 seconds
+
+    return () => clearInterval(rejoinInterval)
+  }, [playerInfo, room, roomCode])
+
+  const handleLeaveRoom = async () => {
     if (playerInfo) {
-      roomManager.leaveRoom(roomCode, playerInfo.playerId)
+      try {
+        await roomManager.leaveRoom(roomCode, playerInfo.playerId)
+      } catch (error) {
+        console.error("[WaitingRoom] Error leaving room:", error)
+      }
     }
     // Check if we're on the client side
     if (typeof window !== 'undefined') {
@@ -198,19 +245,22 @@ export default function WaitingRoomPage() {
               </div>
 
               <div className="grid gap-3">
-                {room.players.map((player) => (
-                  <div key={player.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                    <div className="text-2xl">{player.avatar}</div>
-                    <div className="flex-1">
-                      <div className="font-medium">
-                        {player.username}
-                        {player.username === playerInfo.username && <span className="text-primary ml-2">(You)</span>}
-                        {player.isHost && <span className="text-accent ml-2">(Host)</span>}
+                {room.players.map((player) => {
+                  console.log("[WaitingRoom] Rendering player:", player)
+                  return (
+                    <div key={player.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="text-2xl">{player.avatar}</div>
+                      <div className="flex-1">
+                        <div className="font-medium">
+                          {player.username}
+                          {player.username === playerInfo?.username && <span className="text-primary ml-2">(You)</span>}
+                          {player.isHost && <span className="text-accent ml-2">(Host)</span>}
+                        </div>
                       </div>
+                      <Badge variant="outline">Ready</Badge>
                     </div>
-                    <Badge variant="outline">Ready</Badge>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               <div className="mt-6 p-4 bg-muted/50 rounded-lg text-center">

@@ -24,26 +24,54 @@ export default function SettingsPage() {
     }
   }, [searchParams, router])
 
-  const handleSettingsComplete = (settings: { timeLimit: number; questionCount: number }) => {
+  const handleSettingsComplete = async (settings: { timeLimit: number; questionCount: number }) => {
     if (!selectedQuiz) return
 
-    const room = roomManager.createRoom(hostId, {
-      questionCount: settings.questionCount,
-      timePerQuestion: settings.timeLimit,
-    })
+    try {
+      // Get quiz title from quiz data
+      const quizTitle = `Quiz ${selectedQuiz}` // You can enhance this to get actual quiz title
+      
+      const room = await roomManager.createRoom(hostId, {
+        questionCount: settings.questionCount,
+        timePerQuestion: settings.timeLimit,
+      }, selectedQuiz, quizTitle)
 
-    // Store host info
-    localStorage.setItem(
-      "currentHost",
-      JSON.stringify({
-        hostId,
-        roomCode: room.code,
-        quizId: selectedQuiz,
-      }),
-    )
+      if (!room) {
+        console.error("[Settings] Failed to create room")
+        return
+      }
 
-    // Navigate to lobby
-    router.push(`/lobby?roomCode=${room.code}`)
+      console.log("[Settings] Room created:", room)
+
+      // Store host info
+      localStorage.setItem(
+        "currentHost",
+        JSON.stringify({
+          hostId,
+          roomCode: room.code,
+          quizId: selectedQuiz,
+        }),
+      )
+
+      // Store quiz settings for the game
+      localStorage.setItem(
+        `game-${room.code}`,
+        JSON.stringify({
+          quizId: selectedQuiz,
+          settings: {
+            questionCount: settings.questionCount,
+            timeLimit: settings.timeLimit,
+          },
+        }),
+      )
+
+      console.log("[Settings] Host data stored, navigating to lobby")
+
+      // Navigate to lobby
+      router.push(`/lobby?roomCode=${room.code}`)
+    } catch (error) {
+      console.error("[Settings] Error creating room:", error)
+    }
   }
 
   if (!selectedQuiz) {
