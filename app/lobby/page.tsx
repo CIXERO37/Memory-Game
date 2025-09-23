@@ -28,8 +28,53 @@ export default function LobbyPage() {
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
+  const [localRoom, setLocalRoom] = useState<any>(null)
   const { toast } = useToast()
   const { room, loading } = useRoom(roomCode || "")
+  
+  // Use localRoom if available, otherwise use room from hook
+  const currentRoom = localRoom || room
+
+  // Subscribe to room updates for real-time synchronization
+  useEffect(() => {
+    if (!roomCode) return
+
+    // Load room data immediately
+    const loadInitialRoom = async () => {
+      try {
+        const initialRoom = await roomManager.getRoom(roomCode)
+        if (initialRoom) {
+          console.log("[Lobby] Initial room load:", initialRoom)
+          setLocalRoom(initialRoom)
+        }
+      } catch (error) {
+        console.error("[Lobby] Error loading initial room:", error)
+      }
+    }
+
+    loadInitialRoom()
+
+    let unsubscribe: (() => void) | null = null
+    
+    const setupSubscription = async () => {
+      try {
+        unsubscribe = await roomManager.subscribe(roomCode, (updatedRoom) => {
+          if (updatedRoom?.code === roomCode) {
+            console.log("[Lobby] Received room update via Supabase subscription:", updatedRoom)
+            setLocalRoom(updatedRoom)
+          }
+        })
+      } catch (error) {
+        console.error("[Lobby] Error setting up subscription:", error)
+      }
+    }
+    
+    setupSubscription()
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [roomCode])
 
   useEffect(() => {
     const roomCodeParam = searchParams.get("roomCode")
@@ -45,9 +90,33 @@ export default function LobbyPage() {
           
           if (!roomCodeParam) {
             setRoomCode(storedRoomCode)
+            // Load room data immediately
+            const loadRoom = async () => {
+              try {
+                const room = await roomManager.getRoom(storedRoomCode)
+                if (room) {
+                  setLocalRoom(room)
+                }
+              } catch (error) {
+                console.error("[Lobby] Error loading room:", error)
+              }
+            }
+            loadRoom()
           } else if (roomCodeParam === storedRoomCode) {
             // Room code matches, this is a valid host session
             setRoomCode(roomCodeParam)
+            // Load room data immediately
+            const loadRoom = async () => {
+              try {
+                const room = await roomManager.getRoom(roomCodeParam)
+                if (room) {
+                  setLocalRoom(room)
+                }
+              } catch (error) {
+                console.error("[Lobby] Error loading room:", error)
+              }
+            }
+            loadRoom()
           } else {
             // Room code doesn't match, clear old data and treat as new room
             console.log("Room code mismatch, clearing old host data")
@@ -75,10 +144,41 @@ export default function LobbyPage() {
   }, [searchParams, router])
 
   useEffect(() => {
-    if (room?.gameStarted) {
+    if (currentRoom?.gameStarted) {
       setGameStarted(true)
     }
-  }, [room])
+    console.log("[Lobby] Room updated:", currentRoom)
+  }, [currentRoom])
+
+  // Force refresh room data periodically to ensure host sees all players
+  useEffect(() => {
+    if (!roomCode) return
+
+    const refreshInterval = setInterval(async () => {
+      try {
+        const latestRoom = await roomManager.getRoom(roomCode)
+        if (latestRoom) {
+          // Compare players count to detect changes
+          const currentPlayerCount = currentRoom?.players?.length || 0
+          const latestPlayerCount = latestRoom.players?.length || 0
+          
+          if (latestPlayerCount !== currentPlayerCount || 
+              JSON.stringify(latestRoom.players) !== JSON.stringify(currentRoom?.players)) {
+            console.log("[Lobby] Force refresh - players changed:", {
+              current: currentPlayerCount,
+              latest: latestPlayerCount,
+              latestRoom
+            })
+            setLocalRoom(latestRoom)
+          }
+        }
+      } catch (error) {
+        console.error("[Lobby] Error in refresh interval:", error)
+      }
+    }, 5000) // Check every 5 seconds (less frequent to reduce delay)
+
+    return () => clearInterval(refreshInterval)
+  }, [roomCode, currentRoom])
 
 
   const shareUrl = roomCode && typeof window !== 'undefined' ? `${window.location.origin}/join?room=${roomCode}` : ""
@@ -107,18 +207,22 @@ export default function LobbyPage() {
     setTimeout(() => setCopiedLink(false), 1500)
   }
 
-  const startGame = () => {
-    if (gameStarted || !room || !roomCode || !hostId) return
+  const startGame = async () => {
+    if (gameStarted || !currentRoom || !roomCode || !hostId) return
 
-    const success = roomManager.startGame(roomCode, hostId)
-    if (success) {
-      setGameStarted(true)
-      // Navigate to monitor
-      router.push(`/monitor?roomCode=${roomCode}`)
+    try {
+      const success = await roomManager.startGame(roomCode, hostId)
+      if (success) {
+        setGameStarted(true)
+        // Navigate to monitor
+        router.push(`/monitor?roomCode=${roomCode}`)
+      }
+    } catch (error) {
+      console.error("[Lobby] Error starting game:", error)
     }
   }
 
-  if (loading) {
+  if (loading && !currentRoom) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center text-white">
@@ -128,23 +232,53 @@ export default function LobbyPage() {
     )
   }
 
-  if (!room && !loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center text-white space-y-4">
-          <div className="text-xl">Room not found</div>
-          <div className="text-sm text-gray-300">
-            The room may have been closed or the host left.
+  if (!currentRoom && !loading) {
+    // If we have host data but no room, try to recreate the room
+    if (hostId && roomCode && quizId) {
+      const recreatedRoom = roomManager.createRoomWithCode(roomCode, hostId, {
+        questionCount: quizSettings.questionCount,
+        timePerQuestion: quizSettings.timeLimit
+      })
+      
+      if (recreatedRoom) {
+        // Update the room state and continue
+        setLocalRoom(recreatedRoom)
+      } else {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+            <div className="text-center text-white space-y-4">
+              <div className="text-xl">Room not found</div>
+              <div className="text-sm text-gray-300">
+                The room may have been closed or the host left.
+              </div>
+              <Button 
+                onClick={() => router.push("/select-quiz")}
+                className="w-full"
+              >
+                Create New Room
+              </Button>
+            </div>
           </div>
-          <Button 
-            onClick={() => router.push("/select-quiz")}
-            className="w-full"
-          >
-            Create New Room
-          </Button>
+        )
+      }
+    } else {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+          <div className="text-center text-white space-y-4">
+            <div className="text-xl">Room not found</div>
+            <div className="text-sm text-gray-300">
+              The room may have been closed or the host left.
+            </div>
+            <Button 
+              onClick={() => router.push("/select-quiz")}
+              className="w-full"
+            >
+              Create New Room
+            </Button>
+          </div>
         </div>
-      </div>
-    )
+      )
+    }
   }
 
   return (
@@ -249,9 +383,9 @@ export default function LobbyPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-blue-400" />
-                  <CardTitle className="text-white">Players ({room?.players.length || 0})</CardTitle>
+                  <CardTitle className="text-white">Players ({currentRoom?.players.length || 0})</CardTitle>
                 </div>
-                {room && room.players.length >= 1 && !gameStarted && (
+                {currentRoom && currentRoom.players.length >= 1 && !gameStarted && (
                   <Button onClick={startGame} className="font-semibold bg-blue-500 hover:bg-blue-600">
                     <Play className="h-4 w-4 mr-2" />
                     Start Quiz
@@ -260,33 +394,27 @@ export default function LobbyPage() {
                 {gameStarted && <Badge variant="secondary">Game Started</Badge>}
               </div>
               <CardDescription className="text-blue-100">
-                {room && room.players.length === 0
+                {currentRoom && currentRoom.players.length === 0
                   ? "Waiting for players to join..."
                   : gameStarted
                     ? "Game in progress"
-                    : "Players in your room"}
+                    : ""}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {room && room.players.length === 0 ? (
+              {currentRoom && currentRoom.players.length === 0 ? (
                 <div className="text-center py-8 text-blue-200">
                   <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No players yet. Share the room code to get started!</p>
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {room && room.players.map((player) => (
+                  {currentRoom && currentRoom.players.map((player: any) => (
                     <div key={player.id} className="flex items-center gap-3 p-3 bg-white/10 rounded-lg">
                       <div className="text-2xl">{player.avatar}</div>
                       <div className="flex-1">
                         <div className="font-medium text-white">{player.username}</div>
-                        <div className="text-xs text-blue-200">
-                          Joined {new Date(player.joinedAt).toLocaleTimeString()}
-                        </div>
                       </div>
-                      <Badge variant="outline" className="border-white/20 text-white">
-                        {gameStarted ? "Playing" : "Ready"}
-                      </Badge>
                     </div>
                   ))}
                 </div>
