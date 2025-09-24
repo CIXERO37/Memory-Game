@@ -4,10 +4,10 @@ import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, FileSearch, Search, Filter } from "lucide-react"
+import { ArrowLeft, FileSearch, Search, Filter, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { quizzes } from "@/lib/quiz-data"
+import { useQuizzes, transformQuizData } from "@/hooks/use-quiz"
 
 
 export default function SelectQuizPage() {
@@ -15,12 +15,20 @@ export default function SelectQuizPage() {
   const [searchInput, setSearchInput] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [difficultyFilter, setDifficultyFilter] = useState("all")
+  
+  // Fetch quizzes from Supabase
+  const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       setSearchTerm(searchInput)
     }
   }
+
+  // Transform Supabase data to match existing interface
+  const quizzes = useMemo(() => {
+    return supabaseQuizzes.map(transformQuizData)
+  }, [supabaseQuizzes])
 
   const filteredQuizzes = useMemo(() => {
     return quizzes.filter((quiz) => {
@@ -30,7 +38,7 @@ export default function SelectQuizPage() {
       const matchesDifficulty = difficultyFilter === "all" || quiz.difficulty === difficultyFilter
       return matchesSearch && matchesDifficulty
     })
-  }, [searchTerm, difficultyFilter])
+  }, [quizzes, searchTerm, difficultyFilter])
 
   const handleQuizSelect = (quizId: string) => {
     // Navigate to settings page with quizId
@@ -89,7 +97,20 @@ export default function SelectQuizPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 justify-items-center">
-            {filteredQuizzes.length === 0 ? (
+            {loading ? (
+              <div className="col-span-full text-center py-12">
+                <Loader2 className="h-12 w-12 mx-auto text-blue-400 mb-4 animate-spin" />
+                <h3 className="text-lg font-semibold text-white mb-2">Loading quizzes...</h3>
+                <p className="text-gray-400">Fetching quiz data from database</p>
+              </div>
+            ) : error ? (
+              <div className="col-span-full text-center py-12">
+                <div className="h-12 w-12 mx-auto text-red-400 mb-4 flex items-center justify-center">⚠️</div>
+                <h3 className="text-lg font-semibold text-white mb-2">Error loading quizzes</h3>
+                <p className="text-red-400 mb-4">{error}</p>
+                <p className="text-gray-400">Please check your Supabase configuration</p>
+              </div>
+            ) : filteredQuizzes.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">No quizzes found</h3>
