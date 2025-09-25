@@ -362,7 +362,7 @@ export default function LobbyPage() {
               <Users className="h-5 w-5 text-white" />
             </div>
             <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
-              <h1 className="text-xl font-bold text-black pixel-font">LOBBY</h1>
+              <h1 className="text-lg font-bold text-black">LOBBY</h1>
             </div>
           </div>
         </div>
@@ -389,7 +389,7 @@ export default function LobbyPage() {
                   
                   {/* Room code di tengah - diperbesar */}
                   <div className="text-center pt-4">
-                    <div className="text-8xl md:text-[12rem] lg:text-[16rem] font-black font-mono tracking-wider text-black pixel-font room-code-text">
+                    <div className="text-5xl md:text-6xl lg:text-7xl font-black font-mono text-black room-code-text">
                       {roomCode}
                     </div>
                   </div>
@@ -398,10 +398,7 @@ export default function LobbyPage() {
                 {/* Pixel QR Card */}
                 {smallQrUrl && (
                   <div className="bg-white border-2 border-black rounded p-4 pixel-qr-card">
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="inline-block bg-green-500 border border-black rounded px-2 py-1">
-                        <span className="text-white font-bold text-xs pixel-font-sm">QR CODE</span>
-                      </div>
+                    <div className="flex justify-end items-center mb-3">
                       <button
                         onClick={() => setQrOpen(true)}
                         aria-label="Enlarge QR"
@@ -420,13 +417,13 @@ export default function LobbyPage() {
                       />
                       {shareUrl && (
                         <div className="mt-4 relative mx-auto">
-                          <div className="inline-block bg-gray-100 border-2 border-black rounded pl-3 pr-10 py-2 text-xs font-medium break-all pixel-font-sm">
+                          <div className="inline-block bg-gray-100 border-2 border-black rounded pl-3 pr-10 py-2 text-xs font-medium break-all">
                             {shareUrl}
                           </div>
                           <button
                             onClick={copyShareLink}
                             aria-label="Copy share link"
-                            className={`absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded border-2 border-black ${copiedLink ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+                            className={`absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded ${copiedLink ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
                           >
                             {copiedLink ? <span className="font-bold text-xs">✓</span> : <Copy className="h-3 w-3" />}
                           </button>
