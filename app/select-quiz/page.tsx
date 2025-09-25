@@ -68,17 +68,17 @@ export default function SelectQuizPage() {
           <Link href="/">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <Button variant="outline" size="sm" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200">
-                <ArrowLeft className="h-4 w-4" />
+              <Button variant="outline" size="default" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10">
+                <ArrowLeft className="h-5 w-5" />
               </Button>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
               <FileSearch className="h-5 w-5 text-white" />
             </div>
-            <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
-              <h1 className="text-xl font-bold text-black pixel-font">SELECT QUIZ</h1>
+            <div className="inline-block bg-white border-2 border-black rounded px-3 py-2 pixel-header-title">
+              <h1 className="text-xl font-bold text-black">SELECT QUIZ</h1>
             </div>
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function SelectQuizPage() {
               {/* Pixel Search Input */}
               <div className="relative flex-1">
                 <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-xs pixel-font-sm">SEARCH</label>
+                  <label className="text-black font-bold text-sm">SEARCH</label>
                 </div>
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
@@ -102,29 +102,29 @@ export default function SelectQuizPage() {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleSearch}
-                    className="pl-12 bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600"
+                    className="pl-12 h-10 bg-white border-2 border-black rounded-none shadow-lg font-mono text-base text-black placeholder:text-gray-500 focus:border-blue-600"
                   />
                 </div>
               </div>
               
               {/* Pixel Difficulty Filter */}
-              <div className="sm:w-48">
+              <div className="sm:w-56">
                 <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-xs pixel-font-sm">FILTER</label>
+                  <label className="text-black font-bold text-sm">FILTER</label>
                 </div>
                 <div className="relative">
                   <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                    <SelectTrigger className="bg-white border-2 border-black rounded-none shadow-lg text-black focus:border-blue-600">
+                    <SelectTrigger className="h-10 bg-white border-2 border-black rounded-none shadow-lg text-base text-black focus:border-blue-600">
                       <div className="w-6 h-6 bg-green-500 border border-black rounded mr-2 flex items-center justify-center">
                         <Filter className="h-4 w-4 text-white" />
                       </div>
                       <SelectValue placeholder="Filter by difficulty" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border-2 border-black">
-                      <SelectItem value="all" className="text-black hover:bg-gray-200 pixel-font-sm">ALL DIFFICULTIES</SelectItem>
-                      <SelectItem value="Easy" className="text-black hover:bg-green-200 pixel-font-sm">EASY</SelectItem>
-                      <SelectItem value="Medium" className="text-black hover:bg-yellow-200 pixel-font-sm">MEDIUM</SelectItem>
-                      <SelectItem value="Hard" className="text-black hover:bg-red-200 pixel-font-sm">HARD</SelectItem>
+                      <SelectItem value="all" className="text-black hover:bg-gray-200 text-base">ALL DIFFICULTIES</SelectItem>
+                      <SelectItem value="Easy" className="text-black hover:bg-green-200 text-base">EASY</SelectItem>
+                      <SelectItem value="Medium" className="text-black hover:bg-yellow-200 text-base">MEDIUM</SelectItem>
+                      <SelectItem value="Hard" className="text-black hover:bg-red-200 text-base">HARD</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -141,8 +141,8 @@ export default function SelectQuizPage() {
                     <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                       <Loader2 className="h-8 w-8 text-black animate-spin" />
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2 pixel-font">LOADING QUIZZES...</h3>
-                    <p className="text-white/80 pixel-font-sm">FETCHING QUIZ DATA FROM DATABASE</p>
+                    <h3 className="text-lg font-bold text-white mb-2">LOADING QUIZZES...</h3>
+                    <p className="text-white/80 text-sm">FETCHING QUIZ DATA FROM DATABASE</p>
                   </div>
                 </div>
               </div>
@@ -154,9 +154,9 @@ export default function SelectQuizPage() {
                     <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                       <span className="text-2xl">⚠️</span>
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2 pixel-font">ERROR LOADING QUIZZES</h3>
-                    <p className="text-white/80 mb-4 pixel-font-sm">{error}</p>
-                    <p className="text-white/60 pixel-font-sm">PLEASE CHECK YOUR SUPABASE CONFIGURATION</p>
+                    <h3 className="text-lg font-bold text-white mb-2">ERROR LOADING QUIZZES</h3>
+                    <p className="text-white/80 mb-4 text-sm">{error}</p>
+                    <p className="text-white/60 text-sm">PLEASE CHECK YOUR SUPABASE CONFIGURATION</p>
                   </div>
                 </div>
               </div>
@@ -168,8 +168,8 @@ export default function SelectQuizPage() {
                     <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                       <Search className="h-8 w-8 text-black" />
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2 pixel-font">NO QUIZZES FOUND</h3>
-                    <p className="text-white/80 pixel-font-sm">TRY ADJUSTING YOUR SEARCH TERMS OR DIFFICULTY FILTER</p>
+                    <h3 className="text-lg font-bold text-white mb-2">NO QUIZZES FOUND</h3>
+                    <p className="text-white/80 text-sm">TRY ADJUSTING YOUR SEARCH TERMS OR DIFFICULTY FILTER</p>
                   </div>
                 </div>
               </div>
@@ -185,26 +185,29 @@ export default function SelectQuizPage() {
                   >
                     <div className="relative pixel-quiz-card">
                       {/* Pixel Difficulty badge */}
-                      <div className={`absolute -top-3 -right-3 ${difficultyColor} border-2 border-black rounded px-3 py-1 shadow-lg z-20`}>
-                        <span className="text-white font-bold text-xs pixel-font-sm">
-                          {quiz.difficulty.toUpperCase()}
-                        </span>
+                      <div className={`absolute -top-2 -right-2 ${difficultyColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform rotate-3`}>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                          <span className="text-white font-bold text-xs tracking-wide">
+                            {quiz.difficulty.toUpperCase()}
+                          </span>
+                        </div>
                       </div>
                       
                       {/* Pixel Main content */}
-                      <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-6 z-10">
-                        <div className="bg-white border-2 border-black rounded px-4 py-2 mb-3 shadow-lg">
-                          <h3 className="text-lg font-bold text-black pixel-font-sm">
+                      <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 z-10">
+                        <div className="bg-white border-2 border-black rounded px-3 py-1 mb-2 shadow-lg">
+                          <h3 className="text-base font-bold text-black">
                             {quiz.title.toUpperCase()}
                           </h3>
                         </div>
-                        <div className="bg-black/20 border border-white/30 rounded px-3 py-2 mb-4">
-                          <p className="text-sm text-white font-medium pixel-font-sm leading-relaxed">
+                        <div className="bg-black/20 border border-white/30 rounded px-2 py-1 mb-3">
+                          <p className="text-xs text-white font-medium leading-relaxed">
                             {quiz.description.toUpperCase()}
                           </p>
                         </div>
-                        <div className="bg-blue-500 border-2 border-black rounded px-3 py-1">
-                          <div className="text-xs text-white font-bold pixel-font-sm">
+                        <div className="bg-blue-500 border-2 border-black rounded px-2 py-1">
+                          <div className="text-xs text-white font-bold">
                             {quiz.questions.length} QUESTIONS
                           </div>
                         </div>
