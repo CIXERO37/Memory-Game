@@ -1,4 +1,4 @@
-import { supabase, type Database } from './supabase'
+import { supabase } from './supabase'
 
 export interface Player {
   id: string
