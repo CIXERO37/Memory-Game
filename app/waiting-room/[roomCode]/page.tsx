@@ -48,59 +48,21 @@ export default function WaitingRoomPage() {
     router.push(`/join?room=${roomCode}`)
   }, [roomCode, router])
 
-  // Rejoin room if player info is available
-  useEffect(() => {
-    const handleRejoin = async () => {
-      if (playerInfo && room) {
-        // Check if player is already in the room
-        const existingPlayer = room.players.find(p => p.id === playerInfo.playerId)
-        
-        if (!existingPlayer) {
-          // Player not found, try to rejoin with the same ID
-          console.log("[WaitingRoom] Player not found, attempting to rejoin:", playerInfo)
-          try {
-            const success = await roomManager.rejoinRoom(roomCode, {
-              id: playerInfo.playerId,
-              username: playerInfo.username,
-              avatar: playerInfo.avatar,
-            })
-            
-            if (!success) {
-              // If rejoin fails, redirect to join page
-              console.log("[WaitingRoom] Rejoin failed, redirecting to join page")
-              router.push(`/join?room=${roomCode}`)
-            }
-          } catch (error) {
-            console.error("[WaitingRoom] Error rejoining room:", error)
-            router.push(`/join?room=${roomCode}`)
-          }
-        } else {
-          // Player exists, just ensure they're marked as ready
-          console.log("[WaitingRoom] Player found, marking as ready:", existingPlayer)
-          existingPlayer.isReady = true
-        }
-      }
-    }
-
-    handleRejoin()
-  }, [playerInfo, room, roomCode, router])
-
+  // Listen for game start
   useEffect(() => {
     if (room?.gameStarted && !gameStarting) {
       setGameStarting(true)
-      // Check if we're on the client side
-      if (typeof window !== 'undefined') {
-        const gameSession = localStorage.getItem(`game-${roomCode}`)
-        if (gameSession) {
-          const { quizId, settings } = JSON.parse(gameSession)
-          const params = new URLSearchParams({
-            quizId,
-            questionCount: settings.questionCount.toString(),
-            timeLimit: settings.timeLimit.toString(),
-          })
-          window.location.href = `/game/${roomCode}/quiz?${params.toString()}`
+      
+      // Add a small delay before redirecting
+      setTimeout(() => {
+        const params = new URLSearchParams()
+        if (playerInfo) {
+          params.append("playerId", playerInfo.playerId)
+          params.append("username", playerInfo.username)
+          params.append("avatar", playerInfo.avatar)
         }
-      }
+        window.location.href = `/game/${roomCode}/quiz?${params.toString()}`
+      }, 1000)
     }
   }, [room?.gameStarted, gameStarting, roomCode])
 
@@ -154,14 +116,29 @@ export default function WaitingRoomPage() {
 
   if (loading || !playerInfo) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="text-center">
-              <CardContent className="py-12">
-                <p>Loading room...</p>
-              </CardContent>
-            </Card>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        {/* Pixel Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="pixel-grid"></div>
+        </div>
+        {/* Retro Scanlines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="scanlines"></div>
+        </div>
+        {/* Floating Pixel Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <PixelBackgroundElements />
+        </div>
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
+              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-black animate-pulse" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">LOADING...</h3>
+              <p className="text-white/80 pixel-font-sm">CONNECTING TO ROOM</p>
+            </div>
           </div>
         </div>
       </div>
@@ -170,32 +147,49 @@ export default function WaitingRoomPage() {
 
   if (!room) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="text-center">
-              <CardContent className="py-12 space-y-4">
-                <div className="text-xl font-semibold">Room not found</div>
-                <div className="text-sm text-muted-foreground">
-                  The room may have been closed or the host left.
-                </div>
-                <div className="space-y-2">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        {/* Pixel Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="pixel-grid"></div>
+        </div>
+        {/* Retro Scanlines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="scanlines"></div>
+        </div>
+        {/* Floating Pixel Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <PixelBackgroundElements />
+        </div>
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
+              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">ROOM NOT FOUND</h3>
+              <p className="text-white/80 mb-4 pixel-font-sm">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
+              <div className="space-y-3">
+                <div className="relative pixel-button-container">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={() => router.push(`/join?room=${roomCode}`)} 
-                    className="w-full"
+                    className="relative bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-200 font-bold w-full"
                   >
-                    Try to Rejoin
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => router.push("/join")} 
-                    className="w-full"
-                  >
-                    Join Different Room
+                    <span className="pixel-font-sm">TRY TO REJOIN</span>
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="relative pixel-button-container">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <Button 
+                    onClick={() => router.push("/join")} 
+                    className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold w-full"
+                  >
+                    <span className="pixel-font-sm">JOIN DIFFERENT ROOM</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -204,15 +198,29 @@ export default function WaitingRoomPage() {
 
   if (gameStarting) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="text-center">
-              <CardContent className="py-12">
-                <div className="text-2xl font-bold text-primary mb-4">Starting Quiz...</div>
-                <p className="text-muted-foreground">Redirecting to the game...</p>
-              </CardContent>
-            </Card>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        {/* Pixel Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="pixel-grid"></div>
+        </div>
+        {/* Retro Scanlines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="scanlines"></div>
+        </div>
+        {/* Floating Pixel Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <PixelBackgroundElements />
+        </div>
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-4 border-black shadow-2xl p-6">
+              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                <span className="text-2xl animate-pulse">🎮</span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">STARTING QUIZ...</h3>
+              <p className="text-white/80 pixel-font-sm">REDIRECTING TO THE GAME</p>
+            </div>
           </div>
         </div>
       </div>
@@ -220,84 +228,178 @@ export default function WaitingRoomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      {/* Pixel Grid Background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="pixel-grid"></div>
+      </div>
+      
+      {/* Retro Scanlines */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="scanlines"></div>
+      </div>
+      
+      {/* Floating Pixel Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <PixelBackgroundElements />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Pixel Header */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="flex items-center gap-2">
-            <Users className="h-6 w-6 text-blue-400" />
-            <h1 className="text-2xl font-bold text-white">Waiting Room</h1>
+          <div className="w-8 h-8 bg-green-500 border-2 border-black rounded flex items-center justify-center">
+            <Users className="h-5 w-5 text-white" />
+          </div>
+          <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
+            <h1 className="text-xl font-bold text-black pixel-font">WAITING ROOM</h1>
           </div>
         </div>
 
         <div className="max-w-2xl mx-auto space-y-6">
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle className="text-xl">Waiting Room</CardTitle>
-              <CardDescription>
-                Room Code: <span className="font-mono font-bold text-primary">{roomCode}</span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="h-5 w-5" />
-                <span className="font-medium">Players ({room.players.length})</span>
-              </div>
-
-              <div className="grid gap-3">
-                {room.players.map((player) => {
-                  console.log("[WaitingRoom] Rendering player:", player)
-                  return (
-                    <div key={player.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                      <div className="text-2xl">{player.avatar}</div>
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {player.username}
-                          {player.username === playerInfo?.username && <span className="text-primary ml-2">(You)</span>}
-                          {player.isHost && <span className="text-accent ml-2">(Host)</span>}
-                        </div>
-                      </div>
-                      <Badge variant="outline">Ready</Badge>
+          {/* Pixel Waiting Room Card */}
+          <div className="relative pixel-waiting-container">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl pixel-waiting-card">
+              <div className="p-6">
+                {/* Pixel Header */}
+                <div className="text-center mb-6">
+                  <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 mb-3">
+                    <h2 className="text-lg font-bold text-black pixel-font">WAITING ROOM</h2>
+                  </div>
+                  <div className="bg-black/20 border border-white/30 rounded px-3 py-2 inline-block">
+                    <span className="text-white text-sm pixel-font-sm">
+                      ROOM CODE: <span className="font-bold text-yellow-400">{roomCode}</span>
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Pixel Players Section */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-6 h-6 bg-white border border-black rounded flex items-center justify-center">
+                      <Users className="h-4 w-4 text-black" />
                     </div>
-                  )
-                })}
-              </div>
+                    <div className="inline-block bg-white border border-black rounded px-2 py-1">
+                      <span className="text-black font-bold text-xs pixel-font-sm">
+                        PLAYERS ({room.players.length})
+                      </span>
+                    </div>
+                  </div>
 
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg text-center">
-                <Clock className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  {room.gameStarted ? "Game starting soon..." : "Waiting for host to start the game..."}
-                </p>
+                  <div className="grid gap-3">
+                    {room.players.map((player) => {
+                      console.log("[WaitingRoom] Rendering player:", player)
+                      return (
+                        <div key={player.id} className="bg-white border-2 border-black rounded p-3 pixel-player-card">
+                          <div className="flex items-center gap-3">
+                            <div className="text-2xl w-8 h-8 bg-gray-100 border border-black rounded flex items-center justify-center">
+                              {player.avatar}
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-bold text-black pixel-font-sm">
+                                {player.username.toUpperCase()}
+                                {player.username === playerInfo?.username && <span className="text-blue-600 ml-2">(YOU)</span>}
+                                {player.isHost && <span className="text-orange-600 ml-2">(HOST)</span>}
+                              </div>
+                            </div>
+                            <div className="bg-green-500 border border-black rounded px-2 py-1">
+                              <span className="text-white font-bold text-xs pixel-font-sm">READY</span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Pixel Status Section */}
+                <div className="bg-black/20 border border-white/30 rounded p-4 text-center">
+                  <div className="w-8 h-8 mx-auto bg-white border border-black rounded flex items-center justify-center mb-3">
+                    <Clock className="h-5 w-5 text-black" />
+                  </div>
+                  <p className="text-white text-sm pixel-font-sm">
+                    {room.gameStarted ? "GAME STARTING SOON..." : "WAITING FOR HOST TO START THE GAME..."}
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <div className="flex justify-center">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Leave Room
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Leave Room?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to leave this room? You will need to rejoin with the room code if you want to participate in the game.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Stay in Room</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleLeaveRoom} className="bg-red-600 hover:bg-red-700">
-                    Leave Room
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="relative pixel-button-container">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    <span className="pixel-font-sm">LEAVE ROOM</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Leave Room?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to leave this room? You will need to rejoin with the room code if you want to participate in the game.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Stay in Room</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLeaveRoom} className="bg-red-600 hover:bg-red-700">
+                      Leave Room
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function PixelBackgroundElements() {
+  const pixels = [
+    { id: 1, color: 'bg-red-500', size: 'w-2 h-2', delay: '0s', duration: '3s', x: '10%', y: '20%' },
+    { id: 2, color: 'bg-blue-500', size: 'w-3 h-3', delay: '1s', duration: '4s', x: '80%', y: '30%' },
+    { id: 3, color: 'bg-green-500', size: 'w-2 h-2', delay: '2s', duration: '3.5s', x: '20%', y: '70%' },
+    { id: 4, color: 'bg-yellow-500', size: 'w-4 h-4', delay: '0.5s', duration: '5s', x: '70%', y: '10%' },
+    { id: 5, color: 'bg-purple-500', size: 'w-2 h-2', delay: '1.5s', duration: '4.5s', x: '50%', y: '80%' },
+    { id: 6, color: 'bg-pink-500', size: 'w-3 h-3', delay: '2.5s', duration: '3s', x: '30%', y: '50%' },
+    { id: 7, color: 'bg-cyan-500', size: 'w-2 h-2', delay: '0.8s', duration: '4s', x: '90%', y: '60%' },
+    { id: 8, color: 'bg-orange-500', size: 'w-3 h-3', delay: '1.8s', duration: '3.8s', x: '15%', y: '40%' },
+    { id: 9, color: 'bg-lime-500', size: 'w-2 h-2', delay: '2.2s', duration: '4.2s', x: '60%', y: '25%' },
+    { id: 10, color: 'bg-indigo-500', size: 'w-4 h-4', delay: '0.3s', duration: '5.5s', x: '85%', y: '75%' },
+  ]
+
+  return (
+    <>
+      {pixels.map((pixel) => (
+        <div
+          key={pixel.id}
+          className={`absolute ${pixel.color} ${pixel.size} pixel-float`}
+          style={{
+            left: pixel.x,
+            top: pixel.y,
+            animationDelay: pixel.delay,
+            animationDuration: pixel.duration,
+          }}
+        />
+      ))}
+      
+      {/* Floating Pixel Blocks */}
+      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+    </>
   )
 }

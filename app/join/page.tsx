@@ -43,41 +43,12 @@ export default function JoinPage() {
     const roomFromUrl = searchParams.get("room")
     if (roomFromUrl) {
       setRoomCode(roomFromUrl.toUpperCase())
-      // If there's a room in URL, clear any previous player data to allow fresh join
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem("currentPlayer")
-      }
     }
 
-    // Only auto-redirect if there's no room in URL and user has valid session
-    if (!roomFromUrl && typeof window !== 'undefined') {
-      const checkExistingSession = async () => {
-        const storedPlayer = localStorage.getItem("currentPlayer")
-        if (storedPlayer) {
-          try {
-            const player = JSON.parse(storedPlayer)
-            if (player.roomCode) {
-              // Check if the room still exists and user is still in it
-              const room = await roomManager.getRoom(player.roomCode)
-              if (room && room.players.find((p: any) => p.id === player.id)) {
-                // User is still in the room, redirect to waiting room
-                console.log("[Join] Auto-redirecting to existing room:", player.roomCode)
-                router.push(`/waiting-room/${player.roomCode}`)
-                return
-              } else {
-                // Room doesn't exist or user is not in it, clear stored data
-                console.log("[Join] Clearing invalid player data")
-                localStorage.removeItem("currentPlayer")
-              }
-            }
-          } catch (error) {
-            console.error("Error parsing stored player info:", error)
-            localStorage.removeItem("currentPlayer")
-          }
-        }
-      }
-      
-      checkExistingSession()
+    // Clear any existing player data when entering join page
+    // This ensures users always go through the join process
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("currentPlayer")
     }
   }, [searchParams, router])
 
@@ -160,14 +131,29 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      {/* Pixel Grid Background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="pixel-grid"></div>
+      </div>
+      
+      {/* Floating Pixel Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <FloatingPixelElements />
+      </div>
+      
+      {/* Retro Scanlines */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="scanlines"></div>
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link href="/">
             <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
+             
             </Button>
           </Link>
           <div className="flex items-center gap-2">
@@ -177,66 +163,152 @@ export default function JoinPage() {
         </div>
 
         <div className="max-w-md mx-auto">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl">Join Room</CardTitle>
-                <CardDescription>
-                  {roomCode ? "Enter your username to join the game" : "Enter your details to join the game"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    placeholder="Enter your username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
-
-                {!searchParams.get("room") && (
-                  <div className="space-y-2">
-                    <Label htmlFor="roomCode">Room Code</Label>
-                    <Input
-                      id="roomCode"
-                      placeholder="Enter room code"
-                      value={roomCode}
-                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                      className="uppercase"
-                    />
-                    {roomError && <p className="text-sm text-destructive">{roomError}</p>}
-                  </div>
-                )}
-
-                {searchParams.get("room") && (
-                  <div className="space-y-2">
-                    <Label>Room Code</Label>
-                    <div className="p-3 bg-muted rounded-md text-center font-mono text-lg font-semibold">
-                      {roomCode}
+            <div className="relative pixel-card-container">
+              {/* Pixel Card Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-card-shadow"></div>
+              <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl pixel-card-main">
+                <div className="p-6 space-y-6">
+                  {/* Pixel Header */}
+                  <div className="text-center space-y-2">
+                    <div className="inline-block bg-white rounded px-4 py-2 border-2 border-black transform -rotate-1 shadow-lg">
+                      <h2 className="text-xl font-bold text-black pixel-font">JOIN ROOM</h2>
                     </div>
-                    {roomError && <p className="text-sm text-destructive">{roomError}</p>}
+                    <div className="bg-black/20 rounded px-3 py-2 border-2 border-black/50">
+                      <p className="text-sm text-white font-medium">
+                        {roomCode ? "Enter your username to join the game" : "Enter your details to join the game"}
+                      </p>
+                    </div>
                   </div>
-                )}
+                  {/* Pixel Input Fields */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                        <Label htmlFor="username" className="text-black font-bold text-sm">USERNAME</Label>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="username"
+                          placeholder="Enter your username"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600"
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Choose Avatar (Optional)</Label>
-                  <AvatarSelector selectedAvatar={selectedAvatar} onAvatarSelect={setSelectedAvatar} />
-                  <p className="text-xs text-muted-foreground">Default: 🦄 Unicorn</p>
+                    {!searchParams.get("room") && (
+                      <div className="space-y-2">
+                        <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                          <Label htmlFor="roomCode" className="text-black font-bold text-sm">ROOM CODE</Label>
+                        </div>
+                        <div className="relative">
+                          <Input
+                            id="roomCode"
+                            placeholder="Enter room code"
+                            value={roomCode}
+                            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                            className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 uppercase"
+                          />
+                        </div>
+                        {roomError && (
+                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                            <p className="text-sm text-white font-bold">{roomError}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {searchParams.get("room") && (
+                      <div className="space-y-2">
+                        <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                          <Label className="text-black font-bold text-sm">ROOM CODE</Label>
+                        </div>
+                        <div className="bg-yellow-400 border-2 border-black rounded px-4 py-3 text-center shadow-lg">
+                          <div className="font-mono text-2xl font-bold text-black">
+                            {roomCode}
+                          </div>
+                        </div>
+                        {roomError && (
+                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                            <p className="text-sm text-white font-bold">{roomError}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Pixel Avatar Section */}
+                    <div className="space-y-2">
+                      <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                        <Label className="text-black font-bold text-sm">CHOOSE AVATAR</Label>
+                      </div>
+                      <div className="bg-white border-2 border-black rounded p-3">
+                        <AvatarSelector selectedAvatar={selectedAvatar} onAvatarSelect={setSelectedAvatar} />
+                      </div>
+                    </div>
+
+                    {/* Pixel Button */}
+                    <div className="pt-4">
+                      <Button
+                        className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-lg py-3 transform hover:scale-105 transition-all duration-200"
+                        onClick={handleJoinRoom}
+                        disabled={!username.trim() || !roomCode.trim() || isJoining}
+                      >
+                        {isJoining ? "JOINING..." : "JOIN ROOM"}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-
-                <Button
-                  className="w-full"
-                  onClick={handleJoinRoom}
-                  disabled={!username.trim() || !roomCode.trim() || isJoining}
-                >
-                  {isJoining ? "Joining..." : "Join Room"}
-                </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
       </div>
     </div>
+  )
+}
+
+function FloatingPixelElements() {
+  const pixels = [
+    { id: 1, color: 'bg-red-500', size: 'w-2 h-2', delay: '0s', duration: '3s', x: '10%', y: '20%' },
+    { id: 2, color: 'bg-blue-500', size: 'w-3 h-3', delay: '1s', duration: '4s', x: '80%', y: '30%' },
+    { id: 3, color: 'bg-green-500', size: 'w-2 h-2', delay: '2s', duration: '3.5s', x: '20%', y: '70%' },
+    { id: 4, color: 'bg-yellow-500', size: 'w-4 h-4', delay: '0.5s', duration: '5s', x: '70%', y: '10%' },
+    { id: 5, color: 'bg-purple-500', size: 'w-2 h-2', delay: '1.5s', duration: '4.5s', x: '50%', y: '80%' },
+    { id: 6, color: 'bg-pink-500', size: 'w-3 h-3', delay: '2.5s', duration: '3s', x: '30%', y: '50%' },
+    { id: 7, color: 'bg-cyan-500', size: 'w-2 h-2', delay: '0.8s', duration: '4s', x: '90%', y: '60%' },
+    { id: 8, color: 'bg-orange-500', size: 'w-3 h-3', delay: '1.8s', duration: '3.8s', x: '15%', y: '40%' },
+    { id: 9, color: 'bg-lime-500', size: 'w-2 h-2', delay: '2.2s', duration: '4.2s', x: '60%', y: '25%' },
+    { id: 10, color: 'bg-indigo-500', size: 'w-4 h-4', delay: '0.3s', duration: '5.5s', x: '85%', y: '75%' },
+  ]
+
+  return (
+    <>
+      {pixels.map((pixel) => (
+        <div
+          key={pixel.id}
+          className={`absolute ${pixel.color} ${pixel.size} pixel-float`}
+          style={{
+            left: pixel.x,
+            top: pixel.y,
+            animationDelay: pixel.delay,
+            animationDuration: pixel.duration,
+          }}
+        />
+      ))}
+      
+      {/* Floating Pixel Blocks */}
+      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+    </>
   )
 }

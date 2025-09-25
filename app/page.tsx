@@ -9,14 +9,21 @@ export default function HomePage() {
   const dragCardRef = useRef<HTMLDivElement | null>(null)
 
   return (
-    <div
-      className="min-h-screen relative overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: "url('/background3.png')" }}
-    >
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/60 via-blue-900/50 to-indigo-900/60 pointer-events-none" />
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      {/* Pixel Grid Background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="pixel-grid"></div>
+      </div>
+      
+      {/* Retro Scanlines */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="scanlines"></div>
+      </div>
+      
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
+        {/* Pixel Elements */}
+        <PixelBackgroundElements />
         {/* Floating Brain Elements */}
         <div className="absolute top-20 left-10 w-32 h-32 opacity-20 animate-float">
           <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl"></div>
@@ -58,57 +65,83 @@ export default function HomePage() {
           </g>
         </svg>
 
-        {/* Falling + Draggable Playing Cards */}
-        <FallingRemiCards />
+        {/* Falling + Draggable Pixel Cards */}
+        <FallingPixelCards />
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8 min-h-screen flex flex-col justify-center">
         {/* Main Content */}
         <div className="text-center mb-16">
-          {/* Brain Icon with Card */}
-          <div className="relative inline-block mb-8 animate-bounce-slow">
+          {/* Pixel Brain Icon with Card */}
+          <div className="relative inline-block mb-8 pixel-logo-container">
             <div className="relative">
-              {/* Brain */}
-              <div className="w-32 h-32 mx-auto relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 blur-lg animate-pulse"></div>
-                <div className="relative w-full h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
+              {/* Pixel Brain */}
+              <div className="w-32 h-32 mx-auto relative pixel-brain">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg opacity-20 blur-lg animate-pulse"></div>
+                <div className="relative w-full h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-4 border-white shadow-2xl flex items-center justify-center">
                   <Brain className="w-16 h-16 text-white" />
                 </div>
-                {/* Removed green dots as requested */}
               </div>
               
-              {/* Card */}
-              <div className="absolute -right-8 top-4 w-24 h-32 bg-white rounded-lg shadow-2xl border-2 border-blue-200 animate-float-card">
+              {/* Pixel Card */}
+              <div className="absolute -right-8 top-4 w-24 h-32 bg-white rounded-lg shadow-2xl border-4 border-black pixel-card-float">
                 <div className="p-3 h-full flex flex-col items-center justify-center">
-                  <Lightbulb className="w-6 h-6 text-yellow-500 mb-2" />
-                  <HelpCircle className="w-8 h-8 text-blue-600 font-bold" />
+                  <div className="w-6 h-6 bg-yellow-400 border-2 border-black rounded mb-2"></div>
+                  <div className="w-8 h-8 bg-blue-600 border-2 border-black rounded flex items-center justify-center">
+                    <HelpCircle className="w-6 h-6 text-white" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 animate-fade-in-up">
-            <span className="typewriter" onAnimationEnd={(e) => e.currentTarget.classList.add('tw-done')}>Memory Quiz</span>
-          </h1>
-          <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-12 animate-fade-in-up-delayed">
-            Challenge your mind with memory games and educational quizzes
-          </p>
+          {/* Pixel Title */}
+          <div className="mb-6">
+            <div className="inline-block bg-white border-4 border-black rounded-lg px-8 py-4 shadow-2xl pixel-title-container">
+              <h1 className="text-4xl md:text-5xl font-bold text-black pixel-font pixel-title">
+                MEMORY QUIZ
+              </h1>
+            </div>
+          </div>
+          
+          {/* Pixel Description */}
+          <div className="max-w-2xl mx-auto mb-12">
+            <div className="bg-black/20 border-2 border-white/30 rounded-lg px-6 py-4 pixel-description">
+              <p className="text-lg text-white font-medium pixel-font-sm">
+                CHALLENGE YOUR MIND WITH MEMORY GAMES AND EDUCATIONAL QUIZZES
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-6 max-w-md mx-auto animate-fade-in-up-delayed-2">
+        {/* Pixel Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-6 max-w-md mx-auto pixel-buttons-container">
           <Link href="/select-quiz" className="flex-1">
-            <button className="btn-host w-full h-20 text-xl">
-              <Server className="w-7 h-7" />
-              Host
-            </button>
+            <div className="relative pixel-button-container">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <button className="relative w-full h-20 bg-gradient-to-br from-green-500 to-emerald-500 border-4 border-black rounded-lg shadow-2xl font-bold text-black text-xl pixel-button-host transform hover:scale-105 transition-all duration-200">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-8 h-8 bg-black rounded border-2 border-white flex items-center justify-center">
+                    <Server className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="pixel-font-sm">HOST</span>
+                </div>
+              </button>
+            </div>
           </Link>
           
           <Link href="/join" className="flex-1">
-            <button className="btn-join w-full h-20 text-xl">
-              <Play className="w-7 h-7" />
-              JOIN
-            </button>
+            <div className="relative pixel-button-container">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <button className="relative w-full h-20 bg-gradient-to-br from-blue-500 to-purple-500 border-4 border-black rounded-lg shadow-2xl font-bold text-white text-xl pixel-button-join transform hover:scale-105 transition-all duration-200">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-8 h-8 bg-white rounded border-2 border-black flex items-center justify-center">
+                    <Play className="w-5 h-5 text-black" />
+                  </div>
+                  <span className="pixel-font-sm">JOIN</span>
+                </div>
+              </button>
+            </div>
           </Link>
         </div>
       </div>
@@ -117,21 +150,67 @@ export default function HomePage() {
   )
 }
 
-function FallingRemiCards() {
+function PixelBackgroundElements() {
+  const pixels = [
+    { id: 1, color: 'bg-red-500', size: 'w-2 h-2', delay: '0s', duration: '3s', x: '10%', y: '20%' },
+    { id: 2, color: 'bg-blue-500', size: 'w-3 h-3', delay: '1s', duration: '4s', x: '80%', y: '30%' },
+    { id: 3, color: 'bg-green-500', size: 'w-2 h-2', delay: '2s', duration: '3.5s', x: '20%', y: '70%' },
+    { id: 4, color: 'bg-yellow-500', size: 'w-4 h-4', delay: '0.5s', duration: '5s', x: '70%', y: '10%' },
+    { id: 5, color: 'bg-purple-500', size: 'w-2 h-2', delay: '1.5s', duration: '4.5s', x: '50%', y: '80%' },
+    { id: 6, color: 'bg-pink-500', size: 'w-3 h-3', delay: '2.5s', duration: '3s', x: '30%', y: '50%' },
+    { id: 7, color: 'bg-cyan-500', size: 'w-2 h-2', delay: '0.8s', duration: '4s', x: '90%', y: '60%' },
+    { id: 8, color: 'bg-orange-500', size: 'w-3 h-3', delay: '1.8s', duration: '3.8s', x: '15%', y: '40%' },
+    { id: 9, color: 'bg-lime-500', size: 'w-2 h-2', delay: '2.2s', duration: '4.2s', x: '60%', y: '25%' },
+    { id: 10, color: 'bg-indigo-500', size: 'w-4 h-4', delay: '0.3s', duration: '5.5s', x: '85%', y: '75%' },
+  ]
+
+  return (
+    <>
+      {pixels.map((pixel) => (
+        <div
+          key={pixel.id}
+          className={`absolute ${pixel.color} ${pixel.size} pixel-float`}
+          style={{
+            left: pixel.x,
+            top: pixel.y,
+            animationDelay: pixel.delay,
+            animationDuration: pixel.duration,
+          }}
+        />
+      ))}
+      
+      {/* Floating Pixel Blocks */}
+      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+    </>
+  )
+}
+
+function FallingPixelCards() {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const stream: Array<{ id: string; label: string; color: 'pc-red' | 'pc-black'; x: string; delay: string; dur: string; rot: string; w?: string; h?: string; }> = [
-    { id: 'AS', label: 'A♠', color: 'pc-black', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
-    { id: 'KH', label: 'K♥', color: 'pc-red', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
-    { id: 'QD', label: 'Q♦', color: 'pc-red', x: '20%', delay: '1.1s', dur: '13s', rot: '2deg' },
-    { id: 'JC', label: 'J♣', color: 'pc-black', x: '28%', delay: '3.6s', dur: '12.2s', rot: '-10deg' },
-    { id: '7H', label: '7♥', color: 'pc-red', x: '36%', delay: '0.7s', dur: '14s', rot: '0deg' },
-    { id: '9S', label: '9♠', color: 'pc-black', x: '44%', delay: '2.1s', dur: '11.8s', rot: '6deg' },
-    { id: '3D', label: '3♦', color: 'pc-red', x: '52%', delay: '4.1s', dur: '12.6s', rot: '-4deg' },
-    { id: '5C', label: '5♣', color: 'pc-black', x: '60%', delay: '1.5s', dur: '13.4s', rot: '3deg' },
-    { id: 'AH', label: 'A♥', color: 'pc-red', x: '68%', delay: '3.2s', dur: '12.1s', rot: '-8deg' },
-    { id: 'QS', label: 'Q♠', color: 'pc-black', x: '76%', delay: '0.3s', dur: '10.9s', rot: '5deg' },
-    { id: 'JD', label: 'J♦', color: 'pc-red', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
-    { id: 'KC', label: 'K♣', color: 'pc-black', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
+  const stream: Array<{ id: string; label: string; color: string; x: string; delay: string; dur: string; rot: string; w?: string; h?: string; }> = [
+    { id: 'A', label: 'A', color: 'bg-red-500', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
+    { id: 'B', label: 'B', color: 'bg-blue-500', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
+    { id: 'C', label: 'C', color: 'bg-green-500', x: '20%', delay: '1.1s', dur: '13s', rot: '2deg' },
+    { id: 'D', label: 'D', color: 'bg-yellow-500', x: '28%', delay: '3.6s', dur: '12.2s', rot: '-10deg' },
+    { id: 'E', label: 'E', color: 'bg-purple-500', x: '36%', delay: '0.7s', dur: '14s', rot: '0deg' },
+    { id: 'F', label: 'F', color: 'bg-pink-500', x: '44%', delay: '2.1s', dur: '11.8s', rot: '6deg' },
+    { id: 'G', label: 'G', color: 'bg-cyan-500', x: '52%', delay: '4.1s', dur: '12.6s', rot: '-4deg' },
+    { id: 'H', label: 'H', color: 'bg-orange-500', x: '60%', delay: '1.5s', dur: '13.4s', rot: '3deg' },
+    { id: 'I', label: 'I', color: 'bg-lime-500', x: '68%', delay: '3.2s', dur: '12.1s', rot: '-8deg' },
+    { id: 'J', label: 'J', color: 'bg-indigo-500', x: '76%', delay: '0.3s', dur: '10.9s', rot: '5deg' },
+    { id: 'K', label: 'K', color: 'bg-emerald-500', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
+    { id: 'L', label: 'L', color: 'bg-violet-500', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
   ]
 
   useEffect(() => {
@@ -187,12 +266,12 @@ function FallingRemiCards() {
       {stream.map((c) => (
         <div
           key={c.id}
-          className="playing-card falling"
+          className="pixel-card falling"
           style={{ ['--x' as any]: c.x, ['--delay' as any]: c.delay, ['--dur' as any]: c.dur, ['--rot' as any]: c.rot, ['--w' as any]: c.w ?? '88px', ['--h' as any]: c.h ?? '124px' }}
         >
-          <div className={`pc-corner ${c.color}`}>{c.label}</div>
-          <div className={`pc-corner bottom ${c.color}`}>{c.label}</div>
-          <div className={`pc-inner ${c.color}`}>{c.label.replace(/[^A-Z0-9♥♦♣♠]/g, '')}</div>
+          <div className={`w-full h-full ${c.color} border-4 border-black rounded-lg shadow-lg flex items-center justify-center`}>
+            <span className="text-white font-bold text-2xl pixel-font">{c.label}</span>
+          </div>
         </div>
       ))}
     </div>

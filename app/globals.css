@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Pixel Font */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -692,3 +695,402 @@
 .card-deal-sequence:nth-child(2) { animation-delay: 0.3s; }
 .card-deal-sequence:nth-child(3) { animation-delay: 0.5s; }
 .card-deal-sequence:nth-child(4) { animation-delay: 0.7s; }
+
+/* Pixel Font Class */
+.pixel-font {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Pixel Grid Background */
+.pixel-grid {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Retro Scanlines */
+.scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.3) 2px,
+    rgba(0,0,0,0.3) 4px
+  );
+  width: 100%;
+  height: 100%;
+}
+
+/* Floating Pixel Animation */
+@keyframes pixel-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.7;
+  }
+  25% {
+    transform: translateY(-20px) rotate(90deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-40px) rotate(180deg);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(-20px) rotate(270deg);
+    opacity: 1;
+  }
+}
+
+.pixel-float {
+  animation: pixel-float 3s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+/* Pixel Block Floating Animation */
+@keyframes pixel-block-float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-30px) translateX(10px) rotate(5deg);
+  }
+  50% {
+    transform: translateY(-60px) translateX(-5px) rotate(-5deg);
+  }
+  75% {
+    transform: translateY(-30px) translateX(15px) rotate(3deg);
+  }
+}
+
+@keyframes pixel-block-float-delayed {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-25px) translateX(-10px) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-50px) translateX(8px) rotate(4deg);
+  }
+  75% {
+    transform: translateY(-25px) translateX(-15px) rotate(-2deg);
+  }
+}
+
+@keyframes pixel-block-float-slow {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-20px) translateX(12px) rotate(6deg);
+  }
+  66% {
+    transform: translateY(-40px) translateX(-8px) rotate(-4deg);
+  }
+}
+
+@keyframes pixel-block-float-delayed-slow {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-15px) translateX(-12px) rotate(-6deg);
+  }
+  66% {
+    transform: translateY(-35px) translateX(6px) rotate(4deg);
+  }
+}
+
+.pixel-block-float {
+  animation: pixel-block-float 6s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.pixel-block-float-delayed {
+  animation: pixel-block-float-delayed 7s ease-in-out infinite;
+  animation-delay: 1s;
+  border-radius: 4px;
+}
+
+.pixel-block-float-slow {
+  animation: pixel-block-float-slow 8s ease-in-out infinite;
+  animation-delay: 2s;
+  border-radius: 4px;
+}
+
+.pixel-block-float-delayed-slow {
+  animation: pixel-block-float-delayed-slow 9s ease-in-out infinite;
+  animation-delay: 3s;
+  border-radius: 4px;
+}
+
+/* Pixel Card Animations */
+@keyframes pixel-card-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(147, 51, 234, 0.8);
+  }
+}
+
+@keyframes pixel-card-bounce {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.pixel-card-container {
+  animation: pixel-card-bounce 3s ease-in-out infinite;
+}
+
+.pixel-card-main {
+  animation: pixel-card-glow 2s ease-in-out infinite;
+}
+
+.pixel-card-shadow {
+  animation: pixel-card-glow 2s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+/* Landing Page Pixel Styles */
+.pixel-logo-container {
+  animation: pixel-card-bounce 4s ease-in-out infinite;
+}
+
+.pixel-brain {
+  animation: pixel-card-glow 3s ease-in-out infinite;
+}
+
+.pixel-card-float {
+  animation: pixel-block-float 5s ease-in-out infinite;
+}
+
+.pixel-title-container {
+  animation: pixel-card-glow 2.5s ease-in-out infinite;
+}
+
+.pixel-title {
+  animation: pixel-card-bounce 3.5s ease-in-out infinite;
+}
+
+.pixel-description {
+  animation: pixel-card-glow 4s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.pixel-buttons-container {
+  animation: pixel-card-bounce 2s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+.pixel-button-container {
+  animation: pixel-card-glow 2.8s ease-in-out infinite;
+}
+
+.pixel-button-shadow {
+  animation: pixel-card-glow 2.8s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+.pixel-button-host {
+  animation: pixel-card-glow 3s ease-in-out infinite;
+}
+
+.pixel-button-join {
+  animation: pixel-card-glow 3s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+/* Pixel Font Sizes */
+.pixel-font-sm {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* Pixel Card Animation */
+.pixel-card {
+  position: absolute;
+  left: var(--x);
+  animation: falling var(--dur) linear infinite var(--delay);
+  transform: rotate(var(--rot));
+  width: var(--w);
+  height: var(--h);
+}
+
+@keyframes falling {
+  0% {
+    top: -20vh;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100vh;
+    opacity: 0;
+  }
+}
+
+/* Select Quiz Page Pixel Styles */
+.pixel-header-title {
+  animation: pixel-card-glow 2.5s ease-in-out infinite;
+}
+
+.pixel-quiz-card-container {
+  animation: pixel-card-bounce 3s ease-in-out infinite;
+}
+
+.pixel-quiz-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 4px solid #000;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 280px;
+  height: 200px;
+  position: relative;
+  animation: pixel-card-glow 2s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.pixel-quiz-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+  animation: pixel-card-glow 1.5s ease-in-out infinite;
+}
+
+.pixel-quiz-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.pixel-quiz-card:hover::before {
+  transform: translateX(100%);
+}
+
+/* Quiz Settings Page Pixel Styles */
+.pixel-settings-container {
+  animation: pixel-card-bounce 3s ease-in-out infinite;
+}
+
+.pixel-settings-card {
+  animation: pixel-card-glow 2.5s ease-in-out infinite;
+}
+
+.pixel-settings-icon {
+  animation: pixel-card-glow 2s ease-in-out infinite;
+}
+
+.pixel-setting-section {
+  animation: pixel-card-glow 3s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+.pixel-slider {
+  background: #f3f4f6;
+  border: 2px solid #000;
+  border-radius: 4px;
+}
+
+.pixel-slider .slider-track {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border: 1px solid #000;
+}
+
+.pixel-slider .slider-thumb {
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 2px;
+  width: 20px;
+  height: 20px;
+}
+
+.pixel-slider .slider-thumb:hover {
+  background: #f3f4f6;
+  transform: scale(1.1);
+}
+
+/* Settings Page Pixel Styles */
+.pixel-header-title {
+  animation: pixel-card-glow 2.5s ease-in-out infinite;
+}
+
+/* Pixel Lobby Styles */
+.pixel-lobby-container {
+  animation: pixel-card-glow 2s ease-in-out infinite alternate;
+}
+
+.pixel-lobby-card {
+  animation: pixel-card-bounce 0.6s ease-out;
+}
+
+.pixel-room-code {
+  animation: pixel-card-glow 3s ease-in-out infinite alternate;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pixel-room-code .room-code-text {
+  letter-spacing: 0.3em;
+  font-weight: 900;
+  line-height: 0.8;
+}
+
+/* Mobile optimization for room code */
+@media (max-width: 768px) {
+  .pixel-room-code .room-code-text {
+    font-size: 8rem !important;
+    letter-spacing: 0.2em;
+  }
+}
+
+@media (max-width: 480px) {
+  .pixel-room-code .room-code-text {
+    font-size: 6rem !important;
+    letter-spacing: 0.1em;
+  }
+}
+
+.pixel-qr-card {
+  animation: pixel-card-bounce 0.8s ease-out;
+}
+
+.pixel-player-card {
+  animation: pixel-card-bounce 0.4s ease-out;
+  transition: all 0.3s ease;
+}
+
+.pixel-player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Pixel Waiting Room Styles */
+.pixel-waiting-container {
+  animation: pixel-card-glow 2s ease-in-out infinite alternate;
+}
+
+.pixel-waiting-card {
+  animation: pixel-card-bounce 0.6s ease-out;
+}
