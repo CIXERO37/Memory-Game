@@ -404,6 +404,7 @@ export default function LobbyPage() {
                         aria-label="Enlarge QR"
                         className="w-8 h-8 bg-gray-200 border-2 border-black rounded flex items-center justify-center hover:bg-gray-300"
                       >
+                        {/* komen */}
                         <Maximize2 className="h-4 w-4" />
                       </button>
                     </div>
