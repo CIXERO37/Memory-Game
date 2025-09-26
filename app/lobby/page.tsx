@@ -232,6 +232,17 @@ export default function LobbyPage() {
     )
   }
 
+  // Add a small delay to prevent flash of "ROOM NOT FOUND" when creating new rooms
+  if (!currentRoom && !loading && !roomCode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-xl">Initializing...</div>
+        </div>
+      </div>
+    )
+  }
+
   if (!currentRoom && !loading) {
     // If we have host data but no room, try to recreate the room
     if (hostId && roomCode && quizId) {
@@ -244,6 +255,16 @@ export default function LobbyPage() {
         // Update the room state and continue
         setLocalRoom(recreatedRoom)
       } else {
+        // Show loading while trying to create room
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+            <div className="text-center text-white">
+              <div className="text-xl">Creating room...</div>
+            </div>
+          </div>
+        )
+      }
+    } else {
         return (
           <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
             {/* Pixel Grid Background */}
@@ -285,49 +306,7 @@ export default function LobbyPage() {
           </div>
         )
       }
-    } else {
-      return (
-        <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
-          {/* Pixel Grid Background */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="pixel-grid"></div>
-          </div>
-          
-          {/* Retro Scanlines */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="scanlines"></div>
-          </div>
-          
-          {/* Floating Pixel Elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            <PixelBackgroundElements />
-          </div>
-
-          <div className="relative z-10 text-center">
-            <div className="relative inline-block mb-6">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
-                <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                  <span className="text-2xl">⚠️</span>
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2 pixel-font">ROOM NOT FOUND</h3>
-                <p className="text-white/80 mb-4 pixel-font-sm">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
-                <div className="relative pixel-button-container">
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <Button 
-                    onClick={() => router.push("/select-quiz")}
-                    className="relative bg-gradient-to-br from-orange-500 to-orange-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-orange-400 hover:to-orange-500 transform hover:scale-105 transition-all duration-200 font-bold"
-                  >
-                    <span className="pixel-font-sm">CREATE NEW ROOM</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
     }
-  }
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
