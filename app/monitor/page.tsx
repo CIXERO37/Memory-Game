@@ -18,6 +18,7 @@ function MonitorPageContent() {
   const [roomCode, setRoomCode] = useState<string | null>(null)
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
+  const [forceRefresh, setForceRefresh] = useState(0)
   const { room, loading } = useRoom(roomCode || "")
 
   // Get quiz settings from room data
@@ -49,6 +50,17 @@ function MonitorPageContent() {
 
   // Timer is now handled by useSynchronizedTimer hook
 
+  // Force refresh effect for progress bar updates
+  useEffect(() => {
+    if (room && room.players.length > 0) {
+      // Force refresh every 2 seconds to ensure progress bar updates
+      const refreshInterval = setInterval(() => {
+        setForceRefresh(prev => prev + 1)
+      }, 2000)
+      
+      return () => clearInterval(refreshInterval)
+    }
+  }, [room])
 
   // Monitor ranking calculation effect
   useEffect(() => {
@@ -284,8 +296,17 @@ function MonitorPageContent() {
                 const quizScore = player.quizScore || 0
                 const memoryScore = player.memoryScore || 0
                 const totalScore = quizScore + memoryScore
-                const quizProgress = Math.min((quizScore / quizSettings.questionCount) * 100, 100)
+                const questionsAnswered = player.questionsAnswered || 0
+                const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
                 const rankingChange = rankingChanges[player.id]
+
+                // Debug logging for progress bar
+                console.log(`[Monitor] Player ${player.username}:`, {
+                  questionsAnswered,
+                  questionCount: quizSettings.questionCount,
+                  progress: quizProgress,
+                  forceRefresh
+                })
 
                 return (
                   <div key={player.id} className="relative bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
@@ -326,7 +347,7 @@ function MonitorPageContent() {
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-bold text-white">QUIZ PROGRESS</span>
                           <span className="text-sm text-blue-300">
-                            {quizScore}/{quizSettings.questionCount} ({Math.round(quizProgress)}%)
+                            {questionsAnswered}/{quizSettings.questionCount} ({Math.round(quizProgress)}%)
                           </span>
                         </div>
                         <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3">
