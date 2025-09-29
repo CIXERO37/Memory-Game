@@ -29,6 +29,8 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [score, setScore] = useState(0)
   const [correctAnswers, setCorrectAnswers] = useState(0)
+  const [questionsAnswered, setQuestionsAnswered] = useState(0)
+  const [questionsAnsweredInitialized, setQuestionsAnsweredInitialized] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(30)
   const [totalTimeSelected, setTotalTimeSelected] = useState(0)
   const [gameFinished, setGameFinished] = useState(false)
@@ -54,10 +56,32 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       const hostStatus = currentPlayer?.isHost || false
       setIsHost(hostStatus)
 
+      // Sync questionsAnswered with database
+      if (currentPlayer && !questionsAnsweredInitialized) {
+        const dbQuestionsAnswered = currentPlayer.questionsAnswered || 0
+        console.log("[Quiz] Syncing questionsAnswered from database:", dbQuestionsAnswered)
+        setQuestionsAnswered(dbQuestionsAnswered)
+        setQuestionsAnsweredInitialized(true)
+      }
+
       // Debug log for host detection
       console.log("[v0] Host detection:", { playerId, currentPlayer, hostStatus })
     }
-  }, [room, playerId])
+  }, [room, playerId, questionsAnsweredInitialized])
+
+  // Listen for room updates and sync questionsAnswered
+  useEffect(() => {
+    if (room && playerId && questionsAnsweredInitialized) {
+      const currentPlayer = room.players.find((p) => p.id === playerId)
+      if (currentPlayer && currentPlayer.questionsAnswered !== undefined) {
+        const dbQuestionsAnswered = currentPlayer.questionsAnswered
+        if (dbQuestionsAnswered !== questionsAnswered) {
+          console.log("[Quiz] Syncing questionsAnswered from room update:", dbQuestionsAnswered)
+          setQuestionsAnswered(dbQuestionsAnswered)
+        }
+      }
+    }
+  }, [room, playerId, questionsAnsweredInitialized, questionsAnswered])
 
   // Timer is now handled by useSynchronizedTimer hook
 
@@ -141,6 +165,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         const data = JSON.parse(memoryReturn)
         setMemoryGameScore(data.score || 0)
         setCurrentQuestion(data.resumeQuestion || currentQuestion)
+        // Don't override questionsAnswered here - let database sync handle it
         localStorage.removeItem(`memory-return-${params.roomCode}`)
 
         // Update total score in room
@@ -176,6 +201,13 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     setSelectedAnswer(answerIndex)
     setShowResult(true)
 
+    // Always increment questions answered
+    const newQuestionsAnswered = questionsAnswered + 1
+    setQuestionsAnswered(newQuestionsAnswered)
+    
+    // Immediate optimistic update for better UX
+    console.log("[Quiz] Optimistic update - questionsAnswered:", newQuestionsAnswered)
+
     // Check if correct
     if (answerIndex === questions[currentQuestion].correct) {
       const newScore = score + 1
@@ -184,9 +216,9 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setCorrectAnswers(newCorrectAnswers)
 
       if (newCorrectAnswers === 3) {
-        // Update quiz score immediately
+        // Update quiz score and questions answered immediately
         if (playerId) {
-          roomManager.updatePlayerScore(params.roomCode, playerId, newScore)
+          roomManager.updatePlayerScore(params.roomCode, playerId, newScore, undefined, newQuestionsAnswered)
         }
 
         // Store current progress and redirect to memory game
@@ -196,6 +228,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             currentQuestion: currentQuestion + 1,
             score: newScore,
             correctAnswers: newCorrectAnswers,
+            questionsAnswered: newQuestionsAnswered,
             timeLimit: room?.settings.totalTimeLimit || 30,
           }),
         )
@@ -207,13 +240,49 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       }
     }
 
-    // Update score in real-time for host monitoring
+    // Update score and questions answered in real-time for host monitoring
     if (playerId) {
+      console.log("[Quiz] Updating player score:", {
+        playerId,
+        quizScore: score + (answerIndex === questions[currentQuestion].correct ? 1 : 0),
+        questionsAnswered: newQuestionsAnswered
+      })
+      
+      // Update immediately with optimistic update
+      const updateData = {
+        quizScore: score + (answerIndex === questions[currentQuestion].correct ? 1 : 0),
+        questionsAnswered: newQuestionsAnswered
+      }
+      
       roomManager.updatePlayerScore(
         params.roomCode,
         playerId,
-        score + (answerIndex === questions[currentQuestion].correct ? 1 : 0),
-      )
+        updateData.quizScore,
+        undefined,
+        updateData.questionsAnswered
+      ).then((success) => {
+        if (success) {
+          console.log("[Quiz] Player score updated successfully")
+        } else {
+          console.error("[Quiz] Failed to update player score, retrying...")
+          // Retry with exponential backoff
+          setTimeout(() => {
+            roomManager.updatePlayerScore(
+              params.roomCode,
+              playerId,
+              updateData.quizScore,
+              undefined,
+              updateData.questionsAnswered
+            ).then((retrySuccess) => {
+              if (!retrySuccess) {
+                console.error("[Quiz] Retry also failed, will sync on next room update")
+              }
+            })
+          }, 2000)
+        }
+      }).catch((error) => {
+        console.error("[Quiz] Update error:", error)
+      })
     }
 
     // Auto advance after 2 seconds
@@ -233,7 +302,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setGameFinished(true)
 
       if (playerId) {
-        roomManager.updatePlayerScore(params.roomCode, playerId, score)
+        roomManager.updatePlayerScore(params.roomCode, playerId, score, undefined, questionsAnswered)
       }
     }
   }

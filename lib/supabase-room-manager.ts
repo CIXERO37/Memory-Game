@@ -9,6 +9,7 @@ export interface Player {
   isHost: boolean
   quizScore?: number
   memoryScore?: number
+  questionsAnswered?: number
 }
 
 export interface Room {
@@ -119,7 +120,8 @@ class SupabaseRoomManager {
         isReady: true, // Always ready for now
         isHost: false, // All players in this list are non-host
         quizScore: player.quiz_score,
-        memoryScore: player.memory_game_score
+        memoryScore: player.memory_game_score,
+        questionsAnswered: player.questions_answered
       }))
 
       const room: Room = {
@@ -389,11 +391,12 @@ class SupabaseRoomManager {
     }
   }
 
-  async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, memoryScore?: number): Promise<boolean> {
+  async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, memoryScore?: number, questionsAnswered?: number): Promise<boolean> {
     try {
       const updateData: any = {}
       if (quizScore !== undefined) updateData.quiz_score = quizScore
       if (memoryScore !== undefined) updateData.memory_game_score = memoryScore
+      if (questionsAnswered !== undefined) updateData.questions_answered = questionsAnswered
 
       const { error } = await supabase
         .from('players')

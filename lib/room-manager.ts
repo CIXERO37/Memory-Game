@@ -36,8 +36,8 @@ class RoomManager {
     return await supabaseRoomManager.rejoinRoom(roomCode, player)
   }
 
-  async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, memoryScore?: number): Promise<boolean> {
-    return await supabaseRoomManager.updatePlayerScore(roomCode, playerId, quizScore, memoryScore)
+  async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, memoryScore?: number, questionsAnswered?: number): Promise<boolean> {
+    return await supabaseRoomManager.updatePlayerScore(roomCode, playerId, quizScore, memoryScore, questionsAnswered)
   }
 
   updatePlayerMemoryScore(roomCode: string, playerId: string, memoryScore: number): Promise<boolean> {
