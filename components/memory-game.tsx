@@ -84,24 +84,24 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold text-primary mb-2">Memory Game</h2>
+        <h2 className="text-xl font-bold text-white mb-2">MEMORY GAME</h2>
         {showAll && (
-          <p className="text-sm text-muted-foreground animate-pulse">
+          <p className="text-xs text-blue-200 animate-pulse">
             Memorize the positions... {Math.ceil((3000 - (Date.now() % 3000)) / 1000)}
           </p>
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-3 p-4 bg-card/50 rounded-xl">
+      <div className="grid grid-cols-4 gap-2 p-3 bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg">
         {cards.map((card) => (
-          <Card
+          <div
             key={card.id}
             className={cn(
               "aspect-square cursor-pointer transition-all duration-300 hover:scale-105",
-              "flex items-center justify-center text-4xl",
-              "border-2 bg-gradient-to-br from-card to-muted",
-              card.isMatched && "border-accent bg-accent/10 scale-95",
-              (card.isFlipped || card.isMatched || showAll) && "border-primary/50",
+              "flex items-center justify-center text-2xl",
+              "border-2 bg-gradient-to-br from-white/20 to-white/10 rounded-lg",
+              card.isMatched && "border-green-400 bg-green-500/20 scale-95",
+              (card.isFlipped || card.isMatched || showAll) && "border-blue-400 bg-blue-500/20",
               disabled && "cursor-not-allowed opacity-50",
             )}
             onClick={() => handleCardClick(card.id)}
@@ -115,15 +115,15 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
               {card.isFlipped || card.isMatched || showAll ? card.emoji : ""}
             </div>
             {!card.isFlipped && !card.isMatched && !showAll && (
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 rounded-lg flex items-center justify-center">
-                <div className="w-8 h-8 bg-primary/10 rounded-full" />
+              <div className="w-full h-full bg-gradient-to-br from-white/30 to-white/10 rounded-lg flex items-center justify-center">
+                <div className="w-6 h-6 bg-white/20 rounded border border-white/30" />
               </div>
             )}
-          </Card>
+          </div>
         ))}
       </div>
 
-      <div className="text-center mt-4 text-sm text-muted-foreground">Click cards to find matching pairs</div>
+      <div className="text-center mt-3 text-xs text-blue-200">Click cards to find matching pairs</div>
     </div>
   )
 }

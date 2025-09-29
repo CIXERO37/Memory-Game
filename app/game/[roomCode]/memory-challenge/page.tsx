@@ -108,75 +108,141 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center">
-        <Card className="max-w-md mx-auto text-center">
-          <CardContent className="py-8">
-            <div className="text-lg">Validating access...</div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        {/* Pixel Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="pixel-grid"></div>
+        </div>
+        
+        {/* Retro Scanlines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="scanlines"></div>
+        </div>
+        
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">VALIDATING ACCESS...</h2>
+            <p className="text-sm text-blue-200">Checking memory game access</p>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center">
-        <Card className="max-w-md mx-auto text-center">
-          <CardContent className="py-8">
-            <div className="text-lg">Access denied. Redirecting...</div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        {/* Pixel Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="pixel-grid"></div>
+        </div>
+        
+        {/* Retro Scanlines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="scanlines"></div>
+        </div>
+        
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-r from-red-400 to-orange-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">ACCESS DENIED</h2>
+            <p className="text-sm text-red-200">Redirecting to quiz...</p>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      {/* Pixel Grid Background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="pixel-grid"></div>
+      </div>
+      
+      {/* Retro Scanlines */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="scanlines"></div>
+      </div>
+      
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Pixel Elements */}
+        <PixelBackgroundElements />
+        {/* Floating Brain Elements */}
+        <div className="absolute top-20 left-10 w-32 h-32 opacity-20 animate-float">
+          <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl"></div>
+        </div>
+        <div className="absolute top-40 right-20 w-24 h-24 opacity-30 animate-float-delayed">
+          <div className="w-full h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 blur-lg"></div>
+        </div>
+        <div className="absolute bottom-32 left-1/4 w-40 h-40 opacity-25 animate-float-slow">
+          <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400 blur-2xl"></div>
+        </div>
+        <div className="absolute bottom-20 right-1/3 w-28 h-28 opacity-35 animate-float-delayed-slow">
+          <div className="w-full h-full rounded-full bg-gradient-to-r from-green-400 to-cyan-400 blur-xl"></div>
+        </div>
+
+        {/* Neural Network Lines */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 1000 1000">
+          <defs>
+            <linearGradient id="neuralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#3b82f6" />
+              <stop offset="50%" stopColor="#8b5cf6" />
+              <stop offset="100%" stopColor="#06b6d4" />
+            </linearGradient>
+          </defs>
+          <g className="animate-pulse">
+            <line x1="100" y1="200" x2="300" y2="150" stroke="url(#neuralGradient)" strokeWidth="2" />
+            <line x1="300" y1="150" x2="500" y2="300" stroke="url(#neuralGradient)" strokeWidth="2" />
+            <line x1="500" y1="300" x2="700" y2="250" stroke="url(#neuralGradient)" strokeWidth="2" />
+            <line x1="200" y1="400" x2="400" y2="350" stroke="url(#neuralGradient)" strokeWidth="2" />
+            <line x1="400" y1="350" x2="600" y2="500" stroke="url(#neuralGradient)" strokeWidth="2" />
+            <line x1="600" y1="500" x2="800" y2="450" stroke="url(#neuralGradient)" strokeWidth="2" />
+            <circle cx="100" cy="200" r="4" fill="#3b82f6" className="animate-ping" />
+            <circle cx="300" cy="150" r="4" fill="#8b5cf6" className="animate-ping" style={{ animationDelay: '0.5s' }} />
+            <circle cx="500" cy="300" r="4" fill="#06b6d4" className="animate-ping" style={{ animationDelay: '1s' }} />
+            <circle cx="700" cy="250" r="4" fill="#3b82f6" className="animate-ping" style={{ animationDelay: '1.5s' }} />
+            <circle cx="200" cy="400" r="4" fill="#8b5cf6" className="animate-ping" style={{ animationDelay: '2s' }} />
+            <circle cx="400" cy="350" r="4" fill="#06b6d4" className="animate-ping" style={{ animationDelay: '2.5s' }} />
+            <circle cx="600" cy="500" r="4" fill="#3b82f6" className="animate-ping" style={{ animationDelay: '3s' }} />
+            <circle cx="800" cy="450" r="4" fill="#8b5cf6" className="animate-ping" style={{ animationDelay: '3.5s' }} />
+          </g>
+        </svg>
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold mb-2 text-balance">Memory Mini-Game</h1>
-          <p className="text-muted-foreground text-pretty">Find all matching pairs within 30 seconds!</p>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-white">MEMORY MINI-GAME</h1>
+          </div>
+          <p className="text-sm text-blue-200">Find all matching pairs within 30 seconds!</p>
         </div>
 
-        {/* Stats */}
-        <div className="flex justify-center gap-4 mb-6">
-          <Card className="text-center">
-            <CardContent className="py-3 px-4">
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Matches</span>
-              </div>
-              <div className="text-lg font-bold text-primary">{correctMatches}/8</div>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="py-3 px-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium">Time</span>
-              </div>
-              <div className={`text-lg font-bold ${timeRemaining <= 10 ? "text-destructive" : "text-accent"}`}>
-                {timeRemaining}s
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Game Result */}
         {gameCompleted && (
-          <Card className="max-w-md mx-auto mb-6 border-accent bg-accent/5">
-            <CardHeader className="text-center pb-3">
-              <Trophy className="h-8 w-8 mx-auto mb-2 text-accent" />
-              <CardTitle className="text-accent">Memory Challenge Complete!</CardTitle>
-              <CardDescription>
+          <div className="max-w-md mx-auto mb-6">
+            <div className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-2 border-white/30 rounded-lg p-6 pixel-lobby-card text-center">
+              <div className="w-12 h-12 bg-yellow-400 rounded border-2 border-white flex items-center justify-center mx-auto mb-4">
+                <Trophy className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-yellow-400 mb-3">MEMORY CHALLENGE COMPLETE!</h3>
+              <p className="text-sm text-white mb-2">
                 You found {correctMatches} pairs and earned {correctMatches * 10} points!
-                <br />
-                <span className="text-sm text-muted-foreground">Returning to quiz in 3 seconds...</span>
-              </CardDescription>
-            </CardHeader>
-          </Card>
+              </p>
+              <p className="text-xs text-blue-200">Returning to quiz in 3 seconds...</p>
+            </div>
+          </div>
         )}
 
         {/* Memory Game */}
@@ -186,21 +252,35 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
           </div>
         )}
 
-        {/* Instructions */}
-        {!gameCompleted && (
-          <Card className="max-w-md mx-auto mt-6">
-            <CardContent className="py-4">
-              <h3 className="font-semibold mb-2 text-center">How to Play</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Cards will show for 3 seconds, then flip over</li>
-                <li>• Click two cards to find matching pairs</li>
-                <li>• Find all 8 pairs to maximize your score</li>
-                <li>• You have exactly 30 seconds to play!</li>
-              </ul>
-            </CardContent>
-          </Card>
-        )}
       </div>
+      
+      {/* Pixel Background Elements */}
+      <PixelBackgroundElements />
     </div>
+  )
+}
+
+// Pixel Background Elements Component
+function PixelBackgroundElements() {
+  return (
+    <>
+      {/* Floating Pixel Elements */}
+      <div className="absolute top-20 left-10 w-4 h-4 bg-blue-400 animate-float opacity-60"></div>
+      <div className="absolute top-40 right-20 w-3 h-3 bg-purple-400 animate-float-delayed opacity-70"></div>
+      <div className="absolute bottom-32 left-1/4 w-5 h-5 bg-cyan-400 animate-float-slow opacity-50"></div>
+      <div className="absolute bottom-20 right-1/3 w-3 h-3 bg-pink-400 animate-float-delayed-slow opacity-60"></div>
+      <div className="absolute top-1/2 left-20 w-4 h-4 bg-green-400 animate-float opacity-40"></div>
+      <div className="absolute top-1/3 right-40 w-3 h-3 bg-yellow-400 animate-float-delayed opacity-55"></div>
+      
+      {/* Pixel Blocks */}
+      <div className="absolute top-60 left-1/3 w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-400 animate-pixel-float opacity-30"></div>
+      <div className="absolute bottom-40 right-20 w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-400 animate-pixel-block-float opacity-25"></div>
+      <div className="absolute top-80 right-1/2 w-4 h-4 bg-gradient-to-r from-purple-400 to-pink-400 animate-pixel-float-delayed opacity-35"></div>
+      
+      {/* Falling Pixels */}
+      <div className="absolute top-0 left-1/4 w-2 h-2 bg-blue-400 animate-falling opacity-40"></div>
+      <div className="absolute top-0 right-1/3 w-2 h-2 bg-purple-400 animate-falling-delayed opacity-30"></div>
+      <div className="absolute top-0 left-2/3 w-2 h-2 bg-cyan-400 animate-falling-slow opacity-35"></div>
+    </>
   )
 }
