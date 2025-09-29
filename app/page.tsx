@@ -10,6 +10,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+
       {/* Pixel Grid Background */}
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
@@ -119,7 +120,7 @@ export default function HomePage() {
           <Link href="/select-quiz" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-24 bg-gradient-to-br from-green-500 to-emerald-500 border-4 border-black rounded-lg shadow-2xl font-bold text-black text-3xl pixel-button-host transform hover:scale-105 transition-all duration-200 px-6">
+              <button className="relative w-full h-24 bg-gradient-to-br from-green-500 to-emerald-500 border-4 border-black rounded-lg shadow-2xl font-bold text-black text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-6">
                 <div className="flex items-center justify-center gap-4">
                   <div className="w-8 h-8 bg-black rounded border-2 border-white flex items-center justify-center">
                     <Server className="w-5 h-5 text-white" />
@@ -133,7 +134,7 @@ export default function HomePage() {
           <Link href="/join" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-24 bg-gradient-to-br from-blue-500 to-purple-500 border-4 border-black rounded-lg shadow-2xl font-bold text-white text-3xl pixel-button-join transform hover:scale-105 transition-all duration-200 px-6">
+              <button className="relative w-full h-24 bg-gradient-to-br from-blue-500 to-purple-500 border-4 border-black rounded-lg shadow-2xl font-bold text-white text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-6">
                 <div className="flex items-center justify-center gap-4">
                   <div className="w-8 h-8 bg-white rounded border-2 border-black flex items-center justify-center">
                     <Play className="w-5 h-5 text-black" />

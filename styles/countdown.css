@@ -1,0 +1,71 @@
+/* Smooth Countdown Animations */
+
+@keyframes countdownPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes countdownGlow {
+  0% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.6);
+  }
+  100% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes countdownShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+
+.pixel-countdown {
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+
+.pixel-countdown.urgent {
+  animation: countdownPulse 0.5s ease-in-out infinite, countdownGlow 0.5s ease-in-out infinite;
+}
+
+.pixel-countdown.final {
+  animation: countdownShake 0.1s ease-in-out infinite, countdownGlow 0.3s ease-in-out infinite;
+}
+
+
+/* Smooth transitions for all countdown elements */
+.countdown-container {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.countdown-number {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.countdown-icon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.countdown-message {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

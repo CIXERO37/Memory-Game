@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,33 +11,18 @@ import Link from "next/link"
 import { AvatarSelector } from "@/components/avatar-selector"
 import { useRouter } from "next/navigation"
 import { roomManager } from "@/lib/room-manager"
+import { sessionManager } from "@/lib/supabase-session-manager"
 
-export default function JoinPage() {
+function JoinPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [username, setUsername] = useState("")
   const [roomCode, setRoomCode] = useState("")
-  const [selectedAvatar, setSelectedAvatar] = useState("🦄") // Set default avatar
+  const [selectedAvatar, setSelectedAvatar] = useState("/ava1.png") // Set default avatar
   const [isJoining, setIsJoining] = useState(false)
   const [roomError, setRoomError] = useState("")
-  const [playerId] = useState(() => {
-    // Check if we're on the client side
-    if (typeof window === 'undefined') {
-      return Math.random().toString(36).substr(2, 9)
-    }
-    
-    // Try to get existing player ID from localStorage first
-    const storedPlayer = localStorage.getItem("currentPlayer")
-    if (storedPlayer) {
-      try {
-        const player = JSON.parse(storedPlayer)
-        return player.id || Math.random().toString(36).substr(2, 9)
-      } catch (error) {
-        console.error("Error parsing stored player:", error)
-      }
-    }
-    return Math.random().toString(36).substr(2, 9)
-  })
+  const [playerId, setPlayerId] = useState<string>("")
+  const [sessionId, setSessionId] = useState<string>("")
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")
@@ -45,12 +30,67 @@ export default function JoinPage() {
       setRoomCode(roomFromUrl.toUpperCase())
     }
 
-    // Clear any existing player data when entering join page
-    // This ensures users always go through the join process
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem("currentPlayer")
+    // Initialize session and get existing player data
+    const initializeSession = async () => {
+      try {
+        // Try to get existing session
+        const existingSessionId = sessionManager.getSessionIdFromStorage()
+        if (existingSessionId) {
+          const sessionData = await sessionManager.getSessionData(existingSessionId)
+          if (sessionData && sessionData.user_type === 'player') {
+            setPlayerId(sessionData.user_data.id)
+            setSessionId(existingSessionId)
+            setUsername(sessionData.user_data.username || "")
+            setSelectedAvatar(sessionData.user_data.avatar || "/ava1.png")
+            return
+          }
+        }
+        
+        // Generate new player ID if no valid session
+        const newPlayerId = Math.random().toString(36).substr(2, 9)
+        setPlayerId(newPlayerId)
+      } catch (error) {
+        console.error("Error initializing session:", error)
+        const newPlayerId = Math.random().toString(36).substr(2, 9)
+        setPlayerId(newPlayerId)
+      }
     }
+
+    initializeSession()
   }, [searchParams, router])
+
+  // Function to extract room code from URL
+  const extractRoomCodeFromUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url)
+      const roomParam = urlObj.searchParams.get('room')
+      if (roomParam) {
+        return roomParam.toUpperCase()
+      }
+      // If no room parameter, try to extract from path
+      const pathParts = urlObj.pathname.split('/')
+      const lastPart = pathParts[pathParts.length - 1]
+      if (lastPart && lastPart.length === 6 && /^[A-Z0-9]+$/.test(lastPart)) {
+        return lastPart.toUpperCase()
+      }
+    } catch (error) {
+      // If URL parsing fails, check if it's just a 6-character code
+      if (url.length === 6 && /^[A-Z0-9]+$/.test(url)) {
+        return url.toUpperCase()
+      }
+    }
+    return ""
+  }
+
+  // Handle paste event to extract room code from URL
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData('text')
+    const extractedCode = extractRoomCodeFromUrl(pastedText)
+    if (extractedCode) {
+      setRoomCode(extractedCode)
+      e.preventDefault() // Prevent default paste behavior
+    }
+  }
 
   const handleJoinRoom = async () => {
     if (!username.trim() || !roomCode.trim()) return
@@ -107,17 +147,34 @@ export default function JoinPage() {
       )
       const finalPlayerId = actualPlayer?.id || playerId
       
-      // Store player info locally (only on client side)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(
-          "currentPlayer",
-          JSON.stringify({
+      // Store player info in Supabase session
+      try {
+        const { sessionId: newSessionId } = await sessionManager.getOrCreateSession(
+          'player',
+          {
             id: finalPlayerId,
             username: username.trim(),
             avatar: selectedAvatar,
             roomCode,
-          }),
+          },
+          roomCode
         )
+        setSessionId(newSessionId)
+        console.log("[Join] Session created/updated:", newSessionId)
+      } catch (error) {
+        console.error("[Join] Error creating session:", error)
+        // Fallback to localStorage if Supabase fails
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(
+            "currentPlayer",
+            JSON.stringify({
+              id: finalPlayerId,
+              username: username.trim(),
+              avatar: selectedAvatar,
+              roomCode,
+            }),
+          )
+        }
       }
 
       console.log("[Join] Successfully joined, redirecting to waiting room")
@@ -173,11 +230,7 @@ export default function JoinPage() {
                     <div className="inline-block bg-white rounded px-4 py-2 border-2 border-black transform -rotate-1 shadow-lg">
                       <h2 className="text-xl font-bold text-black pixel-font">JOIN ROOM</h2>
                     </div>
-                    <div className="bg-black/20 rounded px-3 py-2 border-2 border-black/50">
-                      <p className="text-sm text-white font-medium">
-                        {roomCode ? "Enter your username to join the game" : "Enter your details to join the game"}
-                      </p>
-                    </div>
+                   
                   </div>
                   {/* Pixel Input Fields */}
                   <div className="space-y-4">
@@ -204,10 +257,18 @@ export default function JoinPage() {
                         <div className="relative">
                           <Input
                             id="roomCode"
-                            placeholder="Enter room code"
+                            type="text"
+                            placeholder="Enter 6-digit code"
                             value={roomCode}
-                            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                            className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 uppercase"
+                            onChange={(e) => {
+                              const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                              if (value.length <= 6) {
+                                setRoomCode(value);
+                              }
+                            }}
+                            onPaste={handlePaste}
+                            maxLength={6}
+                            className="room-code-input"
                           />
                         </div>
                         {roomError && (
@@ -310,5 +371,28 @@ function FloatingPixelElements() {
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
     </>
+  )
+}
+
+export default function JoinPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
+              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                <Play className="h-8 w-8 text-black animate-spin" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">LOADING...</h3>
+              <p className="text-white/80 pixel-font-sm">PREPARING JOIN PAGE</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <JoinPageContent />
+    </Suspense>
   )
 }

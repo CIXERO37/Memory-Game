@@ -19,9 +19,11 @@ export interface Room {
     questionCount: number
     timePerQuestion: number
   }
-  status: "waiting" | "quiz" | "memory" | "finished"
+  status: "waiting" | "countdown" | "quiz" | "memory" | "finished"
   createdAt: string
   gameStarted: boolean
+  countdownStartTime?: string
+  countdownDuration?: number
 }
 
 class SupabaseRoomManager {
@@ -128,7 +130,9 @@ class SupabaseRoomManager {
         },
         status: roomData.status as Room["status"],
         createdAt: roomData.created_at,
-        gameStarted: roomData.status !== 'waiting'
+        gameStarted: roomData.status !== 'waiting',
+        countdownStartTime: roomData.countdown_start_time,
+        countdownDuration: roomData.countdown_duration
       }
 
       return room
@@ -285,6 +289,45 @@ class SupabaseRoomManager {
     }
   }
 
+  async startCountdown(roomCode: string, hostId: string, duration: number = 10): Promise<boolean> {
+    try {
+      // Get room data
+      const { data: roomData, error: roomError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('room_code', roomCode)
+        .single()
+
+      if (roomError || !roomData) {
+        console.error('[SupabaseRoomManager] Room not found for countdown:', roomCode)
+        return false
+      }
+
+      const countdownStartTime = new Date().toISOString()
+
+      // Update room status to countdown
+      const { error: updateError } = await supabase
+        .from('rooms')
+        .update({ 
+          status: 'countdown',
+          countdown_start_time: countdownStartTime,
+          countdown_duration: duration
+        })
+        .eq('room_code', roomCode)
+
+      if (updateError) {
+        console.error('[SupabaseRoomManager] Error starting countdown:', updateError)
+        return false
+      }
+
+      console.log('[SupabaseRoomManager] Countdown started:', roomCode, 'Duration:', duration)
+      return true
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Error starting countdown:', error)
+      return false
+    }
+  }
+
   async startGame(roomCode: string, hostId: string): Promise<boolean> {
     try {
       // Get room data
@@ -383,10 +426,12 @@ class SupabaseRoomManager {
           table: 'rooms',
           filter: `room_code=eq.${roomCode}`
         }, 
-        async () => {
-          console.log('[SupabaseRoomManager] Room data changed, fetching updated room')
+        async (payload) => {
+          console.log('[SupabaseRoomManager] Room data changed:', payload.eventType, payload)
           const updatedRoom = await this.getRoom(roomCode)
-          callback(updatedRoom)
+          if (updatedRoom) {
+            callback(updatedRoom)
+          }
         }
       )
       .on('postgres_changes', 
@@ -396,18 +441,38 @@ class SupabaseRoomManager {
           table: 'players',
           filter: `room_id=eq.${roomId}`
         }, 
-        async () => {
-          console.log('[SupabaseRoomManager] Players data changed, fetching updated room')
+        async (payload) => {
+          console.log('[SupabaseRoomManager] Players data changed:', payload.eventType, payload)
+          
+          // Log specific player actions
+          if (payload.eventType === 'INSERT') {
+            console.log('[SupabaseRoomManager] New player joined:', payload.new)
+          } else if (payload.eventType === 'DELETE') {
+            console.log('[SupabaseRoomManager] Player left:', payload.old)
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('[SupabaseRoomManager] Player updated:', payload.new)
+          }
+          
           const updatedRoom = await this.getRoom(roomCode)
-          callback(updatedRoom)
+          if (updatedRoom) {
+            callback(updatedRoom)
+          }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('[SupabaseRoomManager] Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('[SupabaseRoomManager] Successfully subscribed to room updates for:', roomCode)
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('[SupabaseRoomManager] Subscription error for room:', roomCode)
+        }
+      })
 
     this.subscriptions.set(roomCode, roomSubscription)
     this.listeners.add(callback)
 
     return () => {
+      console.log('[SupabaseRoomManager] Unsubscribing from room:', roomCode)
       roomSubscription.unsubscribe()
       this.subscriptions.delete(roomCode)
       this.listeners.delete(callback)
