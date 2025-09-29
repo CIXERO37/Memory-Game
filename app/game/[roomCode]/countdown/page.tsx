@@ -33,8 +33,8 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
     if (countdown === 0) {
       const params_url = new URLSearchParams({
         quizId: searchParams.quizId || "math-basic",
-        questionCount: searchParams.questionCount || "10",
-        timeLimit: searchParams.timeLimit || "30",
+        questionCount: room.settings.questionCount.toString(),
+        timeLimit: room.settings.totalTimeLimit.toString(),
       })
 
       window.location.href = `/game/${params.roomCode}/quiz?${params_url.toString()}`

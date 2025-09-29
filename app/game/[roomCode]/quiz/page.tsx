@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -9,6 +9,8 @@ import { Clock, Trophy, Users, Target } from "lucide-react"
 import { getQuizById, getRandomQuestions, type Question } from "@/lib/quiz-data"
 import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
+import { getTimerDisplayText } from "@/lib/timer-utils"
+import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 
 interface QuizPageProps {
   params: {
@@ -28,6 +30,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [score, setScore] = useState(0)
   const [correctAnswers, setCorrectAnswers] = useState(0)
   const [timeRemaining, setTimeRemaining] = useState(30)
+  const [totalTimeSelected, setTotalTimeSelected] = useState(0)
   const [gameFinished, setGameFinished] = useState(false)
   const [showResult, setShowResult] = useState(false)
   const [quizTitle, setQuizTitle] = useState("")
@@ -42,6 +45,8 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
   const { room, loading } = useRoom(params.roomCode)
+  const timerState = useSynchronizedTimer(room)
+  const questionsInitialized = useRef(false)
 
   useEffect(() => {
     if (room && playerId) {
@@ -53,6 +58,8 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       console.log("[v0] Host detection:", { playerId, currentPlayer, hostStatus })
     }
   }, [room, playerId])
+
+  // Timer is now handled by useSynchronizedTimer hook
 
   useEffect(() => {
     if (room && isHost) {
@@ -95,7 +102,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }
   }, [loading, room, isHost, params.roomCode])
 
-  // Initialize quiz questions
+  // Initialize quiz questions - hanya dijalankan sekali untuk mencegah soal diacak ulang
   useEffect(() => {
     if (!loading && (!room || !room.gameStarted)) {
       window.location.href = "/"
@@ -104,18 +111,26 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
     if (!room || loading) return
 
+    // Cek apakah soal sudah diinisialisasi sebelumnya menggunakan useRef
+    // Ini mencegah soal diacak ulang setiap kali komponen di-render
+    if (questionsInitialized.current) return
+
     setGameStarted(true)
+    questionsInitialized.current = true
 
     const quizId = searchParams.quizId || "math-basic"
-    const questionCount = Number.parseInt(searchParams.questionCount || "10")
-    const timeLimit = Number.parseInt(searchParams.timeLimit || "30")
+    // Use room settings instead of searchParams
+    const questionCount = room.settings.questionCount
+    const timeLimit = room.settings.totalTimeLimit
 
     const quiz = getQuizById(quizId)
     if (quiz) {
+      // Soal hanya diacak sekali saat pertama kali dimuat
       const selectedQuestions = getRandomQuestions(quiz, questionCount)
       setQuestions(selectedQuestions)
       setQuizTitle(quiz.title)
-      setTimeRemaining(timeLimit)
+      setTimeRemaining(30) // Timer per soal tetap 30 detik
+      setTotalTimeSelected(timeLimit) // Total durasi quiz
     }
   }, [searchParams, params.roomCode, room, loading])
 
@@ -181,7 +196,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             currentQuestion: currentQuestion + 1,
             score: newScore,
             correctAnswers: newCorrectAnswers,
-            timeLimit: searchParams.timeLimit || "30",
+            timeLimit: room?.settings.totalTimeLimit || 30,
           }),
         )
 
@@ -212,7 +227,8 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setCurrentQuestion(currentQuestion + 1)
       setSelectedAnswer(null)
       setShowResult(false)
-      setTimeRemaining(Number.parseInt(searchParams.timeLimit || "30"))
+      // Reset timer per soal ke 30 detik
+      setTimeRemaining(30)
     } else {
       setGameFinished(true)
 
@@ -262,7 +278,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     )
   }
 
-  const progress = (currentQuestion / questions.length) * 100
+  const progress = (currentQuestion / (room?.settings.questionCount || questions.length)) * 100
 
   if (gameFinished) {
     const totalScore = score + memoryGameScore
@@ -465,7 +481,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             </div>
           </div>
           <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg px-3 py-1">
-            <span className="text-blue-400 font-bold text-xs">Question {currentQuestion + 1} of {questions.length}</span>
+            <span className="text-blue-400 font-bold text-xs">Question {currentQuestion + 1} of {room?.settings.questionCount || questions.length}</span>
           </div>
         </div>
 
@@ -485,38 +501,21 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
         {/* Timer, Score, and Correct Answers */}
         <div className="flex justify-center gap-4 mb-6">
-          <div className="bg-gradient-to-br from-red-500/20 to-orange-500/20 border-2 border-white/30 rounded-lg p-3 pixel-lobby-card">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 bg-red-400 rounded border border-white flex items-center justify-center">
-                <Clock className="h-3 w-3 text-white" />
-              </div>
-              <span className="text-xs font-bold text-white">TIME</span>
-            </div>
-            <div className={`text-lg font-bold ${timeRemaining <= 10 ? "text-red-400" : "text-red-400"}`}>
-              {timeRemaining}s
-            </div>
+          <div className="bg-green-500/20 border-2 border-green-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-green-400" />
+            <span className="text-green-400 font-bold text-sm">
+              {getTimerDisplayText(timerState)}
+            </span>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-2 border-white/30 rounded-lg p-3 pixel-lobby-card">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 bg-yellow-400 rounded border border-white flex items-center justify-center">
-                <Trophy className="h-3 w-3 text-white" />
-              </div>
-              <span className="text-xs font-bold text-white">SCORE</span>
-            </div>
-            <div className="text-lg font-bold text-yellow-400">{score + memoryGameScore}</div>
+          <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-yellow-400" />
+            <span className="text-yellow-400 font-bold text-sm">{score + memoryGameScore}</span>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500/20 to-cyan-500/20 border-2 border-white/30 rounded-lg p-3 pixel-lobby-card">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 bg-green-400 rounded border border-white flex items-center justify-center">
-                <Target className="h-3 w-3 text-white" />
-              </div>
-              <span className="text-xs font-bold text-white">CORRECT</span>
-            </div>
-            <div className={`text-lg font-bold ${correctAnswers >= 3 ? "text-green-400" : "text-gray-400"}`}>
-              {correctAnswers}/3
-            </div>
+          <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
+            <Target className="w-4 h-4 text-blue-400" />
+            <span className="text-blue-400 font-bold text-sm">{correctAnswers}/3</span>
           </div>
         </div>
 

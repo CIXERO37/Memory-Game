@@ -53,7 +53,7 @@ function QuizSettingsPageContent() {
       
       const room = await roomManager.createRoom(hostId, {
         questionCount: questionCount[0],
-        timePerQuestion: timeLimit[0],
+        totalTimeLimit: timeLimit[0],
       }, selectedQuiz, quizTitle)
 
       if (!room) {
@@ -91,7 +91,7 @@ function QuizSettingsPageContent() {
           quizId: selectedQuiz,
           settings: {
             questionCount: questionCount[0],
-            timeLimit: timeLimit[0],
+            totalTimeLimit: timeLimit[0],
           },
         }),
       )

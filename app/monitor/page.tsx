@@ -9,18 +9,27 @@ import { Progress } from "@/components/ui/progress"
 import { Users, Trophy, Clock, Target, TrendingUp, TrendingDown, Play } from "lucide-react"
 import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
+import { getTimerDisplayText } from "@/lib/timer-utils"
+import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 
 function MonitorPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [roomCode, setRoomCode] = useState<string | null>(null)
-  const [quizSettings, setQuizSettings] = useState({
-    timeLimit: 30,
-    questionCount: 10,
-  })
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
   const { room, loading } = useRoom(roomCode || "")
+
+  // Get quiz settings from room data
+  const quizSettings = room ? {
+    timeLimit: room.settings.totalTimeLimit,
+    questionCount: room.settings.questionCount,
+  } : {
+    timeLimit: 30,
+    questionCount: 10,
+  }
+  
+  const timerState = useSynchronizedTimer(room, quizSettings.timeLimit)
 
   useEffect(() => {
     const roomCodeParam = searchParams.get("roomCode")
@@ -37,6 +46,9 @@ function MonitorPageContent() {
       }
     }
   }, [searchParams, router])
+
+  // Timer is now handled by useSynchronizedTimer hook
+
 
   // Monitor ranking calculation effect
   useEffect(() => {
@@ -132,8 +144,9 @@ function MonitorPageContent() {
           <div className="pixel-grid"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-red-500/20 to-orange-500/20 border-4 border-white/30 rounded-lg p-8 text-center pixel-lobby-card">
-            <div className="text-white">ROOM NOT FOUND</div>
+          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-4 border-white/30 rounded-lg p-8 text-center pixel-lobby-card">
+            <div className="text-white">LOADING ROOM...</div>
+            <div className="text-blue-200 text-sm mt-2">Please wait while we connect to the game</div>
           </div>
         </div>
       </div>
@@ -220,6 +233,12 @@ function MonitorPageContent() {
                   <h1 className="text-4xl font-bold text-white pixel-header-title">PLAYER PROGRESS</h1>
                   <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2">
                     <span className="text-blue-400 font-bold text-sm">{players.length} PLAYERS</span>
+                  </div>
+                  <div className="bg-green-500/20 border-2 border-green-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-green-400" />
+                    <span className="text-green-400 font-bold text-sm">
+                      {getTimerDisplayText(timerState)}
+                    </span>
                   </div>
                 </div>
                 <p className="text-lg text-blue-200">Room: {roomCode}</p>

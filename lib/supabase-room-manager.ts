@@ -17,10 +17,11 @@ export interface Room {
   players: Player[]
   settings: {
     questionCount: number
-    timePerQuestion: number
+    totalTimeLimit: number
   }
   status: "waiting" | "countdown" | "quiz" | "memory" | "finished"
   createdAt: string
+  startedAt?: string
   gameStarted: boolean
   countdownStartTime?: string
   countdownDuration?: number
@@ -51,7 +52,7 @@ class SupabaseRoomManager {
           host_name: `Host-${hostId.slice(0, 6)}`,
           quiz_id: quizId,
           quiz_title: quizTitle,
-          time_limit: settings.timePerQuestion,
+          time_limit: settings.totalTimeLimit,
           question_count: settings.questionCount,
           status: 'waiting'
         })
@@ -71,6 +72,7 @@ class SupabaseRoomManager {
         settings,
         status: 'waiting',
         createdAt: roomData.created_at,
+        startedAt: roomData.started_at,
         gameStarted: false
       }
 
@@ -126,10 +128,11 @@ class SupabaseRoomManager {
         players,
         settings: {
           questionCount: roomData.question_count,
-          timePerQuestion: roomData.time_limit
+          totalTimeLimit: roomData.time_limit
         },
         status: roomData.status as Room["status"],
         createdAt: roomData.created_at,
+        startedAt: roomData.started_at,
         gameStarted: roomData.status !== 'waiting',
         countdownStartTime: roomData.countdown_start_time,
         countdownDuration: roomData.countdown_duration
@@ -342,12 +345,14 @@ class SupabaseRoomManager {
         return false
       }
 
+      const startedAtTime = new Date().toISOString()
+
       // Update room status
       const { error: updateError } = await supabase
         .from('rooms')
         .update({ 
           status: 'quiz',
-          started_at: new Date().toISOString()
+          started_at: startedAtTime
         })
         .eq('room_code', roomCode)
 
@@ -356,7 +361,7 @@ class SupabaseRoomManager {
         return false
       }
 
-      console.log('[SupabaseRoomManager] Game started:', roomCode)
+      console.log('[SupabaseRoomManager] Game started:', roomCode, 'at:', startedAtTime)
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error starting game:', error)
