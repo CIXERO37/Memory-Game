@@ -604,10 +604,33 @@ function LobbyPageContent() {
           <div className="relative pixel-lobby-container">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
             <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl pixel-lobby-card">
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-2 ">
                
+                {/* Quiz Info Pills */}
+                <div className="flex justify-center gap-4 mb-4">
+                  {/* Time Pill */}
+                  <div className="bg-blue-100 border border-blue-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
+                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">⏱️</span>
+                    </div>
+                    <span className="text-blue-700 font-medium text-sm">
+                      {currentRoom?.settings.timePerQuestion || quizSettings.timeLimit}:00
+                    </span>
+                  </div>
+                  
+                  {/* Questions Pill */}
+                  <div className="bg-green-100 border border-green-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
+                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">❓</span>
+                    </div>
+                    <span className="text-green-700 font-medium text-sm">
+                      {currentRoom?.settings.questionCount || quizSettings.questionCount} Questions
+                    </span>
+                  </div>
+                </div>
+
                 {/* Simplified Room Code Display */}
-                <div className="bg-white border-2 border-black rounded p-8 pixel-room-code relative">
+                <div className="bg-white border-2 border-black rounded p-6 pixel-room-code relative">
                   {/* Copy icon di pojok kanan atas */}
                   <button
                     onClick={copyRoomCode}
