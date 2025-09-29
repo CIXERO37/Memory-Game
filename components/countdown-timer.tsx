@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Room } from "@/lib/room-manager"
 import { Clock } from "lucide-react"
+import { calculateTimerState } from "@/lib/timer-utils"
 import "@/styles/countdown.css"
 
 interface CountdownTimerProps {
@@ -30,13 +31,9 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
       roomStatus: room.status 
     })
 
-    const startTime = new Date(room.countdownStartTime).getTime()
-    const duration = room.countdownDuration * 1000 // Convert to milliseconds
-    const endTime = startTime + duration
-
     const updateCountdown = () => {
-      const now = new Date().getTime()
-      const remaining = Math.max(0, Math.ceil((endTime - now) / 1000))
+      const timerState = calculateTimerState(room)
+      const remaining = timerState.countdown || 0
       
       // Trigger animation when number changes
       if (remaining !== previousTime && remaining > 0) {
@@ -60,7 +57,7 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
     // Initial calculation
     updateCountdown()
 
-    // Use requestAnimationFrame for smoother animation
+    // Use requestAnimationFrame for smoother animation with 50ms updates
     const animate = () => {
       updateCountdown()
       if (isActive && timeLeft > 0) {

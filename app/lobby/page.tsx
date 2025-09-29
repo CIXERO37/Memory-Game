@@ -22,10 +22,6 @@ function LobbyPageContent() {
   const [roomCode, setRoomCode] = useState<string | null>(null)
   const [hostId, setHostId] = useState<string | null>(null)
   const [quizId, setQuizId] = useState<string | null>(null)
-  const [quizSettings, setQuizSettings] = useState({
-    timeLimit: 30,
-    questionCount: 10,
-  })
   const [gameStarted, setGameStarted] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
@@ -41,6 +37,15 @@ function LobbyPageContent() {
   
   // Use localRoom if available, otherwise use room from hook
   const currentRoom = localRoom || room
+
+  // Get quiz settings from room data or fallback to defaults
+  const quizSettings = currentRoom ? {
+    timeLimit: currentRoom.settings.totalTimeLimit,
+    questionCount: currentRoom.settings.questionCount,
+  } : {
+    timeLimit: 30,
+    questionCount: 10,
+  }
 
   // Pagination logic
   const playersPerPage = 20 // 4 columns x 5 rows
@@ -495,8 +500,8 @@ function LobbyPageContent() {
     // If we have host data but no room, try to recreate the room
     if (hostId && roomCode && quizId) {
       const recreatedRoom = roomManager.createRoomWithCode(roomCode, hostId, {
-        questionCount: quizSettings.questionCount,
-        timePerQuestion: quizSettings.timeLimit
+        questionCount: 10, // Default fallback
+        totalTimeLimit: 30 // Default fallback
       })
       
       if (recreatedRoom) {
@@ -614,7 +619,7 @@ function LobbyPageContent() {
                       <span className="text-white text-xs">⏱️</span>
                     </div>
                     <span className="text-blue-700 font-medium text-sm">
-                      {currentRoom?.settings.timePerQuestion || quizSettings.timeLimit}:00
+                      {currentRoom?.settings.totalTimeLimit || 30}:00
                     </span>
                   </div>
                   
@@ -624,7 +629,7 @@ function LobbyPageContent() {
                       <span className="text-white text-xs">❓</span>
                     </div>
                     <span className="text-green-700 font-medium text-sm">
-                      {currentRoom?.settings.questionCount || quizSettings.questionCount} Questions
+                      {currentRoom?.settings.questionCount || 10} Questions
                     </span>
                   </div>
                 </div>
