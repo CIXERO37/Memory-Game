@@ -1,0 +1,191 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { Room } from "@/lib/room-manager"
+import { Clock } from "lucide-react"
+import "@/styles/countdown.css"
+
+interface CountdownTimerProps {
+  room: Room
+  onCountdownComplete: () => void
+}
+
+export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProps) {
+  const [timeLeft, setTimeLeft] = useState<number>(0)
+  const [isActive, setIsActive] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [previousTime, setPreviousTime] = useState<number>(0)
+  const animationRef = useRef<number>()
+
+  useEffect(() => {
+    if (!room.countdownStartTime || !room.countdownDuration) {
+      console.log("[CountdownTimer] No countdown data:", { countdownStartTime: room.countdownStartTime, countdownDuration: room.countdownDuration })
+      setIsActive(false)
+      return
+    }
+
+    console.log("[CountdownTimer] Starting countdown:", { 
+      startTime: room.countdownStartTime, 
+      duration: room.countdownDuration,
+      roomStatus: room.status 
+    })
+
+    const startTime = new Date(room.countdownStartTime).getTime()
+    const duration = room.countdownDuration * 1000 // Convert to milliseconds
+    const endTime = startTime + duration
+
+    const updateCountdown = () => {
+      const now = new Date().getTime()
+      const remaining = Math.max(0, Math.ceil((endTime - now) / 1000))
+      
+      // Trigger animation when number changes
+      if (remaining !== previousTime && remaining > 0) {
+        setIsAnimating(true)
+        setPreviousTime(remaining)
+        
+        // Reset animation after a short delay
+        setTimeout(() => setIsAnimating(false), 200)
+      }
+      
+      console.log("[CountdownTimer] Time remaining:", remaining)
+      setTimeLeft(remaining)
+      setIsActive(remaining > 0)
+
+      if (remaining <= 0) {
+        console.log("[CountdownTimer] Countdown completed, calling onCountdownComplete")
+        onCountdownComplete()
+      }
+    }
+
+    // Initial calculation
+    updateCountdown()
+
+    // Use requestAnimationFrame for smoother animation
+    const animate = () => {
+      updateCountdown()
+      if (isActive && timeLeft > 0) {
+        animationRef.current = requestAnimationFrame(animate)
+      }
+    }
+
+    // Start animation loop
+    animationRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [room.countdownStartTime, room.countdownDuration, onCountdownComplete, isActive, previousTime])
+
+  if (!isActive || timeLeft <= 0) {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      {/* Pixel Grid Background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="pixel-grid"></div>
+      </div>
+      
+      {/* Retro Scanlines */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="scanlines"></div>
+      </div>
+      
+      {/* Floating Pixel Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <PixelBackgroundElements />
+      </div>
+
+      <div className="relative z-10 text-center countdown-container">
+        <div className="relative inline-block mb-6">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+          <div className="relative bg-gradient-to-br from-orange-500 to-red-500 rounded-lg border-4 border-black shadow-2xl p-8">
+            {/* Countdown Icon with Smooth Animation */}
+            <div className={`w-20 h-20 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-6 countdown-icon ${
+              isAnimating ? 'animate-bounce' : ''
+            }`}>
+              <Clock className={`w-10 h-10 text-black ${
+                timeLeft <= 3 ? 'animate-spin' : 'animate-pulse'
+              }`} />
+            </div>
+            
+            {/* Countdown Title with Smooth Fade */}
+            <h3 className={`text-2xl font-bold text-white mb-4 pixel-font countdown-message ${
+              isAnimating ? 'animate-pulse' : ''
+            }`}>GET READY!</h3>
+            
+            {/* Countdown Number with Smooth Animation */}
+            <div className={`text-9xl font-black text-white mb-6 countdown-number ${
+              timeLeft <= 1 ? 'pixel-countdown final' :
+              timeLeft <= 3 ? 'pixel-countdown urgent' :
+              'pixel-countdown'
+            } ${timeLeft <= 3 ? 'text-red-400' : 'text-white'}`}>
+              {timeLeft}
+            </div>
+            
+            
+            {/* Countdown Message with Smooth Animation */}
+            <div className={`bg-white border-2 border-black rounded px-6 py-3 inline-block countdown-message ${
+              isAnimating ? 'animate-pulse' : ''
+            }`}>
+              <p className={`text-black font-bold text-lg pixel-font-sm ${
+                timeLeft <= 3 ? 'text-red-600 animate-pulse' : ''
+              }`}>
+                {timeLeft <= 3 ? 'GET READY! STARTING SOON!' : 'THE QUIZ IS ABOUT TO BEGIN!'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PixelBackgroundElements() {
+  const pixels = [
+    { id: 1, color: 'bg-red-500', size: 'w-2 h-2', delay: '0s', duration: '3s', x: '10%', y: '20%' },
+    { id: 2, color: 'bg-blue-500', size: 'w-3 h-3', delay: '1s', duration: '4s', x: '80%', y: '30%' },
+    { id: 3, color: 'bg-green-500', size: 'w-2 h-2', delay: '2s', duration: '3.5s', x: '20%', y: '70%' },
+    { id: 4, color: 'bg-yellow-500', size: 'w-4 h-4', delay: '0.5s', duration: '5s', x: '70%', y: '10%' },
+    { id: 5, color: 'bg-purple-500', size: 'w-2 h-2', delay: '1.5s', duration: '4.5s', x: '50%', y: '80%' },
+    { id: 6, color: 'bg-pink-500', size: 'w-3 h-3', delay: '2.5s', duration: '3s', x: '30%', y: '50%' },
+    { id: 7, color: 'bg-cyan-500', size: 'w-2 h-2', delay: '0.8s', duration: '4s', x: '90%', y: '60%' },
+    { id: 8, color: 'bg-orange-500', size: 'w-3 h-3', delay: '1.8s', duration: '3.8s', x: '15%', y: '40%' },
+    { id: 9, color: 'bg-lime-500', size: 'w-2 h-2', delay: '2.2s', duration: '4.2s', x: '60%', y: '25%' },
+    { id: 10, color: 'bg-indigo-500', size: 'w-4 h-4', delay: '0.3s', duration: '5.5s', x: '85%', y: '75%' },
+  ]
+
+  return (
+    <>
+      {pixels.map((pixel) => (
+        <div
+          key={pixel.id}
+          className={`absolute ${pixel.color} ${pixel.size} pixel-float`}
+          style={{
+            left: pixel.x,
+            top: pixel.y,
+            animationDelay: pixel.delay,
+            animationDuration: pixel.duration,
+          }}
+        />
+      ))}
+      
+      {/* Floating Pixel Blocks */}
+      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-orange-400 to-red-400 opacity-30 pixel-block-float">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-40 pixel-block-float-delayed">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-orange-400 to-red-400 opacity-45 pixel-block-float-delayed-slow">
+        <div className="w-full h-full border-2 border-white/50"></div>
+      </div>
+    </>
+  )
+}

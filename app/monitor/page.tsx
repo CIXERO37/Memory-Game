@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +10,7 @@ import { Users, Trophy, Clock, Target, TrendingUp, TrendingDown, Play } from "lu
 import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
 
-export default function MonitorPage() {
+function MonitorPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [roomCode, setRoomCode] = useState<string | null>(null)
@@ -210,7 +210,17 @@ export default function MonitorPage() {
                             {rankingChange === "up" && <TrendingUp className="h-4 w-4 text-green-500" />}
                             {rankingChange === "down" && <TrendingDown className="h-4 w-4 text-red-500" />}
                           </div>
-                          <div className="text-3xl">{player.avatar}</div>
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+                            <img
+                              src={player.avatar}
+                              alt={`${player.username}'s avatar`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback to default avatar if image fails to load
+                                e.currentTarget.src = "/ava1.png"
+                              }}
+                            />
+                          </div>
                           <div>
                             <h3 className="font-semibold text-lg text-white">{player.username}</h3>
                             <p className="text-sm text-blue-200">
@@ -268,5 +278,21 @@ export default function MonitorPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function MonitorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <Card className="max-w-md mx-auto text-center bg-white/5 border-white/10">
+          <CardContent className="py-8">
+            <div className="text-white">Loading...</div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <MonitorPageContent />
+    </Suspense>
   )
 }

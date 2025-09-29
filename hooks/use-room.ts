@@ -48,19 +48,28 @@ export function useRoom(roomCode: string | null) {
     
     setupSubscription()
 
-    // Add polling mechanism as fallback for synchronization (less frequent)
+    // Light polling as fallback for critical updates only
     const pollInterval = setInterval(async () => {
       try {
         const currentRoom = await roomManager.getRoom(roomCode)
         if (currentRoom) {
-          console.log("[useRoom] Room updated via polling:", currentRoom)
-          console.log("[useRoom] Players in polled room:", currentRoom.players?.map(p => ({ id: p.id, username: p.username, avatar: p.avatar })))
-          setRoom(currentRoom)
+          // Only update for critical status changes
+          if (currentRoom.status === "countdown" && room?.status !== "countdown") {
+            console.log("[useRoom] Countdown detected via polling - updating immediately")
+            setRoom(currentRoom)
+            return
+          }
+          
+          if (currentRoom.status === "quiz" && room?.status !== "quiz") {
+            console.log("[useRoom] Game started detected via polling - updating immediately")
+            setRoom(currentRoom)
+            return
+          }
         }
       } catch (error) {
         console.error("[useRoom] Error polling room:", error)
       }
-    }, 5000) // Poll every 5 seconds (less frequent since we have realtime)
+    }, 3000) // Reduced frequency - poll every 3 seconds for critical updates only
 
     const connectionCheck = setInterval(() => {
       setIsConnected(roomManager.isChannelConnected())

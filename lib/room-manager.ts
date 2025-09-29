@@ -44,6 +44,10 @@ class RoomManager {
     return this.updatePlayerScore(roomCode, playerId, undefined, memoryScore)
   }
 
+  async startCountdown(roomCode: string, hostId: string, duration: number = 10): Promise<boolean> {
+    return await supabaseRoomManager.startCountdown(roomCode, hostId, duration)
+  }
+
   async startGame(roomCode: string, hostId: string): Promise<boolean> {
     return await supabaseRoomManager.startGame(roomCode, hostId)
   }

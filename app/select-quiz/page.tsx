@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, FileSearch, Search, Filter, Loader2 } from "lucide-react"
+import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQuizzes, transformQuizData } from "@/hooks/use-quiz"
@@ -15,6 +15,7 @@ export default function SelectQuizPage() {
   const [searchInput, setSearchInput] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [difficultyFilter, setDifficultyFilter] = useState("all")
+  const [isSelectAllExpanded, setIsSelectAllExpanded] = useState(false)
   
   // Fetch quizzes from Supabase
   const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
@@ -113,20 +114,90 @@ export default function SelectQuizPage() {
                   <label className="text-black font-bold text-sm">FILTER</label>
                 </div>
                 <div className="relative">
-                  <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                    <SelectTrigger className="h-10 bg-white border-2 border-black rounded-none shadow-lg text-base text-black focus:border-blue-600">
-                      <div className="w-6 h-6 bg-green-500 border border-black rounded mr-2 flex items-center justify-center">
-                        <Filter className="h-4 w-4 text-white" />
+                  <div className="relative">
+                    <Button
+                      onClick={() => setIsSelectAllExpanded(!isSelectAllExpanded)}
+                      className="w-full h-10 bg-white border-2 border-black rounded-none shadow-lg text-base text-black hover:bg-gray-100 focus:border-blue-600 flex items-center justify-between px-3"
+                    >
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 bg-green-500 border border-black rounded mr-2 flex items-center justify-center">
+                          <Filter className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="font-bold">
+                          {difficultyFilter === "all" ? "ALL DIFFICULTIES" : 
+                           difficultyFilter === "Easy" ? "EASY" :
+                           difficultyFilter === "Medium" ? "MEDIUM" : "HARD"}
+                        </span>
                       </div>
-                      <SelectValue placeholder="Filter by difficulty" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-2 border-black">
-                      <SelectItem value="all" className="text-black hover:bg-gray-200 text-base">ALL DIFFICULTIES</SelectItem>
-                      <SelectItem value="Easy" className="text-black hover:bg-green-200 text-base">EASY</SelectItem>
-                      <SelectItem value="Medium" className="text-black hover:bg-yellow-200 text-base">MEDIUM</SelectItem>
-                      <SelectItem value="Hard" className="text-black hover:bg-red-200 text-base">HARD</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      {isSelectAllExpanded ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
+                    </Button>
+                    
+                    {/* Custom Dropdown Menu */}
+                    {isSelectAllExpanded && (
+                      <div className="absolute top-full left-0 right-0 z-50 bg-white border-2 border-black shadow-lg mt-1">
+                        <button
+                          onClick={() => {
+                            setDifficultyFilter("all")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-base hover:bg-gray-200 flex items-center justify-between ${
+                            difficultyFilter === "all" ? "bg-gray-200" : "text-black"
+                          }`}
+                        >
+                          <span>ALL DIFFICULTIES</span>
+                          {difficultyFilter === "all" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDifficultyFilter("Easy")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-base hover:bg-green-200 flex items-center justify-between ${
+                            difficultyFilter === "Easy" ? "bg-green-200" : "text-black"
+                          }`}
+                        >
+                          <span>EASY</span>
+                          {difficultyFilter === "Easy" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDifficultyFilter("Medium")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-base hover:bg-yellow-200 flex items-center justify-between ${
+                            difficultyFilter === "Medium" ? "bg-yellow-200" : "text-black"
+                          }`}
+                        >
+                          <span>MEDIUM</span>
+                          {difficultyFilter === "Medium" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDifficultyFilter("Hard")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-base hover:bg-red-200 flex items-center justify-between ${
+                            difficultyFilter === "Hard" ? "bg-red-200" : "text-black"
+                          }`}
+                        >
+                          <span>HARD</span>
+                          {difficultyFilter === "Hard" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

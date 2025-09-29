@@ -17,6 +17,8 @@ CREATE TABLE rooms (
     question_count INTEGER DEFAULT 10,
     status VARCHAR(20) DEFAULT 'waiting', -- waiting, countdown, memory_challenge, quiz, finished
     current_question INTEGER DEFAULT 0,
+    countdown_start_time TIMESTAMP WITH TIME ZONE,
+    countdown_duration INTEGER DEFAULT 10,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     started_at TIMESTAMP WITH TIME ZONE,
     finished_at TIMESTAMP WITH TIME ZONE
