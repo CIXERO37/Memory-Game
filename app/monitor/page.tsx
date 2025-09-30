@@ -265,8 +265,8 @@ function MonitorPageContent() {
                 console.log("Button clicked, calling endGame...")
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-orange-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative bg-gradient-to-br from-red-500 to-orange-500 border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-6 py-3">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <button className="relative bg-gradient-to-br from-blue-500 to-cyan-500 border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-6 py-3">
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 bg-black rounded border-2 border-white flex items-center justify-center">
                     <span className="text-white font-bold text-sm">✕</span>
