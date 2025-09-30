@@ -85,6 +85,93 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
   // Timer is now handled by useSynchronizedTimer hook
 
+  // Monitor room status for game end
+  useEffect(() => {
+    if (room && room.status === "finished" && !isHost) {
+      console.log("[Quiz] Game finished, redirecting to result page...")
+      // Redirect to result page for players
+      window.location.href = `/result?roomCode=${params.roomCode}`
+    }
+  }, [room?.status, isHost, params.roomCode])
+
+  // Check if all players have completed the quiz
+  useEffect(() => {
+    if (room && isHost && room.players.length > 0) {
+      const nonHostPlayers = room.players.filter(p => !p.isHost)
+      const totalQuestions = room.settings.questionCount || 10
+      
+      // Check if all players have completed all questions
+      const allPlayersCompleted = nonHostPlayers.every(player => 
+        (player.questionsAnswered || 0) >= totalQuestions
+      )
+      
+      if (allPlayersCompleted && nonHostPlayers.length > 0) {
+        console.log("[Quiz] All players completed quiz, ending game automatically...")
+        
+        // End the game automatically
+        roomManager.updateGameStatus(params.roomCode, "finished").then(() => {
+          // Broadcast game end event to all players
+          if (typeof window !== 'undefined') {
+            const broadcastChannel = new BroadcastChannel(`game-end-${params.roomCode}`)
+            broadcastChannel.postMessage({ 
+              type: 'game-ended', 
+              roomCode: params.roomCode,
+              timestamp: Date.now()
+            })
+            broadcastChannel.close()
+            console.log("[Quiz] Broadcasted game end event to players")
+          }
+          
+          // Redirect host to leaderboard
+          window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+        }).catch((error) => {
+          console.error("[Quiz] Error ending game automatically:", error)
+          // Fallback redirect
+          window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+        })
+      }
+    }
+  }, [room, isHost, params.roomCode])
+
+  // Aggressive polling for game end detection (fallback)
+  useEffect(() => {
+    if (!isHost && params.roomCode) {
+      const gameEndPolling = setInterval(async () => {
+        try {
+          const currentRoom = await roomManager.getRoom(params.roomCode)
+          if (currentRoom && currentRoom.status === "finished") {
+            console.log("[Quiz] Game finished detected via aggressive polling - redirecting immediately...")
+            clearInterval(gameEndPolling)
+            window.location.href = `/result?roomCode=${params.roomCode}`
+          }
+        } catch (error) {
+          console.error("[Quiz] Error in game end polling:", error)
+        }
+      }, 1000) // Check every 1 second for game end
+
+      return () => clearInterval(gameEndPolling)
+    }
+  }, [isHost, params.roomCode])
+
+  // Listen for immediate game end broadcast
+  useEffect(() => {
+    if (!isHost && params.roomCode) {
+      const broadcastChannel = new BroadcastChannel(`game-end-${params.roomCode}`)
+      
+      broadcastChannel.onmessage = (event) => {
+        if (event.data.type === 'game-ended') {
+          console.log("[Quiz] Game end broadcast received - redirecting immediately...")
+          broadcastChannel.close()
+          window.location.href = `/result?roomCode=${params.roomCode}`
+        }
+      }
+
+      return () => {
+        broadcastChannel.close()
+      }
+    }
+  }, [isHost, params.roomCode])
+
   useEffect(() => {
     if (room && isHost) {
       const players = room.players.filter((p) => !p.isHost)
@@ -159,7 +246,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   }, [searchParams, params.roomCode, room, loading])
 
   useEffect(() => {
-    const checkMemoryGameReturn = () => {
+    const checkMemoryGameReturn = async () => {
       const memoryReturn = localStorage.getItem(`memory-return-${params.roomCode}`)
       if (memoryReturn) {
         console.log("[Quiz] Memory game return detected:", memoryReturn)
@@ -170,14 +257,36 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         localStorage.removeItem(`memory-return-${params.roomCode}`)
         console.log("[Quiz] Memory game return processed, continuing quiz...")
 
+        // Check if player has completed all questions after memory game
+        const totalQuestions = room?.settings.questionCount || 10
+        const currentQuestionsAnswered = questionsAnswered || 0
+        
+        if (currentQuestionsAnswered >= totalQuestions) {
+          console.log("[Quiz] Player completed all questions after memory game, ending game...")
+          
+          try {
+            await roomManager.updateGameStatus(params.roomCode, "finished")
+            
+            // Redirect based on user type
+            if (!isHost) {
+              window.location.href = `/result?roomCode=${params.roomCode}`
+            } else {
+              window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+            }
+          } catch (error) {
+            console.error("[Quiz] Error ending game after memory return:", error)
+            // Continue with normal quiz flow
+          }
+        }
+
         // No memory score update needed - memory game is just an obstacle
       }
     }
 
-    if (gameStarted && !isHost) {
+    if (gameStarted && !isHost && room) {
       checkMemoryGameReturn()
     }
-  }, [gameStarted, params.roomCode, playerId, isHost])
+  }, [gameStarted, params.roomCode, playerId, isHost, room, questionsAnswered])
 
   // Removed per-question timer countdown - players can take their time to think
 
@@ -276,17 +385,40 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }, 2000)
   }
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1)
       setSelectedAnswer(null)
       setShowResult(false)
       // No timer reset needed - players can think without time pressure
     } else {
+      // Quiz completed - end the game for all players
       setGameFinished(true)
 
       if (playerId) {
-        roomManager.updatePlayerScore(params.roomCode, playerId, score, undefined, questionsAnswered)
+        // Update final score
+        await roomManager.updatePlayerScore(params.roomCode, playerId, score, undefined, questionsAnswered)
+      }
+
+      // End the game and redirect based on user type
+      try {
+        await roomManager.updateGameStatus(params.roomCode, "finished")
+        
+        // Redirect player to result page
+        if (!isHost) {
+          window.location.href = `/result?roomCode=${params.roomCode}`
+        } else {
+          // Host gets redirected to leaderboard
+          window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+        }
+      } catch (error) {
+        console.error("[Quiz] Error ending game:", error)
+        // Fallback redirect
+        if (!isHost) {
+          window.location.href = `/result?roomCode=${params.roomCode}`
+        } else {
+          window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+        }
       }
     }
   }
@@ -444,10 +576,10 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-4 border-white/30 rounded-lg px-8 py-4 text-white font-bold text-lg transition-all duration-300 hover:scale-105 pixel-button flex items-center justify-center gap-3"
                 onClick={() => {
                   roomManager.updateGameStatus(params.roomCode, "finished")
-                  window.location.href = "/"
+                  window.location.href = "/result?roomCode=" + params.roomCode
                 }}
               >
-                ⭐ PLAY AGAIN
+                ⭐ LIHAT HASIL
               </button>
             </div>
           </div>

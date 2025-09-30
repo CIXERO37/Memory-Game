@@ -559,9 +559,14 @@ function LobbyPageContent() {
         // Broadcast countdown start to all players immediately
         if (typeof window !== 'undefined') {
           const broadcastChannel = new BroadcastChannel(`countdown-${roomCode}`)
-          broadcastChannel.postMessage({ type: 'countdown-started', room: updatedRoom })
+          broadcastChannel.postMessage({ 
+            type: 'countdown-started', 
+            room: updatedRoom,
+            countdownStartTime: updatedRoom.countdownStartTime,
+            countdownDuration: updatedRoom.countdownDuration
+          })
           broadcastChannel.close()
-          console.log("[Lobby] Broadcasted countdown start to players")
+          console.log("[Lobby] Broadcasted countdown start to players with data:", updatedRoom)
         }
       } else {
         console.error("[Lobby] Failed to start countdown")
