@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { MemoryGame } from "@/components/memory-game"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Trophy, Clock, Target } from "lucide-react"
+import { Target } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
 
 interface MemoryChallengePageProps {
@@ -15,14 +15,32 @@ interface MemoryChallengePageProps {
 export default function MemoryChallengePage({ params }: MemoryChallengePageProps) {
   const [correctMatches, setCorrectMatches] = useState(0)
   const [gameCompleted, setGameCompleted] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState(30)
+  // Removed timer - memory game is now an obstacle without time pressure
   const [gameWon, setGameWon] = useState(false)
   const [hasAccess, setHasAccess] = useState(false)
   const [loading, setLoading] = useState(true)
+  
+  console.log("[Memory Challenge] Component state:", { correctMatches, gameCompleted, gameWon, hasAccess, loading })
   const [playerId] = useState(() => {
     const player = localStorage.getItem("currentPlayer")
     return player ? JSON.parse(player).id : null
   })
+
+  // Initialize progress from localStorage on component mount
+  useEffect(() => {
+    const savedProgress = localStorage.getItem(`memory-progress-${params.roomCode}`)
+    if (savedProgress) {
+      const progressCount = parseInt(savedProgress)
+      console.log(`[Memory Challenge] Initializing with saved progress: ${progressCount}`)
+      setCorrectMatches(progressCount)
+      
+      // If already completed, redirect immediately
+      if (progressCount >= 6) {
+        console.log("[Memory Challenge] Game already completed on initialization, redirecting...")
+        handleGameEnd()
+      }
+    }
+  }, [params.roomCode])
 
   useEffect(() => {
     const checkAccess = () => {
@@ -36,6 +54,8 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
       const progressData = JSON.parse(quizProgress)
       if (progressData.correctAnswers >= 3) {
         setHasAccess(true)
+        
+        // Progress restoration is now handled in initialization useEffect
       } else {
         window.location.href = `/game/${params.roomCode}/quiz`
         return
@@ -47,63 +67,57 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     checkAccess()
   }, [params.roomCode])
 
-  // Timer countdown
-  useEffect(() => {
-    if (timeRemaining <= 0 || gameCompleted || !hasAccess) {
-      if (timeRemaining <= 0 && !gameCompleted) {
-        handleGameEnd()
-      }
-      return
-    }
+  // Removed timer countdown - memory game is now an obstacle without time pressure
 
-    const timer = setTimeout(() => {
-      setTimeRemaining(timeRemaining - 1)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [timeRemaining, gameCompleted, hasAccess])
-
-  useEffect(() => {
-    if (correctMatches >= 8) {
-      setGameCompleted(true)
-      setGameWon(true)
-      handleGameEnd()
-    }
-  }, [correctMatches])
+  // Completion logic is now handled in handleCorrectMatch to avoid race conditions
 
   const handleGameEnd = () => {
-    setGameCompleted(true)
+    // Memory game is now just an obstacle - no scoring system
+    // No points awarded for completing memory challenge
 
-    const memoryScore = correctMatches * 10 // 10 points per match
-
-    // Update memory score in room
-    if (playerId) {
-      roomManager.updatePlayerMemoryScore(params.roomCode, playerId, memoryScore)
-    }
-
-    // Store return data for quiz page
+    // Store return data for quiz page (without score)
     const quizProgress = localStorage.getItem(`quiz-progress-${params.roomCode}`)
     const progressData = quizProgress ? JSON.parse(quizProgress) : {}
 
     localStorage.setItem(
       `memory-return-${params.roomCode}`,
       JSON.stringify({
-        score: memoryScore,
+        score: 0, // No score from memory game
         resumeQuestion: progressData.currentQuestion || 0,
       }),
     )
 
     // Clean up progress data
     localStorage.removeItem(`quiz-progress-${params.roomCode}`)
+    localStorage.removeItem(`memory-progress-${params.roomCode}`)
 
-    // Auto-redirect back to quiz after 3 seconds
-    setTimeout(() => {
+    // Auto-redirect back to quiz immediately
+    console.log("[Memory Challenge] Game completed, redirecting to quiz immediately...")
+    try {
       window.location.href = `/game/${params.roomCode}/quiz`
-    }, 3000)
+    } catch (error) {
+      console.error("[Memory Challenge] Redirect failed:", error)
+      // Fallback redirect
+      window.location.replace(`/game/${params.roomCode}/quiz`)
+    }
   }
 
   const handleCorrectMatch = () => {
-    setCorrectMatches((prev) => prev + 1)
+    setCorrectMatches((prev) => {
+      const newCount = prev + 1
+      console.log(`[Memory Challenge] Match found! Total matches: ${newCount}`)
+      // Save progress to localStorage to prevent reset on refresh
+      localStorage.setItem(`memory-progress-${params.roomCode}`, newCount.toString())
+      
+      // Check if game is completed after this match
+      if (newCount >= 6) {
+        console.log("[Memory Challenge] Game completed via handleCorrectMatch!")
+        // Direct redirect without showing completion modal
+        handleGameEnd()
+      }
+      
+      return newCount
+    })
   }
 
   if (loading) {
@@ -225,25 +239,11 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
             </div>
             <h1 className="text-2xl font-bold text-white">MEMORY MINI-GAME</h1>
           </div>
-          <p className="text-sm text-blue-200">Find all matching pairs within 30 seconds!</p>
+          <p className="text-sm text-blue-200">Find all matching pairs to continue!</p>
         </div>
 
 
-        {/* Game Result */}
-        {gameCompleted && (
-          <div className="max-w-md mx-auto mb-6">
-            <div className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-2 border-white/30 rounded-lg p-6 pixel-lobby-card text-center">
-              <div className="w-12 h-12 bg-yellow-400 rounded border-2 border-white flex items-center justify-center mx-auto mb-4">
-                <Trophy className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-yellow-400 mb-3">MEMORY CHALLENGE COMPLETE!</h3>
-              <p className="text-sm text-white mb-2">
-                You found {correctMatches} pairs and earned {correctMatches * 10} points!
-              </p>
-              <p className="text-xs text-blue-200">Returning to quiz in 3 seconds...</p>
-            </div>
-          </div>
-        )}
+        {/* Game Result modal removed - direct redirect after completion */}
 
         {/* Memory Game */}
         {!gameCompleted && (

@@ -66,9 +66,11 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
 
       if (firstCard && secondCard && firstCard.emoji === secondCard.emoji) {
         // Match found
+        console.log("[MemoryGame] Match found:", firstCard.emoji)
         setTimeout(() => {
           setCards((prev) => prev.map((c) => (c.id === firstId || c.id === secondId ? { ...c, isMatched: true } : c)))
           setFlippedCards([])
+          console.log("[MemoryGame] Calling onCorrectMatch callback")
           onCorrectMatch()
         }, 500)
       } else {
