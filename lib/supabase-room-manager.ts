@@ -294,6 +294,61 @@ class SupabaseRoomManager {
     }
   }
 
+  async kickPlayer(roomCode: string, playerId: string, hostId: string): Promise<boolean> {
+    try {
+      // Get room data and verify host
+      const { data: roomData, error: roomError } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('room_code', roomCode)
+        .single()
+
+      if (roomError || !roomData) {
+        console.error('[SupabaseRoomManager] Room not found for kick:', roomCode)
+        return false
+      }
+
+      // Verify the requester is the host
+      // host_name is stored as "Host-{hostId.slice(0, 6)}" so we need to check if hostId starts with the same prefix
+      const expectedHostName = `Host-${hostId.slice(0, 6)}`
+      if (roomData.host_name !== expectedHostName) {
+        console.error('[SupabaseRoomManager] Host verification failed:', { host_name: roomData.host_name, hostId, expectedHostName })
+        return false
+      }
+
+      // Get player info before deleting
+      const { data: playerData, error: playerError } = await supabase
+        .from('players')
+        .select('username')
+        .eq('id', playerId)
+        .eq('room_id', roomData.id)
+        .single()
+
+      if (playerError || !playerData) {
+        console.error('[SupabaseRoomManager] Player not found for kick:', playerId)
+        return false
+      }
+
+      // Delete player
+      const { error: deleteError } = await supabase
+        .from('players')
+        .delete()
+        .eq('id', playerId)
+        .eq('room_id', roomData.id)
+
+      if (deleteError) {
+        console.error('[SupabaseRoomManager] Error kicking player:', deleteError)
+        return false
+      }
+
+      console.log('[SupabaseRoomManager] Player kicked:', playerId, 'Username:', playerData.username)
+      return true
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Error kicking player:', error)
+      return false
+    }
+  }
+
   async startCountdown(roomCode: string, hostId: string, duration: number = 10): Promise<boolean> {
     try {
       // Get room data
@@ -414,6 +469,11 @@ class SupabaseRoomManager {
       console.error('[SupabaseRoomManager] Error updating player score:', error)
       return false
     }
+  }
+
+  async isPlayerKicked(roomCode: string, username: string): Promise<boolean> {
+    // Always return false since we removed kick prevention
+    return false
   }
 
   async subscribe(roomCode: string, callback: (room: Room | null) => void) {

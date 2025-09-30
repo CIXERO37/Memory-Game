@@ -60,6 +60,10 @@ class RoomManager {
     return await supabaseRoomManager.leaveRoom(roomCode, playerId)
   }
 
+  async kickPlayer(roomCode: string, playerId: string, hostId: string): Promise<boolean> {
+    return await supabaseRoomManager.kickPlayer(roomCode, playerId, hostId)
+  }
+
   deleteRoom(roomCode: string, hostId: string): boolean {
     console.warn("[RoomManager] deleteRoom is deprecated. Rooms are managed by Supabase.")
     return false
@@ -67,6 +71,10 @@ class RoomManager {
 
   async subscribe(roomCode: string, callback: (room: Room | null) => void) {
     return await supabaseRoomManager.subscribe(roomCode, callback)
+  }
+
+  async isPlayerKicked(roomCode: string, username: string): Promise<boolean> {
+    return await supabaseRoomManager.isPlayerKicked(roomCode, username)
   }
 
   isChannelConnected(): boolean {
