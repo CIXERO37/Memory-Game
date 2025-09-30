@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Trophy, Users, Home, Star } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
@@ -9,19 +9,28 @@ interface Player {
   id: string
   username: string
   avatar: string
-  quizScore: number
-  memoryScore: number
+  quizScore?: number
+  memoryScore?: number
   isHost: boolean
 }
 
 interface Room {
-  id: string
-  roomCode: string
+  code: string
+  hostId: string
   players: Player[]
-  gameStatus: string
+  settings: {
+    questionCount: number
+    totalTimeLimit: number
+  }
+  status: "waiting" | "countdown" | "quiz" | "memory" | "finished"
+  createdAt: string
+  startedAt?: string
+  gameStarted: boolean
+  countdownStartTime?: string
+  countdownDuration?: number
 }
 
-export default function LeaderboardPage() {
+function LeaderboardPageContent() {
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const searchParams = useSearchParams()
@@ -285,6 +294,26 @@ export default function LeaderboardPage() {
       {/* Pixel Background Elements */}
       <PixelBackgroundElements />
     </div>
+  )
+}
+
+export default function LeaderboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+              <Trophy className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">LOADING...</h2>
+            <p className="text-sm text-blue-200">Preparing leaderboard</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <LeaderboardPageContent />
+    </Suspense>
   )
 }
 
