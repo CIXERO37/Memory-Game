@@ -31,14 +31,14 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [correctAnswers, setCorrectAnswers] = useState(0)
   const [questionsAnswered, setQuestionsAnswered] = useState(0)
   const [questionsAnsweredInitialized, setQuestionsAnsweredInitialized] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState(30)
+  // Removed per-question timer to allow unlimited thinking time
   const [totalTimeSelected, setTotalTimeSelected] = useState(0)
   const [gameFinished, setGameFinished] = useState(false)
   const [showResult, setShowResult] = useState(false)
   const [quizTitle, setQuizTitle] = useState("")
   const [gameStarted, setGameStarted] = useState(false)
   const [isInMemoryGame, setIsInMemoryGame] = useState(false)
-  const [memoryGameScore, setMemoryGameScore] = useState(0)
+  // Removed memory game score - memory game is now just an obstacle
   const [playerId] = useState(() => {
     const player = localStorage.getItem("currentPlayer")
     return player ? JSON.parse(player).id : null
@@ -153,7 +153,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       const selectedQuestions = getRandomQuestions(quiz, questionCount)
       setQuestions(selectedQuestions)
       setQuizTitle(quiz.title)
-      setTimeRemaining(30) // Timer per soal tetap 30 detik
+      // Removed per-question timer - players can think without time pressure
       setTotalTimeSelected(timeLimit) // Total durasi quiz
     }
   }, [searchParams, params.roomCode, room, loading])
@@ -162,39 +162,24 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     const checkMemoryGameReturn = () => {
       const memoryReturn = localStorage.getItem(`memory-return-${params.roomCode}`)
       if (memoryReturn) {
+        console.log("[Quiz] Memory game return detected:", memoryReturn)
         const data = JSON.parse(memoryReturn)
-        setMemoryGameScore(data.score || 0)
+        // Memory game no longer provides score - it's just an obstacle
         setCurrentQuestion(data.resumeQuestion || currentQuestion)
         // Don't override questionsAnswered here - let database sync handle it
         localStorage.removeItem(`memory-return-${params.roomCode}`)
+        console.log("[Quiz] Memory game return processed, continuing quiz...")
 
-        // Update total score in room
-        if (playerId) {
-          roomManager.updatePlayerMemoryScore(params.roomCode, playerId, data.score || 0)
-        }
+        // No memory score update needed - memory game is just an obstacle
       }
     }
 
     if (gameStarted && !isHost) {
       checkMemoryGameReturn()
     }
-  }, [gameStarted, params.roomCode, playerId, isHost, currentQuestion])
+  }, [gameStarted, params.roomCode, playerId, isHost])
 
-  // Timer countdown
-  useEffect(() => {
-    if (timeRemaining <= 0 || gameFinished || questions.length === 0 || isInMemoryGame) {
-      if (timeRemaining <= 0) {
-        handleNextQuestion()
-      }
-      return
-    }
-
-    const timer = setTimeout(() => {
-      setTimeRemaining(timeRemaining - 1)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [timeRemaining, gameFinished, questions.length, isInMemoryGame])
+  // Removed per-question timer countdown - players can take their time to think
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (selectedAnswer !== null || showResult) return
@@ -296,8 +281,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setCurrentQuestion(currentQuestion + 1)
       setSelectedAnswer(null)
       setShowResult(false)
-      // Reset timer per soal ke 30 detik
-      setTimeRemaining(30)
+      // No timer reset needed - players can think without time pressure
     } else {
       setGameFinished(true)
 
@@ -350,7 +334,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const progress = (currentQuestion / (room?.settings.questionCount || questions.length)) * 100
 
   if (gameFinished) {
-    const totalScore = score + memoryGameScore
+    const totalScore = score // Only quiz score counts now
     
     // Get player name from localStorage
     const getPlayerName = () => {
@@ -579,7 +563,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
           <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
             <Trophy className="w-4 h-4 text-yellow-400" />
-            <span className="text-yellow-400 font-bold text-sm">{score + memoryGameScore}</span>
+            <span className="text-yellow-400 font-bold text-sm">{score}</span>
           </div>
 
           <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
