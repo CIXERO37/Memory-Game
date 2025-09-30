@@ -109,6 +109,8 @@ function JoinPageContent() {
       console.log("[Join] Room not found for code:", roomCode)
       setRoomError("Room not found. Please check the room code.")
       setIsJoining(false)
+      
+      // Kick prevention has been removed
       return
     }
 
@@ -117,6 +119,8 @@ function JoinPageContent() {
       setIsJoining(false)
       return
     }
+
+    // Kick prevention has been removed - players can now rejoin after being kicked
 
     // Check if player already exists in room
     const existingPlayer = room.players.find((p: any) => p.id === playerId)

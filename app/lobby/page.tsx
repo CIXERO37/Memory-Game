@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Users, Copy, QrCode, Share, Play, Maximize2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Users, Copy, QrCode, Share, Play, Maximize2, ChevronLeft, ChevronRight, AlertTriangle, X } from "lucide-react"
 import Link from "next/link"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
@@ -32,6 +32,9 @@ function LobbyPageContent() {
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [playerCountChanged, setPlayerCountChanged] = useState(false)
   const [playerLeft, setPlayerLeft] = useState(false)
+  const [showKickDialog, setShowKickDialog] = useState(false)
+  const [playerToKick, setPlayerToKick] = useState<any>(null)
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(0)
   const { toast } = useToast()
   const { room, loading } = useRoom(roomCode || "")
   
@@ -112,6 +115,89 @@ function LobbyPageContent() {
     setPendingNavigation(null)
   }
 
+  const handleKickPlayer = (player: any) => {
+    setPlayerToKick(player)
+    setShowKickDialog(true)
+  }
+
+  const confirmKickPlayer = async () => {
+    if (!playerToKick || !roomCode || !hostId) {
+      toast({
+        title: "Error",
+        description: "Missing required data to kick player.",
+        duration: 3000,
+      })
+      return
+    }
+
+    try {
+      console.log("[Lobby] Attempting to kick player:", {
+        playerId: playerToKick.id,
+        username: playerToKick.username,
+        roomCode,
+        hostId
+      })
+      
+      const success = await roomManager.kickPlayer(roomCode, playerToKick.id, hostId)
+      
+      if (success) {
+        console.log("[Lobby] Player kicked successfully")
+        toast({
+          title: "Player Kicked!",
+          description: `👢 ${playerToKick.username} has been kicked from the game`,
+          duration: 3000,
+        })
+        
+        // Force refresh room data after successful kick
+        setTimeout(async () => {
+          try {
+            const refreshedRoom = await roomManager.getRoom(roomCode)
+            if (refreshedRoom) {
+              setLocalRoom(refreshedRoom)
+            }
+          } catch (error) {
+            console.error("[Lobby] Error refreshing room after kick:", error)
+          }
+        }, 500)
+        
+        // Broadcast kick event to all players immediately
+        if (typeof window !== 'undefined') {
+          const broadcastChannel = new BroadcastChannel(`kick-${roomCode}`)
+          broadcastChannel.postMessage({ 
+            type: 'player-kicked', 
+            playerId: playerToKick.id,
+            username: playerToKick.username,
+            roomCode: roomCode
+          })
+          broadcastChannel.close()
+          console.log("[Lobby] Broadcasted kick event to players")
+        }
+      } else {
+        console.log("[Lobby] Failed to kick player")
+        toast({
+          title: "Failed to Kick Player",
+          description: "Could not kick the player. Please try again.",
+          duration: 3000,
+        })
+      }
+    } catch (error) {
+      console.error("[Lobby] Error kicking player:", error)
+      toast({
+        title: "Error",
+        description: "An error occurred while kicking the player.",
+        duration: 3000,
+      })
+    }
+
+    setShowKickDialog(false)
+    setPlayerToKick(null)
+  }
+
+  const cancelKickPlayer = () => {
+    setShowKickDialog(false)
+    setPlayerToKick(null)
+  }
+
   const handleCountdownComplete = async () => {
     if (!roomCode || !hostId) return
     
@@ -152,13 +238,27 @@ function LobbyPageContent() {
       try {
         unsubscribe = await roomManager.subscribe(roomCode, (updatedRoom) => {
           if (updatedRoom?.code === roomCode) {
+            const now = Date.now()
+            
+            // Debounce rapid updates (prevent multiple updates within 100ms)
+            if (now - lastUpdateTime < 100) {
+              console.log("[Lobby] Debouncing rapid update")
+              return
+            }
+            setLastUpdateTime(now)
+            
             console.log("[Lobby] Received room update via Supabase subscription:", updatedRoom)
             console.log("[Lobby] Player count changed from", currentRoom?.players?.length || 0, "to", updatedRoom?.players?.length || 0)
+            console.log("[Lobby] Current players:", currentRoom?.players?.map((p: any) => ({ id: p.id, username: p.username })))
+            console.log("[Lobby] Updated players:", updatedRoom?.players?.map((p: any) => ({ id: p.id, username: p.username })))
+            
+            // Always update the room state first to prevent race conditions
+            setLocalRoom(updatedRoom)
             
             // Show toast notification for player changes
-            if (updatedRoom?.players && currentRoom?.players) {
+            if (updatedRoom?.players) {
               const newPlayerCount = updatedRoom.players.length
-              const oldPlayerCount = currentRoom.players.length
+              const oldPlayerCount = currentRoom?.players?.length || 0
               
               if (newPlayerCount > oldPlayerCount) {
                 // Player joined
@@ -185,19 +285,21 @@ function LobbyPageContent() {
                 setTimeout(() => setPlayerCountChanged(false), 2000)
               } else if (newPlayerCount < oldPlayerCount) {
                 // Player left - find which players left
-                const oldPlayerIds = currentRoom.players.map((p: any) => p.id)
+                const oldPlayerIds = currentRoom?.players?.map((p: any) => p.id) || []
                 const newPlayerIds = updatedRoom.players.map((p: any) => p.id)
                 const leftPlayerIds = oldPlayerIds.filter((id: string) => !newPlayerIds.includes(id))
-                const leftPlayers = currentRoom.players.filter((p: any) => leftPlayerIds.includes(p.id))
+                const leftPlayers = currentRoom?.players?.filter((p: any) => leftPlayerIds.includes(p.id)) || []
+                
+                console.log("[Lobby] Players left:", leftPlayers.map((p: any) => ({ id: p.id, username: p.username })))
                 
                 if (leftPlayers.length > 0) {
-                leftPlayers.forEach((player: any) => {
-                  toast({
-                    title: "Player Left",
-                    description: `👋 ${player.username} left the game`,
-                    duration: 3000,
+                  leftPlayers.forEach((player: any) => {
+                    toast({
+                      title: "Player Left",
+                      description: `👋 ${player.username} left the game`,
+                      duration: 3000,
+                    })
                   })
-                })
                   
                   // Trigger visual indicator for player leaving
                   setPlayerLeft(true)
@@ -223,7 +325,7 @@ function LobbyPageContent() {
                 }
               } else if (newPlayerCount === oldPlayerCount && newPlayerCount > 0) {
                 // Same count but different players (rejoin scenario)
-                const oldPlayerIds = currentRoom.players.map((p: any) => p.id)
+                const oldPlayerIds = currentRoom?.players?.map((p: any) => p.id) || []
                 const newPlayerIds = updatedRoom.players.map((p: any) => p.id)
                 const hasChanges = !oldPlayerIds.every((id: string) => newPlayerIds.includes(id)) || 
                                  !newPlayerIds.every((id: string) => oldPlayerIds.includes(id))
@@ -234,8 +336,6 @@ function LobbyPageContent() {
                 }
               }
             }
-            
-              setLocalRoom(updatedRoom)
           }
         })
       } catch (error) {
@@ -248,7 +348,7 @@ function LobbyPageContent() {
     return () => {
       if (unsubscribe) unsubscribe()
     }
-  }, [roomCode, currentRoom?.players?.length, currentRoom?.players, toast])
+  }, [roomCode, toast])
 
   useEffect(() => {
     const roomCodeParam = searchParams.get("roomCode")
@@ -359,7 +459,7 @@ function LobbyPageContent() {
     console.log("[Lobby] Current values:", { roomCode, hostId, gameStarted, roomStatus: currentRoom?.status })
   }, [currentRoom, roomCode, hostId, gameStarted])
 
-  // Light polling as fallback for critical updates (countdown, game start)
+  // Light polling as fallback for critical updates (countdown, game start, player changes)
   useEffect(() => {
     if (!roomCode) return
 
@@ -367,21 +467,27 @@ function LobbyPageContent() {
       try {
         const latestRoom = await roomManager.getRoom(roomCode)
         if (latestRoom) {
-          // Only update for critical status changes that might be missed by subscription
+          // Check for player count changes that might be missed by subscription
+          const currentPlayerCount = currentRoom?.players?.length || 0
+          const latestPlayerCount = latestRoom.players?.length || 0
+          
+          // Only update for critical status changes or player count changes
           const currentStatus = currentRoom?.status
           const latestStatus = latestRoom.status
           const currentCountdown = currentRoom?.countdownStartTime
           const latestCountdown = latestRoom.countdownStartTime
           
-          // Only force update for countdown and game start status changes
           if ((latestStatus === "countdown" && currentStatus !== "countdown") ||
               (latestStatus === "quiz" && currentStatus !== "quiz") ||
-              (latestCountdown !== currentCountdown && latestStatus === "countdown")) {
-            console.log("[Lobby] Critical status change detected via polling:", {
+              (latestCountdown !== currentCountdown && latestStatus === "countdown") ||
+              (latestPlayerCount !== currentPlayerCount)) {
+            console.log("[Lobby] Critical change detected via polling:", {
               currentStatus,
               latestStatus,
               currentCountdown,
-              latestCountdown
+              latestCountdown,
+              currentPlayerCount,
+              latestPlayerCount
             })
             setLocalRoom(latestRoom)
           }
@@ -389,10 +495,10 @@ function LobbyPageContent() {
       } catch (error) {
         console.error("[Lobby] Error in refresh interval:", error)
       }
-    }, 5000) // Reduced frequency - check every 5 seconds only for critical updates
+    }, 3000) // Check every 3 seconds for player changes and critical updates
 
     return () => clearInterval(refreshInterval)
-  }, [roomCode, currentRoom?.status, currentRoom?.countdownStartTime])
+  }, [roomCode, currentRoom?.status, currentRoom?.countdownStartTime, currentRoom?.players?.length])
 
 
   const shareUrl = roomCode && typeof window !== 'undefined' ? `${window.location.origin}/join?room=${roomCode}` : ""
@@ -737,14 +843,14 @@ function LobbyPageContent() {
                   {currentRoom && !gameStarted && (
                     <div className="space-y-3">
                       <div className="relative pixel-button-container">
-                        <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                         <button 
                           onClick={startGame}
                           disabled={!roomCode || !hostId || !currentRoom || currentRoom.players.length === 0}
-                          className="start-quiz-button px-6 py-3 flex items-center justify-center gap-3 text-lg font-black tracking-wide"
+                          className="relative bg-gradient-to-br from-purple-500 to-purple-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-purple-400 hover:to-purple-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-3 flex items-center justify-center gap-3 text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
                           <Play className="h-4 w-4" />
-                          <span>START QUIZ</span>
+                          <span className="pixel-font-sm">START QUIZ</span>
                         </button>
                       </div>
                     </div>
@@ -785,7 +891,17 @@ function LobbyPageContent() {
                     {/* Players Grid - 4 columns x 5 rows */}
                     <div className="grid grid-cols-4 gap-2">
                       {currentPlayers.map((player: any) => (
-                        <div key={player.id} className="bg-white border-2 border-black rounded p-2 pixel-player-card">
+                        <div key={player.id} className="bg-white border-2 border-black rounded p-2 pixel-player-card relative">
+                          {/* Kick button - only show for host */}
+                          {hostId && (
+                            <button
+                              onClick={() => handleKickPlayer(player)}
+                              className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 border-2 border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                              title={`Kick ${player.username}`}
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          )}
                           <div className="flex flex-col items-center gap-2">
                             <div className="w-12 h-12 bg-gray-100 border border-black rounded flex items-center justify-center overflow-hidden">
                               <img 
@@ -850,8 +966,8 @@ function LobbyPageContent() {
       <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
         <DialogContent className="max-w-md bg-transparent border-none p-0">
           <div className="relative pixel-dialog-container">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg border-4 border-black shadow-2xl p-6">
               {/* Dialog Header */}
               <div className="text-center mb-6">
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
@@ -884,6 +1000,52 @@ function LobbyPageContent() {
                     className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
                     <span className="pixel-font-sm">LEAVE LOBBY</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Kick Player Confirmation Dialog */}
+      <Dialog open={showKickDialog} onOpenChange={setShowKickDialog}>
+        <DialogContent className="max-w-md bg-transparent border-none p-0">
+          <div className="relative pixel-dialog-container">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
+              {/* Dialog Header */}
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                  <X className="h-8 w-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 pixel-font">KICK PLAYER?</h3>
+                <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
+                  ARE YOU SURE YOU WANT TO KICK<br/>
+                  <span className="font-bold text-yellow-300">{playerToKick?.username?.toUpperCase()}</span><br/>
+                  FROM THE GAME?
+                </p>
+              </div>
+
+              {/* Dialog Buttons */}
+              <div className="flex gap-4 justify-center">
+                <div className="relative pixel-button-container">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <Button 
+                    onClick={cancelKickPlayer}
+                    className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
+                  >
+                    <span className="pixel-font-sm">CANCEL</span>
+                  </Button>
+                </div>
+
+                <div className="relative pixel-button-container">
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <Button 
+                    onClick={confirmKickPlayer}
+                    className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
+                  >
+                    <span className="pixel-font-sm">KICK PLAYER</span>
                   </Button>
                 </div>
               </div>
