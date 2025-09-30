@@ -75,6 +75,38 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
     }
   }, [room.countdownStartTime, room.countdownDuration, onCountdownComplete, isActive, previousTime])
 
+  // Show loading state if countdown data is not ready yet
+  if (!room.countdownStartTime || !room.countdownDuration) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        {/* Pixel Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="pixel-grid"></div>
+        </div>
+        {/* Retro Scanlines */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="scanlines"></div>
+        </div>
+        {/* Floating Pixel Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <PixelBackgroundElements />
+        </div>
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-6">
+              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                <Clock className="h-8 w-8 text-black animate-spin" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">PREPARING COUNTDOWN...</h3>
+              <p className="text-white/80 pixel-font-sm">GET READY FOR THE QUIZ!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!isActive || timeLeft <= 0) {
     return null
   }

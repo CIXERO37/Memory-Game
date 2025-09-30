@@ -97,6 +97,45 @@ function MonitorPageContent() {
     }
   }, [room, previousRankings])
 
+  // Check if all players have completed the quiz and auto-redirect
+  useEffect(() => {
+    if (room && room.players.length > 0) {
+      const nonHostPlayers = room.players.filter(p => !p.isHost)
+      const totalQuestions = room.settings.questionCount || 10
+      
+      // Check if all players have completed all questions
+      const allPlayersCompleted = nonHostPlayers.every(player => 
+        (player.questionsAnswered || 0) >= totalQuestions
+      )
+      
+      if (allPlayersCompleted && nonHostPlayers.length > 0) {
+        console.log("[Monitor] All players completed quiz, ending game automatically...")
+        
+        // End the game automatically
+        roomManager.updateGameStatus(roomCode!, "finished").then(() => {
+          // Broadcast game end event to all players
+          if (typeof window !== 'undefined') {
+            const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
+            broadcastChannel.postMessage({ 
+              type: 'game-ended', 
+              roomCode: roomCode,
+              timestamp: Date.now()
+            })
+            broadcastChannel.close()
+            console.log("[Monitor] Broadcasted game end event to players")
+          }
+          
+          // Redirect to leaderboard
+          window.location.href = `/leaderboard?roomCode=${roomCode}`
+        }).catch((error) => {
+          console.error("[Monitor] Error ending game automatically:", error)
+          // Fallback redirect
+          window.location.href = `/leaderboard?roomCode=${roomCode}`
+        })
+      }
+    }
+  }, [room, roomCode])
+
   const endGame = async () => {
     console.log("End Game clicked, roomCode:", roomCode)
     if (roomCode) {
@@ -105,6 +144,20 @@ function MonitorPageContent() {
         console.log("Game status updated:", success)
         
         if (success) {
+          console.log("Game ended successfully, broadcasting to players...")
+          
+          // Broadcast game end event to all players immediately
+          if (typeof window !== 'undefined') {
+            const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
+            broadcastChannel.postMessage({ 
+              type: 'game-ended', 
+              roomCode: roomCode,
+              timestamp: Date.now()
+            })
+            broadcastChannel.close()
+            console.log("[Monitor] Broadcasted game end event to players")
+          }
+          
           console.log("Redirecting to leaderboard...")
           // Try router.push first, then fallback to window.location
           try {

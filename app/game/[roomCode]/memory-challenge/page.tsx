@@ -5,6 +5,7 @@ import { MemoryGame } from "@/components/memory-game"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Target } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
+import { useRoom } from "@/hooks/use-room"
 
 interface MemoryChallengePageProps {
   params: {
@@ -25,6 +26,55 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     const player = localStorage.getItem("currentPlayer")
     return player ? JSON.parse(player).id : null
   })
+  const { room } = useRoom(params.roomCode)
+
+  // Monitor room status for game end
+  useEffect(() => {
+    if (room && room.status === "finished") {
+      console.log("[Memory Challenge] Game finished, redirecting to result page...")
+      // Redirect to result page for players
+      window.location.href = `/result?roomCode=${params.roomCode}`
+    }
+  }, [room?.status, params.roomCode])
+
+  // Aggressive polling for game end detection (fallback)
+  useEffect(() => {
+    if (params.roomCode) {
+      const gameEndPolling = setInterval(async () => {
+        try {
+          const currentRoom = await roomManager.getRoom(params.roomCode)
+          if (currentRoom && currentRoom.status === "finished") {
+            console.log("[Memory Challenge] Game finished detected via aggressive polling - redirecting immediately...")
+            clearInterval(gameEndPolling)
+            window.location.href = `/result?roomCode=${params.roomCode}`
+          }
+        } catch (error) {
+          console.error("[Memory Challenge] Error in game end polling:", error)
+        }
+      }, 1000) // Check every 1 second for game end
+
+      return () => clearInterval(gameEndPolling)
+    }
+  }, [params.roomCode])
+
+  // Listen for immediate game end broadcast
+  useEffect(() => {
+    if (params.roomCode) {
+      const broadcastChannel = new BroadcastChannel(`game-end-${params.roomCode}`)
+      
+      broadcastChannel.onmessage = (event) => {
+        if (event.data.type === 'game-ended') {
+          console.log("[Memory Challenge] Game end broadcast received - redirecting immediately...")
+          broadcastChannel.close()
+          window.location.href = `/result?roomCode=${params.roomCode}`
+        }
+      }
+
+      return () => {
+        broadcastChannel.close()
+      }
+    }
+  }, [params.roomCode])
 
   // Initialize progress from localStorage on component mount
   useEffect(() => {
@@ -71,7 +121,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
   // Completion logic is now handled in handleCorrectMatch to avoid race conditions
 
-  const handleGameEnd = () => {
+  const handleGameEnd = async () => {
     // Memory game is now just an obstacle - no scoring system
     // No points awarded for completing memory challenge
 
@@ -91,14 +141,42 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     localStorage.removeItem(`quiz-progress-${params.roomCode}`)
     localStorage.removeItem(`memory-progress-${params.roomCode}`)
 
-    // Auto-redirect back to quiz immediately
-    console.log("[Memory Challenge] Game completed, redirecting to quiz immediately...")
-    try {
-      window.location.href = `/game/${params.roomCode}/quiz`
-    } catch (error) {
-      console.error("[Memory Challenge] Redirect failed:", error)
-      // Fallback redirect
-      window.location.replace(`/game/${params.roomCode}/quiz`)
+    // Check if player has completed all quiz questions
+    const totalQuestions = room?.settings.questionCount || 10
+    const questionsAnswered = progressData.questionsAnswered || 0
+    
+    if (questionsAnswered >= totalQuestions) {
+      // Player has completed all questions - end the game
+      console.log("[Memory Challenge] Player completed all questions, ending game...")
+      
+      try {
+        await roomManager.updateGameStatus(params.roomCode, "finished")
+        
+        // Get player info to determine if they're host
+        const playerData = localStorage.getItem("currentPlayer")
+        const isHost = playerData ? JSON.parse(playerData).isHost : false
+        
+        // Redirect based on user type
+        if (!isHost) {
+          window.location.href = `/result?roomCode=${params.roomCode}`
+        } else {
+          window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+        }
+      } catch (error) {
+        console.error("[Memory Challenge] Error ending game:", error)
+        // Fallback to quiz page
+        window.location.href = `/game/${params.roomCode}/quiz`
+      }
+    } else {
+      // Continue to quiz for remaining questions
+      console.log("[Memory Challenge] Game completed, redirecting to quiz immediately...")
+      try {
+        window.location.href = `/game/${params.roomCode}/quiz`
+      } catch (error) {
+        console.error("[Memory Challenge] Redirect failed:", error)
+        // Fallback redirect
+        window.location.replace(`/game/${params.roomCode}/quiz`)
+      }
     }
   }
 

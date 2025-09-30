@@ -65,6 +65,12 @@ export function useRoom(roomCode: string | null) {
             setRoom(currentRoom)
             return
           }
+          
+          if (currentRoom.status === "finished" && room?.status !== "finished") {
+            console.log("[useRoom] Game finished detected via polling - updating immediately")
+            setRoom(currentRoom)
+            return
+          }
         }
       } catch (error) {
         console.error("[useRoom] Error polling room:", error)
