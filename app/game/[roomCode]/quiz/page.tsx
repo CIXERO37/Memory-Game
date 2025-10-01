@@ -59,8 +59,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       // Sync questionsAnswered with database
       if (currentPlayer && !questionsAnsweredInitialized) {
         const dbQuestionsAnswered = currentPlayer.questionsAnswered || 0
-        console.log("[Quiz] Syncing questionsAnswered from database:", dbQuestionsAnswered)
+        const dbQuizScore = currentPlayer.quizScore || 0
+        console.log("[Quiz] Syncing player data from database:", { 
+          questionsAnswered: dbQuestionsAnswered, 
+          quizScore: dbQuizScore 
+        })
         setQuestionsAnswered(dbQuestionsAnswered)
+        setScore(dbQuizScore)
+        // Set currentQuestion based on questionsAnswered to maintain consistency
+        setCurrentQuestion(dbQuestionsAnswered)
         setQuestionsAnsweredInitialized(true)
       }
 
@@ -69,19 +76,32 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }
   }, [room, playerId, questionsAnsweredInitialized])
 
-  // Listen for room updates and sync questionsAnswered
+  // Listen for room updates and sync questionsAnswered and score
   useEffect(() => {
     if (room && playerId && questionsAnsweredInitialized) {
       const currentPlayer = room.players.find((p) => p.id === playerId)
-      if (currentPlayer && currentPlayer.questionsAnswered !== undefined) {
-        const dbQuestionsAnswered = currentPlayer.questionsAnswered
+      if (currentPlayer) {
+        const dbQuestionsAnswered = currentPlayer.questionsAnswered || 0
+        const dbQuizScore = currentPlayer.quizScore || 0
+        
         if (dbQuestionsAnswered !== questionsAnswered) {
           console.log("[Quiz] Syncing questionsAnswered from room update:", dbQuestionsAnswered)
           setQuestionsAnswered(dbQuestionsAnswered)
         }
+        
+        if (dbQuizScore !== score) {
+          console.log("[Quiz] Syncing quiz score from room update:", dbQuizScore)
+          setScore(dbQuizScore)
+        }
+        
+        // Sync currentQuestion with questionsAnswered
+        if (dbQuestionsAnswered !== currentQuestion) {
+          console.log("[Quiz] Syncing currentQuestion with questionsAnswered:", dbQuestionsAnswered)
+          setCurrentQuestion(dbQuestionsAnswered)
+        }
       }
     }
-  }, [room, playerId, questionsAnsweredInitialized, questionsAnswered])
+  }, [room, playerId, questionsAnsweredInitialized, questionsAnswered, score, currentQuestion])
 
   // Timer is now handled by useSynchronizedTimer hook
 
@@ -251,9 +271,40 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       if (memoryReturn) {
         console.log("[Quiz] Memory game return detected:", memoryReturn)
         const data = JSON.parse(memoryReturn)
-        // Memory game no longer provides score - it's just an obstacle
-        setCurrentQuestion(data.resumeQuestion || currentQuestion)
-        // Don't override questionsAnswered here - let database sync handle it
+        
+        // Restore progress data from localStorage
+        const progressData = localStorage.getItem(`quiz-progress-${params.roomCode}`)
+        if (progressData) {
+          const progress = JSON.parse(progressData)
+          console.log("[Quiz] Restoring progress data from localStorage:", progress)
+          setCurrentQuestion(progress.currentQuestion || data.resumeQuestion || currentQuestion)
+          setScore(progress.score || 0)
+          setCorrectAnswers(progress.correctAnswers || 0)
+          setQuestionsAnswered(progress.questionsAnswered || 0)
+          
+          // Sync restored data with database
+          if (playerId) {
+            try {
+              await roomManager.updatePlayerScore(
+                params.roomCode, 
+                playerId, 
+                progress.score || 0, 
+                undefined, 
+                progress.questionsAnswered || 0
+              )
+              console.log("[Quiz] Successfully synced restored data with database")
+            } catch (error) {
+              console.error("[Quiz] Error syncing restored data with database:", error)
+            }
+          }
+          
+          // Clean up localStorage after restore
+          localStorage.removeItem(`quiz-progress-${params.roomCode}`)
+        } else {
+          // Fallback to memory return data
+          setCurrentQuestion(data.resumeQuestion || currentQuestion)
+        }
+        
         localStorage.removeItem(`memory-return-${params.roomCode}`)
         console.log("[Quiz] Memory game return processed, continuing quiz...")
 
@@ -463,7 +514,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     )
   }
 
-  const progress = (currentQuestion / (room?.settings.questionCount || questions.length)) * 100
+  const progress = (questionsAnswered / (room?.settings.questionCount || questions.length)) * 100
 
   if (gameFinished) {
     const totalScore = score // Only quiz score counts now
@@ -666,7 +717,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             </div>
           </div>
           <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg px-3 py-1">
-            <span className="text-blue-400 font-bold text-xs">Question {currentQuestion + 1} of {room?.settings.questionCount || questions.length}</span>
+            <span className="text-blue-400 font-bold text-xs">Question {questionsAnswered + 1} of {room?.settings.questionCount || questions.length}</span>
           </div>
         </div>
 
