@@ -38,6 +38,8 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [quizTitle, setQuizTitle] = useState("")
   const [gameStarted, setGameStarted] = useState(false)
   const [isInMemoryGame, setIsInMemoryGame] = useState(false)
+  const [showTimeWarning, setShowTimeWarning] = useState(false)
+  const [timeUpHandled, setTimeUpHandled] = useState(false)
   // Removed memory game score - memory game is now just an obstacle
   const [playerId] = useState(() => {
     const player = localStorage.getItem("currentPlayer")
@@ -47,8 +49,65 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
   const { room, loading } = useRoom(params.roomCode)
-  const timerState = useSynchronizedTimer(room)
+  
+  // Handle timer expiration
+  const handleTimeUp = async () => {
+    if (timeUpHandled) return // Prevent multiple calls
+    setTimeUpHandled(true)
+    
+    console.log("[Quiz] Timer expired! Ending game automatically...")
+    
+    try {
+      // End the game automatically
+      await roomManager.updateGameStatus(params.roomCode, "finished")
+      
+      // Broadcast game end event to all players
+      if (typeof window !== 'undefined') {
+        const broadcastChannel = new BroadcastChannel(`game-end-${params.roomCode}`)
+        broadcastChannel.postMessage({ 
+          type: 'game-ended', 
+          roomCode: params.roomCode,
+          timestamp: Date.now()
+        })
+        broadcastChannel.close()
+        console.log("[Quiz] Broadcasted game end event to players")
+      }
+      
+      // Redirect based on user type
+      if (!isHost) {
+        window.location.href = `/result?roomCode=${params.roomCode}`
+      } else {
+        window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+      }
+    } catch (error) {
+      console.error("[Quiz] Error ending game due to timer expiration:", error)
+      // Fallback redirect
+      if (!isHost) {
+        window.location.href = `/result?roomCode=${params.roomCode}`
+      } else {
+        window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+      }
+    }
+  }
+  
+  const timerState = useSynchronizedTimer(room, undefined, handleTimeUp)
   const questionsInitialized = useRef(false)
+  
+  // Show warning when time is running low
+  useEffect(() => {
+    if (timerState.remainingTime <= 60 && timerState.remainingTime > 0) { // Show warning in last minute
+      setShowTimeWarning(true)
+    } else {
+      setShowTimeWarning(false)
+    }
+  }, [timerState.remainingTime])
+  
+  // Show time up notification
+  useEffect(() => {
+    if (timerState.remainingTime <= 0 && !timeUpHandled) {
+      setShowTimeWarning(true)
+    }
+  }, [timerState.remainingTime, timeUpHandled])
 
   useEffect(() => {
     if (room && playerId) {
@@ -721,6 +780,25 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           </div>
         </div>
 
+        {/* Time Warning */}
+        {showTimeWarning && (
+          <div className="mb-6 bg-red-500/20 border-2 border-red-500/50 rounded-lg p-4 animate-pulse">
+            <div className="flex items-center justify-center gap-2">
+              <Clock className="w-5 h-5 text-red-400" />
+              <span className="text-red-400 font-bold text-lg">
+                {timerState.remainingTime <= 0 ? "WAKTU HABIS!" : "WAKTU HAMPIR HABIS!"}
+              </span>
+              <Clock className="w-5 h-5 text-red-400" />
+            </div>
+            <p className="text-red-300 text-center text-sm mt-1">
+              {timerState.remainingTime <= 0 
+                ? "Game akan berakhir secara otomatis..." 
+                : "Selesaikan pertanyaan Anda secepat mungkin!"
+              }
+            </p>
+          </div>
+        )}
+
         {/* Progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -737,9 +815,9 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
         {/* Timer, Score, and Correct Answers */}
         <div className="flex justify-center gap-4 mb-6">
-          <div className="bg-green-500/20 border-2 border-green-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-green-400" />
-            <span className="text-green-400 font-bold text-sm">
+          <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-4 py-2 flex items-center gap-2`}>
+            <Clock className={`w-4 h-4 ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`} />
+            <span className={`font-bold text-sm ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`}>
               {getTimerDisplayText(timerState)}
             </span>
           </div>
