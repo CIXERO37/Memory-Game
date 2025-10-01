@@ -343,7 +343,7 @@ function MonitorPageContent() {
                 <p className="text-lg text-white">NO PLAYERS HAVE JOINED THE GAME YET</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3   xl:grid-cols-4 gap-4">
                 {sortedPlayers.map((player, index) => {
                 const rank = index + 1
                 const quizScore = player.quizScore || 0
@@ -398,7 +398,7 @@ function MonitorPageContent() {
                     <div className="space-y-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-bold text-white">QUIZ PROGRESS</span>
+                          <span className="text-sm font-bold text-white">PROGRESS</span>
                           <span className="text-sm text-blue-300">
                             {questionsAnswered}/{quizSettings.questionCount} ({Math.round(quizProgress)}%)
                           </span>

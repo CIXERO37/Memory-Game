@@ -25,6 +25,8 @@ export default function WaitingRoomPage() {
     avatar: string
     playerId: string
   } | null>(null)
+  const [previousPlayerCount, setPreviousPlayerCount] = useState(0)
+  const [showPlayerJoinedAnimation, setShowPlayerJoinedAnimation] = useState(false)
 
   // Restore player info from Supabase session on page load/refresh
   useEffect(() => {
@@ -100,6 +102,29 @@ export default function WaitingRoomPage() {
       }, 1000)
     }
   }, [room?.status, room?.gameStarted, gameStarting, roomCode])
+
+  // Detect new players joining and show animation
+  useEffect(() => {
+    if (room && room.players) {
+      const currentPlayerCount = room.players.length
+      
+      // Check if a new player joined (not the first load)
+      if (previousPlayerCount > 0 && currentPlayerCount > previousPlayerCount) {
+        console.log("[WaitingRoom] New player joined! Count:", previousPlayerCount, "->", currentPlayerCount)
+        
+        // Show animation for new player
+        setShowPlayerJoinedAnimation(true)
+        
+        // Hide animation after 3 seconds
+        setTimeout(() => {
+          setShowPlayerJoinedAnimation(false)
+        }, 3000)
+      }
+      
+      // Update previous count
+      setPreviousPlayerCount(currentPlayerCount)
+    }
+  }, [room?.players, previousPlayerCount])
 
   // Immediate countdown detection with aggressive polling
   useEffect(() => {
@@ -586,6 +611,26 @@ export default function WaitingRoomPage() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* New Player Joined Animation */}
+        {showPlayerJoinedAnimation && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className="relative inline-block">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-4 border-black shadow-2xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white border-2 border-black rounded flex items-center justify-center">
+                    <Users className="h-5 w-5 text-black animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="text-white font-bold text-sm pixel-font">NEW PLAYER JOINED!</div>
+                    <div className="text-white/80 text-xs pixel-font-sm">REFRESHING PLAYER LIST...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Pixel Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="w-8 h-8 bg-green-500 border-2 border-black rounded flex items-center justify-center">
@@ -692,6 +737,12 @@ export default function WaitingRoomPage() {
                   <p className="text-white text-sm pixel-font-sm">
                     {room.gameStarted ? "GAME STARTING SOON..." : "WAITING FOR HOST TO START THE GAME..."}
                   </p>
+                  
+                  {/* Real-time Status Indicator */}
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-white/70 text-xs pixel-font-sm">LIVE UPDATES ACTIVE</span>
+                  </div>
                 </div>
               </div>
             </div>

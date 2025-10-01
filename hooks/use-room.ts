@@ -21,6 +21,7 @@ export function useRoom(roomCode: string | null) {
         const initialRoom = await roomManager.getRoom(roomCode)
         setRoom(initialRoom)
         setLoading(false)
+        console.log("[useRoom] Initial room loaded:", initialRoom?.players?.length, "players")
       } catch (error) {
         console.error("[useRoom] Error loading room:", error)
         setLoading(false)
@@ -38,9 +39,17 @@ export function useRoom(roomCode: string | null) {
         unsubscribe = await roomManager.subscribe(roomCode, (updatedRoom) => {
           console.log("[useRoom] Room updated via Supabase subscription:", updatedRoom)
           console.log("[useRoom] Players in updated room:", updatedRoom?.players?.map(p => ({ id: p.id, username: p.username, avatar: p.avatar })))
+          
+          // Always update the room data when subscription triggers
           setRoom(updatedRoom)
           setIsConnected(true) // Supabase is always connected
+          
+          // Log player count changes for debugging
+          if (updatedRoom?.players) {
+            console.log(`[useRoom] Player count changed to: ${updatedRoom.players.length}`)
+          }
         })
+        console.log("[useRoom] Subscription set up successfully for room:", roomCode)
       } catch (error) {
         console.error("[useRoom] Error setting up subscription:", error)
       }
@@ -48,12 +57,22 @@ export function useRoom(roomCode: string | null) {
     
     setupSubscription()
 
-    // Light polling as fallback for critical updates only
+    // More frequent polling as fallback for player updates
     const pollInterval = setInterval(async () => {
       try {
         const currentRoom = await roomManager.getRoom(roomCode)
         if (currentRoom) {
-          // Only update for critical status changes
+          // Always check for player count changes
+          const currentPlayerCount = currentRoom.players?.length || 0
+          const previousPlayerCount = room?.players?.length || 0
+          
+          if (currentPlayerCount !== previousPlayerCount) {
+            console.log("[useRoom] Player count changed via polling:", previousPlayerCount, "->", currentPlayerCount)
+            setRoom(currentRoom)
+            return
+          }
+          
+          // Check for critical status changes
           if (currentRoom.status === "countdown" && room?.status !== "countdown") {
             console.log("[useRoom] Countdown detected via polling - updating immediately")
             setRoom(currentRoom)
@@ -75,7 +94,7 @@ export function useRoom(roomCode: string | null) {
       } catch (error) {
         console.error("[useRoom] Error polling room:", error)
       }
-    }, 3000) // Reduced frequency - poll every 3 seconds for critical updates only
+    }, 1500) // Increased frequency - poll every 1.5 seconds for better player updates
 
     const connectionCheck = setInterval(() => {
       setIsConnected(roomManager.isChannelConnected())

@@ -433,7 +433,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     // Auto advance after 2 seconds
     setTimeout(() => {
       handleNextQuestion()
-    }, 2000)
+    }, 1000)
   }
 
   const handleNextQuestion = async () => {
