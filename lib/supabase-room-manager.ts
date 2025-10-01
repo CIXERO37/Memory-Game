@@ -484,6 +484,8 @@ class SupabaseRoomManager {
       return () => {}
     }
 
+    console.log('[SupabaseRoomManager] Setting up subscription for room:', roomCode, 'with room ID:', roomId)
+
     // Subscribe to room changes
     const roomSubscription = supabase
       .channel(`room-${roomCode}`)
@@ -498,6 +500,7 @@ class SupabaseRoomManager {
           console.log('[SupabaseRoomManager] Room data changed:', payload.eventType, payload)
           const updatedRoom = await this.getRoom(roomCode)
           if (updatedRoom) {
+            console.log('[SupabaseRoomManager] Calling callback with updated room data')
             callback(updatedRoom)
           }
         }
@@ -512,27 +515,40 @@ class SupabaseRoomManager {
         async (payload) => {
           console.log('[SupabaseRoomManager] Players data changed:', payload.eventType, payload)
           
-          // Log specific player actions
+          // Log specific player actions with more detail
           if (payload.eventType === 'INSERT') {
-            console.log('[SupabaseRoomManager] New player joined:', payload.new)
+            console.log('[SupabaseRoomManager] ✅ NEW PLAYER JOINED:', payload.new)
+            console.log('[SupabaseRoomManager] Player details:', {
+              id: payload.new.id,
+              username: payload.new.username,
+              avatar: payload.new.avatar,
+              room_id: payload.new.room_id
+            })
           } else if (payload.eventType === 'DELETE') {
-            console.log('[SupabaseRoomManager] Player left:', payload.old)
+            console.log('[SupabaseRoomManager] ❌ PLAYER LEFT:', payload.old)
           } else if (payload.eventType === 'UPDATE') {
-            console.log('[SupabaseRoomManager] Player updated:', payload.new)
+            console.log('[SupabaseRoomManager] 🔄 PLAYER UPDATED:', payload.new)
           }
           
+          // Immediately fetch and callback with updated room data
+          console.log('[SupabaseRoomManager] Fetching updated room data after player change...')
           const updatedRoom = await this.getRoom(roomCode)
           if (updatedRoom) {
+            console.log('[SupabaseRoomManager] ✅ Calling callback with updated room data')
+            console.log('[SupabaseRoomManager] Updated room has', updatedRoom.players.length, 'players')
             callback(updatedRoom)
+          } else {
+            console.error('[SupabaseRoomManager] ❌ Failed to get updated room data')
           }
         }
       )
       .subscribe((status) => {
         console.log('[SupabaseRoomManager] Subscription status:', status)
         if (status === 'SUBSCRIBED') {
-          console.log('[SupabaseRoomManager] Successfully subscribed to room updates for:', roomCode)
+          console.log('[SupabaseRoomManager] ✅ Successfully subscribed to room updates for:', roomCode)
+          console.log('[SupabaseRoomManager] Now listening for player changes in room ID:', roomId)
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('[SupabaseRoomManager] Subscription error for room:', roomCode)
+          console.error('[SupabaseRoomManager] ❌ Subscription error for room:', roomCode)
         }
       })
 
