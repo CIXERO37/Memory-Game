@@ -20,6 +20,7 @@ function QuizSettingsPageContent() {
   const [questionCount, setQuestionCount] = useState([10]) // Default 10 questions
   const [maxQuestions, setMaxQuestions] = useState(50) // Default max questions
   const [quiz, setQuiz] = useState<any>(null)
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false)
 
   useEffect(() => {
     const quizId = searchParams.get("quizId")
@@ -40,7 +41,9 @@ function QuizSettingsPageContent() {
   }, [searchParams, router])
 
   const handleSettingsComplete = async () => {
-    if (!selectedQuiz) return
+    if (!selectedQuiz || isCreatingRoom) return
+
+    setIsCreatingRoom(true)
 
     try {
       // Get quiz title from quiz data
@@ -59,6 +62,7 @@ function QuizSettingsPageContent() {
       if (!room) {
         console.error("[QuizSettings] Failed to create room")
         alert("Failed to create room. Please try again.")
+        setIsCreatingRoom(false)
         return
       }
 
@@ -69,6 +73,7 @@ function QuizSettingsPageContent() {
       if (!verifyRoom) {
         console.error("[QuizSettings] Room verification failed")
         alert("Room was created but verification failed. Please try again.")
+        setIsCreatingRoom(false)
         return
       }
 
@@ -106,6 +111,7 @@ function QuizSettingsPageContent() {
     } catch (error) {
       console.error("[QuizSettings] Error creating room:", error)
       alert("An error occurred while creating the room. Please try again.")
+      setIsCreatingRoom(false)
     }
   }
 
@@ -280,9 +286,10 @@ function QuizSettingsPageContent() {
                     <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                     <Button 
                       onClick={handleSettingsComplete} 
-                      className="relative w-full bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-green-400 hover:to-emerald-400 transform hover:scale-105 transition-all duration-200 font-bold"
+                      disabled={isCreatingRoom}
+                      className="relative w-full bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-green-400 hover:to-emerald-400 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      <span className="pixel-font-sm">CREATE ROOM</span>
+                      <span className="pixel-font-sm">{isCreatingRoom ? "CREATING..." : "CREATE ROOM"}</span>
                     </Button>
                   </div>
                 </div>

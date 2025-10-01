@@ -14,7 +14,6 @@ interface CountdownTimerProps {
 export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0)
   const [isActive, setIsActive] = useState(false)
-  const [isAnimating, setIsAnimating] = useState(false)
   const [previousTime, setPreviousTime] = useState<number>(0)
   const animationRef = useRef<number>()
 
@@ -35,13 +34,9 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
       const timerState = calculateTimerState(room)
       const remaining = timerState.countdown || 0
       
-      // Trigger animation when number changes
+      // Track time changes for logging
       if (remaining !== previousTime && remaining > 0) {
-        setIsAnimating(true)
         setPreviousTime(remaining)
-        
-        // Reset animation after a short delay
-        setTimeout(() => setIsAnimating(false), 200)
       }
       
       console.log("[CountdownTimer] Time remaining:", remaining)
@@ -132,19 +127,13 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
         <div className="relative inline-block mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
           <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-8">
-            {/* Countdown Icon with Smooth Animation */}
-            <div className={`w-20 h-20 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-6 countdown-icon ${
-              isAnimating ? 'animate-bounce' : ''
-            }`}>
-              <Clock className={`w-10 h-10 text-black ${
-                timeLeft <= 3 ? 'animate-spin' : 'animate-pulse'
-              }`} />
+            {/* Countdown Icon with Continuous Spin */}
+            <div className="w-20 h-20 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-6 countdown-icon">
+              <Clock className="w-10 h-10 text-black animate-spin" />
             </div>
             
-            {/* Countdown Title with Smooth Fade */}
-            <h3 className={`text-2xl font-bold text-white mb-4 pixel-font countdown-message ${
-              isAnimating ? 'animate-pulse' : ''
-            }`}>GET READY!</h3>
+            {/* Countdown Title */}
+            <h3 className="text-2xl font-bold text-white mb-4 pixel-font countdown-message">GET READY!</h3>
             
             {/* Countdown Number with Smooth Animation */}
             <div className={`text-9xl font-black text-white mb-6 countdown-number ${
@@ -156,12 +145,10 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
             </div>
             
             
-            {/* Countdown Message with Smooth Animation */}
-            <div className={`bg-white border-2 border-black rounded px-6 py-3 inline-block countdown-message ${
-              isAnimating ? 'animate-pulse' : ''
-            }`}>
+            {/* Countdown Message */}
+            <div className="bg-white border-2 border-black rounded px-6 py-3 inline-block countdown-message">
               <p className={`text-black font-bold text-lg pixel-font-sm ${
-                timeLeft <= 3 ? 'text-red-600 animate-pulse' : ''
+                timeLeft <= 3 ? 'text-red-600' : ''
               }`}>
                 {timeLeft <= 3 ? 'GET READY! STARTING SOON!' : 'THE QUIZ IS ABOUT TO BEGIN!'}
               </p>

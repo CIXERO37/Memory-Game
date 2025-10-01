@@ -23,6 +23,7 @@ function JoinPageContent() {
   const [roomError, setRoomError] = useState("")
   const [playerId, setPlayerId] = useState<string>("")
   const [sessionId, setSessionId] = useState<string>("")
+  const [hasClickedJoin, setHasClickedJoin] = useState(false)
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")
@@ -93,8 +94,9 @@ function JoinPageContent() {
   }
 
   const handleJoinRoom = async () => {
-    if (!username.trim() || !roomCode.trim()) return
+    if (!username.trim() || !roomCode.trim() || hasClickedJoin) return
 
+    setHasClickedJoin(true)
     setIsJoining(true)
     setRoomError("")
 
@@ -109,6 +111,7 @@ function JoinPageContent() {
       console.log("[Join] Room not found for code:", roomCode)
       setRoomError("Room not found. Please check the room code.")
       setIsJoining(false)
+      setHasClickedJoin(false)
       
       // Kick prevention has been removed
       return
@@ -117,6 +120,7 @@ function JoinPageContent() {
     if (room.gameStarted) {
       setRoomError("This game has already started. Please join a new room.")
       setIsJoining(false)
+      setHasClickedJoin(false)
       return
     }
 
@@ -186,6 +190,7 @@ function JoinPageContent() {
       router.push(`/waiting-room/${roomCode}`)
     } else {
       setRoomError("Failed to join room. Please try again.")
+      setHasClickedJoin(false)
     }
 
     setIsJoining(false)
@@ -316,9 +321,9 @@ function JoinPageContent() {
                       <Button
                         className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-lg py-3 transform hover:scale-105 transition-all duration-200"
                         onClick={handleJoinRoom}
-                        disabled={!username.trim() || !roomCode.trim() || isJoining}
+                        disabled={!username.trim() || !roomCode.trim() || isJoining || hasClickedJoin}
                       >
-                        {isJoining ? "JOINING..." : "JOIN ROOM"}
+                        {isJoining ? "JOINING..." : hasClickedJoin ? "PROCESSING..." : "JOIN ROOM"}
                       </Button>
                     </div>
                   </div>
