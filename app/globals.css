@@ -1275,3 +1275,38 @@
   font-weight: 400;
   color: #94a3b8;
 }
+
+/* Player username text wrapping */
+.player-username {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.2;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(1.2em * 2); /* Fallback for browsers without -webkit-line-clamp */
+}
+
+/* Fallback for browsers that don't support -webkit-line-clamp */
+@supports not (-webkit-line-clamp: 2) {
+  .player-username {
+    display: block;
+    max-height: calc(1.2em * 2);
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .player-username::after {
+    content: '...';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: white;
+    padding-left: 2px;
+  }
+}
