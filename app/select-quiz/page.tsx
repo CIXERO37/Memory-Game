@@ -234,8 +234,8 @@ export default function SelectQuizPage() {
             ) : filteredQuizzes.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <div className="relative bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg border-4 border-black shadow-2xl p-6">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
                     <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                       <Search className="h-8 w-8 text-black" />
                     </div>
