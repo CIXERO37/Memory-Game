@@ -171,152 +171,239 @@ function LeaderboardPageContent() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
-              <Trophy className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-white pixel-header-title">CHAMPIONS</h1>
-          </div>
-        </div>
-
-        {/* Podium - Top 3 Players */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="flex justify-center items-end gap-4 relative">
+        {/* Enhanced Header */}
+        <div className="text-center mb-12 relative z-30">
+          <div className="relative inline-block">
+            {/* Header Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 to-amber-400/30 rounded-3xl blur-2xl animate-pulse"></div>
             
-            {/* 2nd Place - Silver */}
-            {sortedPlayers[1] && (
-              <div className="flex flex-col items-center">
-                <div className="bg-gradient-to-br from-gray-400/20 to-gray-500/20 border-4 border-gray-400/50 rounded-lg p-6 pixel-lobby-card text-center relative mb-4 w-48 hover:scale-105 transition-all duration-300">
-                  {/* 2nd Place Rank */}
-                  <div className="bg-gray-400 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm relative mb-4 mx-auto">
-                    2
-                  </div>
-                  
-                  {/* 2nd Place Avatar */}
-                  <div className="w-16 h-16 rounded-full border-4 border-gray-400 overflow-hidden mx-auto mb-4 relative">
-                    <div className="absolute inset-0 bg-gray-400/30 rounded-full blur-lg"></div>
-                    <img
-                      src={sortedPlayers[1].avatar}
-                      alt={`${sortedPlayers[1].username}'s avatar`}
-                      className="w-full h-full object-cover relative z-10"
-                      onError={(e) => {
-                        e.currentTarget.src = "/ava1.png"
-                      }}
-                    />
-                  </div>
-                  
-                  {/* 2nd Place Name */}
-                  <h3 className="text-lg font-bold text-gray-300 mb-3">{sortedPlayers[1].username}</h3>
-                  
-                  {/* 2nd Place Score */}
-                  <div className="bg-gradient-to-r from-gray-400 to-gray-500 rounded-lg px-4 py-2 relative">
-                    <div className="text-2xl font-bold text-white">{(sortedPlayers[1].quizScore || 0) + (sortedPlayers[1].memoryScore || 0)}</div>
-                    <div className="text-sm text-white">POINTS</div>
+            <div className="relative bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-4 border-yellow-400/50 rounded-3xl p-8 backdrop-blur-sm z-30">
+              <div className="flex items-center justify-center gap-6 mb-6">
+                {/* Trophy Icon */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-yellow-400/50 rounded-2xl blur-lg animate-pulse"></div>
+                  <div className="relative w-16 h-16 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl border-4 border-white shadow-2xl flex items-center justify-center pixel-brain animate-bounce-slow">
+                    <Trophy className="w-8 h-8 text-white" />
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* 1st Place - Gold */}
-            {champion && (
-              <div className="flex flex-col items-center">
-                <div className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-4 border-yellow-400/50 rounded-lg p-8 pixel-lobby-card text-center relative mb-4 w-56 hover:scale-105 transition-all duration-300 animate-pulse">
-                  {/* Champion Glow Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-400/20 rounded-lg blur-xl"></div>
-                  
-                  {/* Champion Rank */}
-                  <div className="bg-yellow-400 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg relative z-10 mb-4 mx-auto">
-                    1
-                  </div>
-                  
-                  {/* Champion Avatar with Glow */}
-                  <div className="w-20 h-20 rounded-full border-4 border-yellow-400 overflow-hidden mx-auto mb-4 relative z-10">
-                    <div className="absolute inset-0 bg-yellow-400/30 rounded-full blur-lg"></div>
-                    <img
-                      src={champion.avatar}
-                      alt={`${champion.username}'s avatar`}
-                      className="w-full h-full object-cover relative z-10"
-                      onError={(e) => {
-                        e.currentTarget.src = "/ava1.png"
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Champion Name */}
-                  <h2 className="text-xl font-bold text-yellow-400 mb-4 relative z-10">{champion.username}</h2>
-                  
-                  {/* Champion Score with Glow */}
-                  <div className="bg-gradient-to-r from-yellow-400 to-amber-400 rounded-lg px-6 py-3 relative z-10">
-                    <div className="absolute inset-0 bg-yellow-400/30 rounded-lg blur-sm"></div>
-                    <div className="text-3xl font-bold text-white relative z-10">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
-                    <div className="text-sm text-white relative z-10">POINTS</div>
+                
+                {/* Title */}
+                <div className="relative">
+                  <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400 pixel-header-title drop-shadow-2xl">
+                    CHAMPIONS
+                  </h1>
+                  <div className="absolute inset-0 text-5xl font-bold text-yellow-400/20 pixel-header-title blur-sm">
+                    CHAMPIONS
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* 3rd Place - Bronze */}
-            {sortedPlayers[2] && (
-              <div className="flex flex-col items-center">
-                <div className="bg-gradient-to-br from-amber-600/20 to-orange-600/20 border-4 border-amber-600/50 rounded-lg p-6 pixel-lobby-card text-center relative mb-4 w-48 hover:scale-105 transition-all duration-300">
-                  {/* 3rd Place Rank */}
-                  <div className="bg-amber-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm relative mb-4 mx-auto">
-                    3
-                  </div>
-                  
-                  {/* 3rd Place Avatar */}
-                  <div className="w-16 h-16 rounded-full border-4 border-amber-600 overflow-hidden mx-auto mb-4 relative">
-                    <div className="absolute inset-0 bg-amber-600/30 rounded-full blur-lg"></div>
-                    <img
-                      src={sortedPlayers[2].avatar}
-                      alt={`${sortedPlayers[2].username}'s avatar`}
-                      className="w-full h-full object-cover relative z-10"
-                      onError={(e) => {
-                        e.currentTarget.src = "/ava1.png"
-                      }}
-                    />
-                  </div>
-                  
-                  {/* 3rd Place Name */}
-                  <h3 className="text-lg font-bold text-amber-300 mb-3">{sortedPlayers[2].username}</h3>
-                  
-                  {/* 3rd Place Score */}
-                  <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-lg px-4 py-2 relative">
-                    <div className="text-2xl font-bold text-white">{(sortedPlayers[2].quizScore || 0) + (sortedPlayers[2].memoryScore || 0)}</div>
-                    <div className="text-sm text-white">POINTS</div>
-                  </div>
+                
+                {/* Star Icons */}
+                <div className="flex flex-col gap-2">
+                  <Star className="w-6 h-6 text-yellow-400 animate-pulse" />
+                  <Star className="w-4 h-4 text-amber-400 animate-pulse" style={{ animationDelay: '0.5s' }} />
                 </div>
               </div>
-            )}
+              
+              {/* Decorative Elements */}
+              <div className="absolute top-4 left-4 w-4 h-4 bg-yellow-400/60 rounded-full animate-ping"></div>
+              <div className="absolute top-4 right-4 w-4 h-4 bg-amber-400/60 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-4 left-4 w-3 h-3 bg-yellow-300/60 rounded-full animate-ping" style={{ animationDelay: '2s' }}></div>
+              <div className="absolute bottom-4 right-4 w-3 h-3 bg-amber-300/60 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
+            </div>
           </div>
         </div>
 
-         {/* Other Participants - Only show players ranked 4 and below */}
+        {/* Enhanced Podium - Top 3 Players */}
+        <div className="max-w-6xl mx-auto mb-12 mt-8">
+          {/* Podium Platform */}
+          <div className="relative">
+            {/* Podium Base */}
+            <div className="flex justify-center items-end gap-2 relative">
+              
+              {/* 2nd Place Platform */}
+              {sortedPlayers[1] && (
+                <div className="flex flex-col items-center relative">
+                  {/* 2nd Place Medal */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-300 to-gray-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
+                      <span className="text-2xl font-bold text-white">🥈</span>
+                    </div>
+                  </div>
+                  
+                  {/* 2nd Place Card */}
+                  <div className="bg-gradient-to-br from-slate-600/30 to-slate-800/30 border-4 border-slate-400/60 rounded-2xl p-6 pixel-lobby-card text-center relative w-56 hover:scale-105 transition-all duration-500 backdrop-blur-sm">
+                    {/* Glow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-400/20 to-slate-600/20 rounded-2xl blur-xl"></div>
+                    
+                    {/* Avatar */}
+                    <div className="w-20 h-20 rounded-full border-4 border-slate-400 overflow-hidden mx-auto mb-4 relative z-10 shadow-xl">
+                      <div className="absolute inset-0 bg-slate-400/40 rounded-full blur-sm"></div>
+                      <img
+                        src={sortedPlayers[1].avatar}
+                        alt={`${sortedPlayers[1].username}'s avatar`}
+                        className="w-full h-full object-cover relative z-10"
+                        onError={(e) => {
+                          e.currentTarget.src = "/ava1.png"
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Name */}
+                    <h3 className="text-xl font-bold text-slate-200 mb-4 relative z-10 pixel-font-sm">{sortedPlayers[1].username}</h3>
+                    
+                    {/* Score */}
+                    <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-xl px-6 py-3 relative z-10 shadow-lg">
+                      <div className="absolute inset-0 bg-slate-400/30 rounded-xl blur-sm"></div>
+                      <div className="text-3xl font-bold text-white relative z-10">{(sortedPlayers[1].quizScore || 0) + (sortedPlayers[1].memoryScore || 0)}</div>
+                      <div className="text-sm text-slate-100 relative z-10 font-bold">POINTS</div>
+                    </div>
+                    
+                    {/* Podium Base */}
+                    <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-gradient-to-b from-slate-400 to-slate-600 rounded-b-lg border-4 border-slate-300 shadow-xl"></div>
+                  </div>
+                </div>
+              )}
+
+              {/* 1st Place Platform - Champion */}
+              {champion && (
+                <div className="flex flex-col items-center relative z-10">
+                  {/* Champion Crown */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
+                      <span className="text-2xl">👑</span>
+                    </div>
+                  </div>
+                  
+                  {/* Champion Card */}
+                  <div className="bg-gradient-to-br from-yellow-500/30 to-amber-600/30 border-4 border-yellow-400/70 rounded-2xl p-8 pixel-lobby-card text-center relative w-64 hover:scale-105 transition-all duration-500 backdrop-blur-sm animate-pulse">
+                    {/* Champion Glow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-amber-400/30 rounded-2xl blur-2xl animate-pulse"></div>
+                    
+                    {/* Champion Avatar with Enhanced Glow */}
+                    <div className="w-24 h-24 rounded-full border-4 border-yellow-400 overflow-hidden mx-auto mb-6 relative z-10 shadow-2xl">
+                      <div className="absolute inset-0 bg-yellow-400/50 rounded-full blur-lg animate-pulse"></div>
+                      <img
+                        src={champion.avatar}
+                        alt={`${champion.username}'s avatar`}
+                        className="w-full h-full object-cover relative z-10"
+                        onError={(e) => {
+                          e.currentTarget.src = "/ava1.png"
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Champion Name */}
+                    <h2 className="text-2xl font-bold text-yellow-300 mb-6 relative z-10 pixel-font-sm">{champion.username}</h2>
+                    
+                    {/* Champion Score with Enhanced Glow */}
+                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-xl px-8 py-4 relative z-10 shadow-2xl">
+                      <div className="absolute inset-0 bg-yellow-400/40 rounded-xl blur-lg animate-pulse"></div>
+                      <div className="text-4xl font-bold text-white relative z-10">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
+                      <div className="text-sm text-yellow-100 relative z-10 font-bold">POINTS</div>
+                    </div>
+                    
+                    {/* Champion Podium Base */}
+                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-56 h-20 bg-gradient-to-b from-yellow-400 to-amber-600 rounded-b-lg border-4 border-yellow-300 shadow-2xl"></div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3rd Place Platform */}
+              {sortedPlayers[2] && (
+                <div className="flex flex-col items-center relative">
+                  {/* 3rd Place Medal */}
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-orange-700 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
+                      <span className="text-2xl font-bold text-white">🥉</span>
+                    </div>
+                  </div>
+                  
+                  {/* 3rd Place Card */}
+                  <div className="bg-gradient-to-br from-amber-700/30 to-orange-800/30 border-4 border-amber-600/60 rounded-2xl p-6 pixel-lobby-card text-center relative w-56 hover:scale-105 transition-all duration-500 backdrop-blur-sm">
+                    {/* Glow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 to-orange-600/20 rounded-2xl blur-xl"></div>
+                    
+                    {/* Avatar */}
+                    <div className="w-20 h-20 rounded-full border-4 border-amber-600 overflow-hidden mx-auto mb-4 relative z-10 shadow-xl">
+                      <div className="absolute inset-0 bg-amber-600/40 rounded-full blur-sm"></div>
+                      <img
+                        src={sortedPlayers[2].avatar}
+                        alt={`${sortedPlayers[2].username}'s avatar`}
+                        className="w-full h-full object-cover relative z-10"
+                        onError={(e) => {
+                          e.currentTarget.src = "/ava1.png"
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Name */}
+                    <h3 className="text-xl font-bold text-amber-200 mb-4 relative z-10 pixel-font-sm">{sortedPlayers[2].username}</h3>
+                    
+                    {/* Score */}
+                    <div className="bg-gradient-to-r from-amber-600 to-orange-700 rounded-xl px-6 py-3 relative z-10 shadow-lg">
+                      <div className="absolute inset-0 bg-amber-600/30 rounded-xl blur-sm"></div>
+                      <div className="text-3xl font-bold text-white relative z-10">{(sortedPlayers[2].quizScore || 0) + (sortedPlayers[2].memoryScore || 0)}</div>
+                      <div className="text-sm text-amber-100 relative z-10 font-bold">POINTS</div>
+                    </div>
+                    
+                    {/* Podium Base */}
+                    <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-gradient-to-b from-amber-600 to-orange-700 rounded-b-lg border-4 border-amber-500 shadow-xl"></div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Confetti Effect */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-10 left-1/4 w-2 h-2 bg-yellow-400 animate-falling opacity-70"></div>
+              <div className="absolute top-0 left-1/3 w-2 h-2 bg-blue-400 animate-falling-delayed opacity-60"></div>
+              <div className="absolute top-5 right-1/4 w-2 h-2 bg-purple-400 animate-falling-slow opacity-80"></div>
+              <div className="absolute top-0 right-1/3 w-2 h-2 bg-green-400 animate-falling opacity-50"></div>
+              <div className="absolute top-8 left-1/2 w-2 h-2 bg-pink-400 animate-falling-delayed opacity-70"></div>
+            </div>
+          </div>
+        </div>
+
+         {/* Enhanced Other Participants Section */}
          {sortedPlayers.length > 3 && (
-           <div className="max-w-2xl mx-auto mb-8">
-             <div className="bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg p-6 pixel-lobby-card">
-               <h3 className="text-xl font-bold text-white mb-6 text-center">OTHER PARTICIPANTS</h3>
+           <div className="max-w-4xl mx-auto mb-12">
+             <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-4 border-indigo-400/50 rounded-2xl p-8 pixel-lobby-card backdrop-blur-sm relative overflow-hidden">
+               {/* Background Glow */}
+               <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-2xl blur-xl"></div>
                
-               <div className="space-y-4">
+               {/* Header */}
+               <div className="relative z-10 text-center mb-8">
+                 <div className="flex items-center justify-center gap-3 mb-4">
+                   <div className="w-12 h-12 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
+                     <Users className="w-6 h-6 text-white" />
+                   </div>
+                   <h3 className="text-2xl font-bold text-white pixel-header-title">OTHER PARTICIPANTS</h3>
+                 </div>
+               </div>
+               
+               {/* Participants Grid */}
+               <div className="relative z-10 grid gap-4">
                  {sortedPlayers.slice(3).map((player, index) => {
                    const totalScore = (player.quizScore || 0) + (player.memoryScore || 0)
                    const rank = index + 4 // Start from rank 4
                    
                    return (
-                     <div key={player.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/20 hover:bg-white/10 transition-all duration-300">
-                       {/* Rank */}
-                       <div className="w-12 h-12 rounded-lg border-2 border-white flex items-center justify-center font-bold text-lg bg-blue-400 text-white">
+                     <div key={player.id} className="group flex items-center gap-6 p-6 bg-gradient-to-r from-slate-800/40 to-slate-900/40 rounded-xl border-2 border-slate-600/50 hover:border-indigo-400/60 transition-all duration-500 hover:scale-[1.02] backdrop-blur-sm relative overflow-hidden">
+                       {/* Hover Glow Effect */}
+                       <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/5 to-purple-400/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                       
+                       {/* Rank Badge */}
+                       <div className="relative z-10 w-16 h-16 rounded-xl border-3 border-indigo-400 flex items-center justify-center font-bold text-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                          #{rank}
                        </div>
                        
                        {/* Avatar */}
-                       <div className="w-12 h-12 rounded border border-white overflow-hidden">
+                       <div className="relative z-10 w-16 h-16 rounded-xl border-3 border-slate-400 overflow-hidden shadow-lg group-hover:scale-110 transition-transform duration-300">
+                         <div className="absolute inset-0 bg-indigo-400/20 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                          <img
                            src={player.avatar}
                            alt={`${player.username}'s avatar`}
-                           className="w-full h-full object-cover"
+                           className="w-full h-full object-cover relative z-10"
                            onError={(e) => {
                              e.currentTarget.src = "/ava1.png"
                            }}
@@ -324,34 +411,64 @@ function LeaderboardPageContent() {
                        </div>
                        
                        {/* Player Info */}
-                       <div className="flex-1">
-                         <h4 className="font-bold text-white">{player.username}</h4>
+                       <div className="relative z-10 flex-1">
+                         <h4 className="font-bold text-xl text-white pixel-font-sm group-hover:text-indigo-200 transition-colors duration-300">{player.username}</h4>
+                         <p className="text-slate-400 text-sm mt-1">Participant</p>
                        </div>
                        
-                       {/* Total Score */}
-                       <div className="text-right">
-                         <div className="text-lg font-bold text-white">{totalScore}</div>
-                         <div className="text-xs text-blue-200">POINTS</div>
+                       {/* Score Display */}
+                       <div className="relative z-10 text-right">
+                         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-4 py-2 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                           <div className="text-2xl font-bold text-white">{totalScore}</div>
+                           <div className="text-xs text-indigo-100 font-bold">POINTS</div>
+                         </div>
                        </div>
+                       
+                       {/* Decorative Elements */}
+                       <div className="absolute top-2 right-2 w-2 h-2 bg-indigo-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                       <div className="absolute bottom-2 left-2 w-2 h-2 bg-purple-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
                      </div>
                    )
                  })}
                </div>
+               
+               {/* Decorative Border Elements */}
+               <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-indigo-400/50 rounded-tl-lg"></div>
+               <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-indigo-400/50 rounded-tr-lg"></div>
+               <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-indigo-400/50 rounded-bl-lg"></div>
+               <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-indigo-400/50 rounded-br-lg"></div>
              </div>
            </div>
          )}
 
-        {/* Back to Dashboard Button */}
-        <div className="text-center">
-          <button
-            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-4 border-white/30 rounded-lg px-8 py-4 text-white font-bold text-lg transition-all duration-300 hover:scale-105 pixel-button flex items-center justify-center gap-3 mx-auto"
-            onClick={() => {
-              router.push("/")
-            }}
-          >
-            <Home className="w-5 h-5" />
-            BACK TO DASHBOARD
-          </button>
+        {/* Enhanced Back to Dashboard Button */}
+        <div className="text-center relative">
+          <div className="relative inline-block">
+            {/* Button Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur-xl opacity-50 animate-pulse"></div>
+            
+            <button
+              className="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-4 border-white/40 rounded-2xl px-10 py-5 text-white font-bold text-xl transition-all duration-500 hover:scale-110 hover:shadow-2xl pixel-button flex items-center justify-center gap-4 backdrop-blur-sm group overflow-hidden"
+              onClick={() => {
+                router.push("/")
+              }}
+            >
+              {/* Button Background Animation */}
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              {/* Icon */}
+              <div className="relative z-10 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
+                <Home className="w-5 h-5" />
+              </div>
+              
+              {/* Text */}
+              <span className="relative z-10 pixel-font-sm">BACK TO DASHBOARD</span>
+              
+              {/* Decorative Elements */}
+              <div className="absolute top-2 right-2 w-2 h-2 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute bottom-2 left-2 w-2 h-2 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </button>
+          </div>
         </div>
       </div>
       
@@ -407,5 +524,5 @@ function PixelBackgroundElements() {
 }
 
 
-
+// ikan
  

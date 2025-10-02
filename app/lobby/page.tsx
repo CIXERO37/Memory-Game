@@ -916,7 +916,7 @@ function LobbyPageContent() {
                               />
                             </div>
                             <div className="text-center">
-                              <div className="font-bold text-black pixel-font-sm text-xs leading-tight">
+                              <div className="font-bold text-black pixel-font-sm text-xs leading-tight player-username">
                                 {player.username.toUpperCase()}
                               </div>
                             </div>
