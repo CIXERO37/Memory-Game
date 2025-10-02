@@ -175,32 +175,32 @@ function LeaderboardPageContent() {
         <div className="text-center mb-12 relative z-30">
           <div className="relative inline-block">
             {/* Header Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 to-amber-400/30 rounded-3xl blur-2xl animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 to-amber-400/30 rounded-2xl blur-xl animate-pulse"></div>
             
-            <div className="relative bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-4 border-yellow-400/50 rounded-3xl p-8 backdrop-blur-sm z-30">
-              <div className="flex items-center justify-center gap-6 mb-6">
+            <div className="relative bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-4 border-yellow-400/50 rounded-2xl p-4 backdrop-blur-sm z-30">
+              <div className="flex items-center justify-center gap-4 mb-3">
                 {/* Trophy Icon */}
                 <div className="relative">
                   <div className="absolute inset-0 bg-yellow-400/50 rounded-2xl blur-lg animate-pulse"></div>
-                  <div className="relative w-16 h-16 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl border-4 border-white shadow-2xl flex items-center justify-center pixel-brain animate-bounce-slow">
-                    <Trophy className="w-8 h-8 text-white" />
+                  <div className="relative w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl border-3 border-white shadow-2xl flex items-center justify-center pixel-brain animate-bounce-slow">
+                    <Trophy className="w-6 h-6 text-white" />
                   </div>
                 </div>
                 
                 {/* Title */}
                 <div className="relative">
-                  <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400 pixel-header-title drop-shadow-2xl">
+                  <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400 pixel-header-title drop-shadow-2xl">
                     CHAMPIONS
                   </h1>
-                  <div className="absolute inset-0 text-5xl font-bold text-yellow-400/20 pixel-header-title blur-sm">
+                  <div className="absolute inset-0 text-4xl font-bold text-yellow-400/20 pixel-header-title blur-sm">
                     CHAMPIONS
                   </div>
                 </div>
                 
                 {/* Star Icons */}
-                <div className="flex flex-col gap-2">
-                  <Star className="w-6 h-6 text-yellow-400 animate-pulse" />
-                  <Star className="w-4 h-4 text-amber-400 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                <div className="flex flex-col gap-1">
+                  <Star className="w-5 h-5 text-yellow-400 animate-pulse" />
+                  <Star className="w-3 h-3 text-amber-400 animate-pulse" style={{ animationDelay: '0.5s' }} />
                 </div>
               </div>
               
@@ -222,16 +222,15 @@ function LeaderboardPageContent() {
               
               {/* 2nd Place Platform */}
               {sortedPlayers[1] && (
-                <div className="flex flex-col items-center relative">
-                  {/* 2nd Place Medal */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="w-16 h-16 bg-gradient-to-br from-gray-300 to-gray-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
-                      <span className="text-2xl font-bold text-white">🥈</span>
-                    </div>
-                  </div>
+                <div className="flex flex-col items-center relative mt-8">
                   
                   {/* 2nd Place Card */}
                   <div className="bg-gradient-to-br from-slate-600/30 to-slate-800/30 border-4 border-slate-400/60 rounded-2xl p-6 pixel-lobby-card text-center relative w-56 hover:scale-105 transition-all duration-500 backdrop-blur-sm">
+                    {/* Ranking Number */}
+                    <div className="absolute top-3 left-3 w-8 h-8 bg-gradient-to-br from-slate-300 to-slate-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center z-20">
+                      <span className="text-lg font-bold text-white">2</span>
+                    </div>
+                    
                     {/* Glow Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-400/20 to-slate-600/20 rounded-2xl blur-xl"></div>
                     
@@ -249,7 +248,7 @@ function LeaderboardPageContent() {
                     </div>
                     
                     {/* Name */}
-                    <h3 className="text-xl font-bold text-slate-200 mb-4 relative z-10 pixel-font-sm">{sortedPlayers[1].username}</h3>
+                    <h3 className="text-xl font-bold text-slate-200 mb-4 relative z-10">{sortedPlayers[1].username}</h3>
                     
                     {/* Score */}
                     <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-xl px-6 py-3 relative z-10 shadow-lg">
@@ -258,24 +257,21 @@ function LeaderboardPageContent() {
                       <div className="text-sm text-slate-100 relative z-10 font-bold">POINTS</div>
                     </div>
                     
-                    {/* Podium Base */}
-                    <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-gradient-to-b from-slate-400 to-slate-600 rounded-b-lg border-4 border-slate-300 shadow-xl"></div>
                   </div>
                 </div>
               )}
 
               {/* 1st Place Platform - Champion */}
               {champion && (
-                <div className="flex flex-col items-center relative z-10">
-                  {/* Champion Crown */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
-                      <span className="text-2xl">👑</span>
-                    </div>
-                  </div>
+                <div className="flex flex-col items-center relative z-10 mt-0">
                   
                   {/* Champion Card */}
                   <div className="bg-gradient-to-br from-yellow-500/30 to-amber-600/30 border-4 border-yellow-400/70 rounded-2xl p-8 pixel-lobby-card text-center relative w-64 hover:scale-105 transition-all duration-500 backdrop-blur-sm animate-pulse">
+                    {/* Ranking Number */}
+                    <div className="absolute top-3 left-3 w-10 h-10 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full border-2 border-white shadow-xl flex items-center justify-center z-20">
+                      <span className="text-xl font-bold text-white">1</span>
+                    </div>
+                    
                     {/* Champion Glow Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-amber-400/30 rounded-2xl blur-2xl animate-pulse"></div>
                     
@@ -293,7 +289,7 @@ function LeaderboardPageContent() {
                     </div>
                     
                     {/* Champion Name */}
-                    <h2 className="text-2xl font-bold text-yellow-300 mb-6 relative z-10 pixel-font-sm">{champion.username}</h2>
+                    <h2 className="text-2xl font-bold text-yellow-300 mb-6 relative z-10">{champion.username}</h2>
                     
                     {/* Champion Score with Enhanced Glow */}
                     <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-xl px-8 py-4 relative z-10 shadow-2xl">
@@ -302,24 +298,21 @@ function LeaderboardPageContent() {
                       <div className="text-sm text-yellow-100 relative z-10 font-bold">POINTS</div>
                     </div>
                     
-                    {/* Champion Podium Base */}
-                    <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-56 h-20 bg-gradient-to-b from-yellow-400 to-amber-600 rounded-b-lg border-4 border-yellow-300 shadow-2xl"></div>
                   </div>
                 </div>
               )}
 
               {/* 3rd Place Platform */}
               {sortedPlayers[2] && (
-                <div className="flex flex-col items-center relative">
-                  {/* 3rd Place Medal */}
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-20">
-                    <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-orange-700 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
-                      <span className="text-2xl font-bold text-white">🥉</span>
-                    </div>
-                  </div>
+                <div className="flex flex-col items-center relative mt-16">
                   
                   {/* 3rd Place Card */}
                   <div className="bg-gradient-to-br from-amber-700/30 to-orange-800/30 border-4 border-amber-600/60 rounded-2xl p-6 pixel-lobby-card text-center relative w-56 hover:scale-105 transition-all duration-500 backdrop-blur-sm">
+                    {/* Ranking Number */}
+                    <div className="absolute top-3 left-3 w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-700 rounded-full border-2 border-white shadow-lg flex items-center justify-center z-20">
+                      <span className="text-lg font-bold text-white">3</span>
+                    </div>
+                    
                     {/* Glow Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 to-orange-600/20 rounded-2xl blur-xl"></div>
                     
@@ -337,7 +330,7 @@ function LeaderboardPageContent() {
                     </div>
                     
                     {/* Name */}
-                    <h3 className="text-xl font-bold text-amber-200 mb-4 relative z-10 pixel-font-sm">{sortedPlayers[2].username}</h3>
+                    <h3 className="text-xl font-bold text-amber-200 mb-4 relative z-10">{sortedPlayers[2].username}</h3>
                     
                     {/* Score */}
                     <div className="bg-gradient-to-r from-amber-600 to-orange-700 rounded-xl px-6 py-3 relative z-10 shadow-lg">
@@ -346,8 +339,6 @@ function LeaderboardPageContent() {
                       <div className="text-sm text-amber-100 relative z-10 font-bold">POINTS</div>
                     </div>
                     
-                    {/* Podium Base */}
-                    <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-gradient-to-b from-amber-600 to-orange-700 rounded-b-lg border-4 border-amber-500 shadow-xl"></div>
                   </div>
                 </div>
               )}
@@ -412,7 +403,7 @@ function LeaderboardPageContent() {
                        
                        {/* Player Info */}
                        <div className="relative z-10 flex-1">
-                         <h4 className="font-bold text-xl text-white pixel-font-sm group-hover:text-indigo-200 transition-colors duration-300">{player.username}</h4>
+                         <h4 className="font-bold text-xl text-white group-hover:text-indigo-200 transition-colors duration-300">{player.username}</h4>
                          <p className="text-slate-400 text-sm mt-1">Participant</p>
                        </div>
                        
@@ -462,7 +453,7 @@ function LeaderboardPageContent() {
               </div>
               
               {/* Text */}
-              <span className="relative z-10 pixel-font-sm">BACK TO DASHBOARD</span>
+              <span className="relative z-10">BACK TO DASHBOARD</span>
               
               {/* Decorative Elements */}
               <div className="absolute top-2 right-2 w-2 h-2 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
