@@ -19,6 +19,8 @@ function MonitorPageContent() {
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
   const [forceRefresh, setForceRefresh] = useState(0)
+  const [showTimeWarning, setShowTimeWarning] = useState(false)
+  const [timeUpHandled, setTimeUpHandled] = useState(false)
   const { room, loading } = useRoom(roomCode || "")
 
   // Get quiz settings from room data
@@ -30,7 +32,55 @@ function MonitorPageContent() {
     questionCount: 10,
   }
   
-  const timerState = useSynchronizedTimer(room, quizSettings.timeLimit)
+  // Handle timer expiration for host
+  const handleTimeUp = async () => {
+    if (timeUpHandled) return // Prevent multiple calls
+    setTimeUpHandled(true)
+    
+    console.log("[Monitor] Timer expired! Ending game automatically...")
+    
+    try {
+      // End the game automatically
+      await roomManager.updateGameStatus(roomCode!, "finished")
+      
+      // Broadcast game end event to all players
+      if (typeof window !== 'undefined') {
+        const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
+        broadcastChannel.postMessage({ 
+          type: 'game-ended', 
+          roomCode: roomCode,
+          timestamp: Date.now()
+        })
+        broadcastChannel.close()
+        console.log("[Monitor] Broadcasted game end event to players")
+      }
+      
+      // Redirect host to leaderboard
+      window.location.href = `/leaderboard?roomCode=${roomCode}`
+    } catch (error) {
+      console.error("[Monitor] Error ending game due to timer expiration:", error)
+      // Fallback redirect
+      window.location.href = `/leaderboard?roomCode=${roomCode}`
+    }
+  }
+  
+  const timerState = useSynchronizedTimer(room, quizSettings.timeLimit, handleTimeUp)
+  
+  // Show warning when time is running low
+  useEffect(() => {
+    if (timerState.remainingTime <= 60 && timerState.remainingTime > 0) { // Show warning in last minute
+      setShowTimeWarning(true)
+    } else {
+      setShowTimeWarning(false)
+    }
+  }, [timerState.remainingTime])
+  
+  // Show time up notification
+  useEffect(() => {
+    if (timerState.remainingTime <= 0 && !timeUpHandled) {
+      setShowTimeWarning(true)
+    }
+  }, [timerState.remainingTime, timeUpHandled])
 
   useEffect(() => {
     const roomCodeParam = searchParams.get("roomCode")
@@ -299,9 +349,9 @@ function MonitorPageContent() {
                   <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2">
                     <span className="text-blue-400 font-bold text-sm">{players.length} PLAYERS</span>
                   </div>
-                  <div className="bg-green-500/20 border-2 border-green-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-green-400" />
-                    <span className="text-green-400 font-bold text-sm">
+                  <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-4 py-2 flex items-center gap-2`}>
+                    <Clock className={`w-4 h-4 ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`} />
+                    <span className={`font-bold text-sm ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`}>
                       {getTimerDisplayText(timerState)}
                     </span>
                   </div>
@@ -331,6 +381,24 @@ function MonitorPageContent() {
           </div>
         </div>
 
+        {/* Time Warning */}
+        {showTimeWarning && (
+          <div className="mb-6 bg-red-500/20 border-2 border-red-500/50 rounded-lg p-4 animate-pulse">
+            <div className="flex items-center justify-center gap-2">
+              <Clock className="w-5 h-5 text-red-400" />
+              <span className="text-red-400 font-bold text-lg">
+                {timerState.remainingTime <= 0 ? "WAKTU HABIS!" : "WAKTU HAMPIR HABIS!"}
+              </span>
+              <Clock className="w-5 h-5 text-red-400" />
+            </div>
+            <p className="text-red-300 text-center text-sm mt-1">
+              {timerState.remainingTime <= 0 
+                ? "Game akan berakhir secara otomatis..." 
+                : "Game akan berakhir secara otomatis ketika waktu habis!"
+              }
+            </p>
+          </div>
+        )}
 
         {/* Player Progress Cards */}
         <div className="space-y-8 mb-8">

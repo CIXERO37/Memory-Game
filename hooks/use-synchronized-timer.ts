@@ -6,7 +6,7 @@ import type { Room } from "@/lib/room-manager"
  * Custom hook for synchronized timer that updates smoothly
  * Uses requestAnimationFrame for precise timing updates
  */
-export function useSynchronizedTimer(room: Room | null, timeLimit?: number): TimerState {
+export function useSynchronizedTimer(room: Room | null, timeLimit?: number, onTimeUp?: () => void): TimerState {
   const [timerState, setTimerState] = useState<TimerState>({
     duration: 0,
     countdown: null,
@@ -15,6 +15,7 @@ export function useSynchronizedTimer(room: Room | null, timeLimit?: number): Tim
   
   const animationRef = useRef<number>()
   const lastUpdateRef = useRef<number>(0)
+  const timeUpTriggered = useRef<boolean>(false)
 
   useEffect(() => {
     if (!room) {
@@ -47,6 +48,13 @@ export function useSynchronizedTimer(room: Room | null, timeLimit?: number): Tim
       const newTimerState = calculateTimerState(roomWithSettings)
       setTimerState(newTimerState)
       
+      // Check if time is up and trigger callback
+      if (newTimerState.remainingTime <= 0 && !timeUpTriggered.current && onTimeUp) {
+        timeUpTriggered.current = true
+        console.log("[useSynchronizedTimer] Time is up! Triggering callback...")
+        onTimeUp()
+      }
+      
       // Continue animation loop
       animationRef.current = requestAnimationFrame(updateTimer)
     }
@@ -59,7 +67,7 @@ export function useSynchronizedTimer(room: Room | null, timeLimit?: number): Tim
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [room, timeLimit])
+  }, [room, timeLimit, onTimeUp])
 
   return timerState
 }

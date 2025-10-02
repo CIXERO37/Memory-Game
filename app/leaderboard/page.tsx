@@ -181,101 +181,165 @@ function LeaderboardPageContent() {
           </div>
         </div>
 
-        {/* Champion Card - Single Large Card */}
-        {champion && (
-          <div className="max-w-md mx-auto mb-8">
-            <div className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-4 border-yellow-400/50 rounded-lg p-8 pixel-lobby-card text-center relative">
-              {/* Champion Avatar with Glow */}
-              <div className="w-24 h-24 rounded-full border-4 border-yellow-400 overflow-hidden mx-auto mb-6 relative">
-                <div className="absolute inset-0 bg-yellow-400/30 rounded-full blur-lg"></div>
-                <img
-                  src={champion.avatar}
-                  alt={`${champion.username}'s avatar`}
-                  className="w-full h-full object-cover relative z-10"
-                  onError={(e) => {
-                    e.currentTarget.src = "/ava1.png"
-                  }}
-                />
-              </div>
-              
-              {/* Champion Name */}
-              <h2 className="text-2xl font-bold text-yellow-400 mb-6">{champion.username}</h2>
-              
-              {/* Champion Score with Glow */}
-              <div className="bg-gradient-to-r from-yellow-400 to-amber-400 rounded-lg px-8 py-4 mb-6 relative">
-                <div className="absolute inset-0 bg-yellow-400/30 rounded-lg blur-sm"></div>
-                <div className="text-4xl font-bold text-white relative z-10">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
-                <div className="text-lg text-white relative z-10">POINTS</div>
-              </div>
-              
-              {/* Score Breakdown */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="bg-white/10 rounded-lg p-3">
-                  <div className="text-yellow-400 font-bold text-lg">{champion.quizScore || 0}</div>
-                  <div className="text-white text-xs">QUIZ POINTS</div>
-                </div>
-                <div className="bg-white/10 rounded-lg p-3">
-                  <div className="text-yellow-400 font-bold text-lg">{champion.memoryScore || 0}</div>
-                  <div className="text-white text-xs">MEMORY POINTS</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Complete Leaderboard */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg p-6 pixel-lobby-card">
-            <h3 className="text-xl font-bold text-white mb-6 text-center">FINAL LEADERBOARD</h3>
+        {/* Podium - Top 3 Players */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="flex justify-center items-end gap-4 relative">
             
-            <div className="space-y-4">
-              {sortedPlayers.map((player, index) => {
-                const totalScore = (player.quizScore || 0) + (player.memoryScore || 0)
-                const rank = index + 1
-                
-                return (
-                  <div key={player.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/20">
-                    {/* Rank */}
-                    <div className={`w-12 h-12 rounded-lg border-2 border-white flex items-center justify-center font-bold text-lg ${
-                      rank === 1 ? "bg-yellow-400 text-white" : 
-                      rank === 2 ? "bg-gray-400 text-white" : 
-                      rank === 3 ? "bg-amber-600 text-white" : 
-                      "bg-blue-400 text-white"
-                    }`}>
-                      #{rank}
-                    </div>
-                    
-                    {/* Avatar */}
-                    <div className="w-12 h-12 rounded border border-white overflow-hidden">
-                      <img
-                        src={player.avatar}
-                        alt={`${player.username}'s avatar`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = "/ava1.png"
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Player Info */}
-                    <div className="flex-1">
-                      <h4 className="font-bold text-white">{player.username}</h4>
-                      <div className="text-sm text-blue-200">
-                        Quiz: {player.quizScore || 0} | Memory: {player.memoryScore || 0}
-                      </div>
-                    </div>
-                    
-                    {/* Total Score */}
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-white">{totalScore}</div>
-                      <div className="text-xs text-blue-200">POINTS</div>
-                    </div>
+            {/* 2nd Place - Silver */}
+            {sortedPlayers[1] && (
+              <div className="flex flex-col items-center">
+                <div className="bg-gradient-to-br from-gray-400/20 to-gray-500/20 border-4 border-gray-400/50 rounded-lg p-6 pixel-lobby-card text-center relative mb-4 w-48 hover:scale-105 transition-all duration-300">
+                  {/* 2nd Place Rank */}
+                  <div className="bg-gray-400 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm relative mb-4 mx-auto">
+                    2
                   </div>
-                )
-              })}
-            </div>
+                  
+                  {/* 2nd Place Avatar */}
+                  <div className="w-16 h-16 rounded-full border-4 border-gray-400 overflow-hidden mx-auto mb-4 relative">
+                    <div className="absolute inset-0 bg-gray-400/30 rounded-full blur-lg"></div>
+                    <img
+                      src={sortedPlayers[1].avatar}
+                      alt={`${sortedPlayers[1].username}'s avatar`}
+                      className="w-full h-full object-cover relative z-10"
+                      onError={(e) => {
+                        e.currentTarget.src = "/ava1.png"
+                      }}
+                    />
+                  </div>
+                  
+                  {/* 2nd Place Name */}
+                  <h3 className="text-lg font-bold text-gray-300 mb-3">{sortedPlayers[1].username}</h3>
+                  
+                  {/* 2nd Place Score */}
+                  <div className="bg-gradient-to-r from-gray-400 to-gray-500 rounded-lg px-4 py-2 relative">
+                    <div className="text-2xl font-bold text-white">{(sortedPlayers[1].quizScore || 0) + (sortedPlayers[1].memoryScore || 0)}</div>
+                    <div className="text-sm text-white">POINTS</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 1st Place - Gold */}
+            {champion && (
+              <div className="flex flex-col items-center">
+                <div className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border-4 border-yellow-400/50 rounded-lg p-8 pixel-lobby-card text-center relative mb-4 w-56 hover:scale-105 transition-all duration-300 animate-pulse">
+                  {/* Champion Glow Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-amber-400/20 rounded-lg blur-xl"></div>
+                  
+                  {/* Champion Rank */}
+                  <div className="bg-yellow-400 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg relative z-10 mb-4 mx-auto">
+                    1
+                  </div>
+                  
+                  {/* Champion Avatar with Glow */}
+                  <div className="w-20 h-20 rounded-full border-4 border-yellow-400 overflow-hidden mx-auto mb-4 relative z-10">
+                    <div className="absolute inset-0 bg-yellow-400/30 rounded-full blur-lg"></div>
+                    <img
+                      src={champion.avatar}
+                      alt={`${champion.username}'s avatar`}
+                      className="w-full h-full object-cover relative z-10"
+                      onError={(e) => {
+                        e.currentTarget.src = "/ava1.png"
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Champion Name */}
+                  <h2 className="text-xl font-bold text-yellow-400 mb-4 relative z-10">{champion.username}</h2>
+                  
+                  {/* Champion Score with Glow */}
+                  <div className="bg-gradient-to-r from-yellow-400 to-amber-400 rounded-lg px-6 py-3 relative z-10">
+                    <div className="absolute inset-0 bg-yellow-400/30 rounded-lg blur-sm"></div>
+                    <div className="text-3xl font-bold text-white relative z-10">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
+                    <div className="text-sm text-white relative z-10">POINTS</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3rd Place - Bronze */}
+            {sortedPlayers[2] && (
+              <div className="flex flex-col items-center">
+                <div className="bg-gradient-to-br from-amber-600/20 to-orange-600/20 border-4 border-amber-600/50 rounded-lg p-6 pixel-lobby-card text-center relative mb-4 w-48 hover:scale-105 transition-all duration-300">
+                  {/* 3rd Place Rank */}
+                  <div className="bg-amber-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm relative mb-4 mx-auto">
+                    3
+                  </div>
+                  
+                  {/* 3rd Place Avatar */}
+                  <div className="w-16 h-16 rounded-full border-4 border-amber-600 overflow-hidden mx-auto mb-4 relative">
+                    <div className="absolute inset-0 bg-amber-600/30 rounded-full blur-lg"></div>
+                    <img
+                      src={sortedPlayers[2].avatar}
+                      alt={`${sortedPlayers[2].username}'s avatar`}
+                      className="w-full h-full object-cover relative z-10"
+                      onError={(e) => {
+                        e.currentTarget.src = "/ava1.png"
+                      }}
+                    />
+                  </div>
+                  
+                  {/* 3rd Place Name */}
+                  <h3 className="text-lg font-bold text-amber-300 mb-3">{sortedPlayers[2].username}</h3>
+                  
+                  {/* 3rd Place Score */}
+                  <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-lg px-4 py-2 relative">
+                    <div className="text-2xl font-bold text-white">{(sortedPlayers[2].quizScore || 0) + (sortedPlayers[2].memoryScore || 0)}</div>
+                    <div className="text-sm text-white">POINTS</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+         {/* Other Participants - Only show players ranked 4 and below */}
+         {sortedPlayers.length > 3 && (
+           <div className="max-w-2xl mx-auto mb-8">
+             <div className="bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg p-6 pixel-lobby-card">
+               <h3 className="text-xl font-bold text-white mb-6 text-center">OTHER PARTICIPANTS</h3>
+               
+               <div className="space-y-4">
+                 {sortedPlayers.slice(3).map((player, index) => {
+                   const totalScore = (player.quizScore || 0) + (player.memoryScore || 0)
+                   const rank = index + 4 // Start from rank 4
+                   
+                   return (
+                     <div key={player.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/20 hover:bg-white/10 transition-all duration-300">
+                       {/* Rank */}
+                       <div className="w-12 h-12 rounded-lg border-2 border-white flex items-center justify-center font-bold text-lg bg-blue-400 text-white">
+                         #{rank}
+                       </div>
+                       
+                       {/* Avatar */}
+                       <div className="w-12 h-12 rounded border border-white overflow-hidden">
+                         <img
+                           src={player.avatar}
+                           alt={`${player.username}'s avatar`}
+                           className="w-full h-full object-cover"
+                           onError={(e) => {
+                             e.currentTarget.src = "/ava1.png"
+                           }}
+                         />
+                       </div>
+                       
+                       {/* Player Info */}
+                       <div className="flex-1">
+                         <h4 className="font-bold text-white">{player.username}</h4>
+                       </div>
+                       
+                       {/* Total Score */}
+                       <div className="text-right">
+                         <div className="text-lg font-bold text-white">{totalScore}</div>
+                         <div className="text-xs text-blue-200">POINTS</div>
+                       </div>
+                     </div>
+                   )
+                 })}
+               </div>
+             </div>
+           </div>
+         )}
 
         {/* Back to Dashboard Button */}
         <div className="text-center">
