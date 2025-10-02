@@ -133,10 +133,10 @@ function ResultPageContent() {
 
   // Get rank display
   const getRankDisplay = (rank: number) => {
-    if (rank === 1) return { text: "JUARA 1", icon: "🥇", color: "from-yellow-400 to-amber-400", borderColor: "border-yellow-400/50" }
-    if (rank === 2) return { text: "JUARA 2", icon: "🥈", color: "from-gray-400 to-gray-500", borderColor: "border-gray-400/50" }
-    if (rank === 3) return { text: "JUARA 3", icon: "🥉", color: "from-amber-600 to-orange-600", borderColor: "border-amber-600/50" }
-    return { text: `JUARA ${rank}`, icon: "🏅", color: "from-blue-400 to-purple-400", borderColor: "border-blue-400/50" }
+    if (rank === 1) return { text: "CHAMPION", icon: "🥇", color: "from-yellow-400 to-amber-400", borderColor: "border-yellow-400/50" }
+    if (rank === 2) return { text: "2ND PLACE", icon: "🥈", color: "from-gray-400 to-gray-500", borderColor: "border-gray-400/50" }
+    if (rank === 3) return { text: "3RD PLACE", icon: "🥉", color: "from-amber-600 to-orange-600", borderColor: "border-amber-600/50" }
+    return { text: `${rank}TH PLACE`, icon: "🏅", color: "from-blue-400 to-purple-400", borderColor: "border-blue-400/50" }
   }
 
   const rankDisplay = getRankDisplay(playerRanking.rank)
@@ -206,16 +206,21 @@ function ResultPageContent() {
             <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
               <Trophy className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white pixel-header-title">HASIL GAME</h1>
+            <h1 className="text-3xl font-bold text-white pixel-header-title">GAME RESULTS</h1>
           </div>
         </div>
 
         {/* Player Result Card */}
         <div className="max-w-md mx-auto mb-8">
-          <div className={`bg-gradient-to-br ${rankDisplay.color}/20 ${rankDisplay.borderColor} border-4 rounded-lg p-8 pixel-lobby-card text-center relative`}>
+          <div className={`bg-gradient-to-br from-slate-800/35 to-slate-900/45 backdrop-blur-xl border-2 border-slate-400/25 rounded-lg p-8 pixel-lobby-card text-center relative shadow-2xl`}>
+            {/* Card Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/8 to-blue-400/8 rounded-lg blur-xl -z-10"></div>
+            {/* Card Inner Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-lg"></div>
             {/* Player Avatar with Glow */}
-            <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden mx-auto mb-6 relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/30 to-purple-400/30 rounded-full blur-lg"></div>
+            <div className="w-24 h-24 rounded-full border-3 border-slate-300/50 overflow-hidden mx-auto mb-6 relative shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/25 to-blue-400/25 rounded-full blur-lg"></div>
+              <div className="absolute inset-0 ring-1 ring-white/20 rounded-full"></div>
               <img
                 src={playerRanking.player.avatar}
                 alt={`${playerRanking.player.username}'s avatar`}
@@ -227,34 +232,24 @@ function ResultPageContent() {
             </div>
             
             {/* Player Name */}
-            <h2 className="text-2xl font-bold text-white mb-4">{playerRanking.player.username}</h2>
+            <h2 className="text-2xl font-bold text-white/95 mb-4 drop-shadow-lg">{playerRanking.player.username}</h2>
             
             {/* Rank Display */}
             <div className="mb-6">
               <div className="text-6xl mb-2">{rankDisplay.icon}</div>
-              <div className={`text-2xl font-bold bg-gradient-to-r ${rankDisplay.color} bg-clip-text text-transparent`}>
+              <div className={`text-2xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent drop-shadow-sm`}>
                 {rankDisplay.text}
               </div>
             </div>
             
             {/* Score Display with Glow */}
-            <div className="bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg px-8 py-4 mb-6 relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/30 to-purple-400/30 rounded-lg blur-sm"></div>
-              <div className="text-4xl font-bold text-white relative z-10">{playerRanking.totalScore}</div>
-              <div className="text-lg text-white relative z-10">POINTS</div>
+            <div className="bg-gradient-to-r from-slate-700/60 to-slate-800/70 backdrop-blur-sm rounded-lg px-8 py-4 mb-6 relative border border-slate-400/30 shadow-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/15 to-blue-400/15 rounded-lg blur-sm"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent rounded-lg"></div>
+              <div className="text-4xl font-bold text-cyan-100 relative z-10 drop-shadow-lg">{playerRanking.totalScore}</div>
+              <div className="text-lg text-slate-200/80 relative z-10">POINTS</div>
             </div>
             
-            {/* Score Breakdown */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="bg-white/10 rounded-lg p-3">
-                <div className="text-blue-400 font-bold text-lg">{playerRanking.player.quizScore || 0}</div>
-                <div className="text-white text-xs">QUIZ POINTS</div>
-              </div>
-              <div className="bg-white/10 rounded-lg p-3">
-                <div className="text-blue-400 font-bold text-lg">{playerRanking.player.memoryScore || 0}</div>
-                <div className="text-white text-xs">MEMORY POINTS</div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -267,7 +262,7 @@ function ResultPageContent() {
             }}
           >
             <Home className="w-5 h-5" />
-            KEMBALI KE DASHBOARD
+            BACK TO DASHBOARD
           </button>
         </div>
       </div>

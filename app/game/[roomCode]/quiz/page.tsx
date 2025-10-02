@@ -575,21 +575,8 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
   const progress = (questionsAnswered / (room?.settings.questionCount || questions.length)) * 100
 
+  // Removed temporary result display - redirect directly to result page
   if (gameFinished) {
-    const totalScore = score // Only quiz score counts now
-    
-    // Get player name from localStorage
-    const getPlayerName = () => {
-      try {
-        const player = localStorage.getItem("currentPlayer")
-        return player ? JSON.parse(player).username : "Player"
-      } catch {
-        return "Player"
-      }
-    }
-    
-    const playerName = getPlayerName()
-
     return (
       <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         {/* Pixel Grid Background */}
@@ -602,101 +589,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           <div className="scanlines"></div>
         </div>
         
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Pixel Elements */}
-          <PixelBackgroundElements />
-          {/* Floating Brain Elements */}
-          <div className="absolute top-20 left-10 w-32 h-32 opacity-20 animate-float">
-            <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl"></div>
-          </div>
-          <div className="absolute top-40 right-20 w-24 h-24 opacity-30 animate-float-delayed">
-            <div className="w-full h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 blur-lg"></div>
-          </div>
-          <div className="absolute bottom-32 left-1/4 w-40 h-40 opacity-25 animate-float-slow">
-            <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400 blur-2xl"></div>
-          </div>
-          <div className="absolute bottom-20 right-1/3 w-28 h-28 opacity-35 animate-float-delayed-slow">
-            <div className="w-full h-full rounded-full bg-gradient-to-r from-green-400 to-cyan-400 blur-xl"></div>
-          </div>
-
-          {/* Neural Network Lines */}
-          <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 1000 1000">
-            <defs>
-              <linearGradient id="neuralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#3b82f6" />
-                <stop offset="50%" stopColor="#8b5cf6" />
-                <stop offset="100%" stopColor="#06b6d4" />
-              </linearGradient>
-            </defs>
-            <g className="animate-pulse">
-              <line x1="100" y1="200" x2="300" y2="150" stroke="url(#neuralGradient)" strokeWidth="2" />
-              <line x1="300" y1="150" x2="500" y2="300" stroke="url(#neuralGradient)" strokeWidth="2" />
-              <line x1="500" y1="300" x2="700" y2="250" stroke="url(#neuralGradient)" strokeWidth="2" />
-              <line x1="200" y1="400" x2="400" y2="350" stroke="url(#neuralGradient)" strokeWidth="2" />
-              <line x1="400" y1="350" x2="600" y2="500" stroke="url(#neuralGradient)" strokeWidth="2" />
-              <line x1="600" y1="500" x2="800" y2="450" stroke="url(#neuralGradient)" strokeWidth="2" />
-              <circle cx="100" cy="200" r="4" fill="#3b82f6" className="animate-ping" />
-              <circle cx="300" cy="150" r="4" fill="#8b5cf6" className="animate-ping" style={{ animationDelay: '0.5s' }} />
-              <circle cx="500" cy="300" r="4" fill="#06b6d4" className="animate-ping" style={{ animationDelay: '1s' }} />
-              <circle cx="700" cy="250" r="4" fill="#3b82f6" className="animate-ping" style={{ animationDelay: '1.5s' }} />
-              <circle cx="200" cy="400" r="4" fill="#8b5cf6" className="animate-ping" style={{ animationDelay: '2s' }} />
-              <circle cx="400" cy="350" r="4" fill="#06b6d4" className="animate-ping" style={{ animationDelay: '2.5s' }} />
-              <circle cx="600" cy="500" r="4" fill="#3b82f6" className="animate-ping" style={{ animationDelay: '3s' }} />
-              <circle cx="800" cy="450" r="4" fill="#8b5cf6" className="animate-ping" style={{ animationDelay: '3.5s' }} />
-            </g>
-          </svg>
-        </div>
-
-        <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
-          <div className="max-w-lg mx-auto">
-            {/* Main Result Card */}
-            <div className="bg-gradient-to-br from-white/10 to-white/5 border-4 border-white/30 rounded-lg p-8 pixel-lobby-card text-center">
-              {/* Game Title */}
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white pixel-header-title">MEMORY QUIZ GAME</h1>
-              </div>
-              
-              {/* Player Avatar */}
-              <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden mx-auto mb-6">
-                <img
-                  src="/ava1.png"
-                  alt="Player Avatar"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              
-              {/* Player Name */}
-              <h2 className="text-xl font-bold text-white mb-6">{playerName}</h2>
-              
-              {/* Score Display */}
-              <div className="mb-8">
-                <div className="text-5xl font-bold text-white mb-2">{totalScore}</div>
-                <div className="text-lg text-white">points</div>
-              </div>
-              
-              {/* Player Position */}
-              <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 border-white/30 rounded-lg p-6 mb-8">
-                <div className="text-lg text-white mb-3">Your Position</div>
-                <div className="text-4xl font-bold text-yellow-400">#1</div>
-              </div>
-              
-              {/* Play Again Button */}
-              <button
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-4 border-white/30 rounded-lg px-8 py-4 text-white font-bold text-lg transition-all duration-300 hover:scale-105 pixel-button flex items-center justify-center gap-3"
-                onClick={() => {
-                  roomManager.updateGameStatus(params.roomCode, "finished")
-                  window.location.href = "/result?roomCode=" + params.roomCode
-                }}
-              >
-                ⭐ LIHAT HASIL
-              </button>
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+              <Trophy className="w-6 h-6 text-white" />
             </div>
+            <h2 className="text-xl font-bold text-white mb-2">QUIZ COMPLETED!</h2>
+            <p className="text-sm text-blue-200">Redirecting to results...</p>
           </div>
         </div>
-        
-        {/* Pixel Background Elements */}
-        <PixelBackgroundElements />
       </div>
     )
   }
