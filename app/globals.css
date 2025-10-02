@@ -944,6 +944,49 @@
   }
 }
 
+/* Enhanced Falling Animations for Confetti */
+@keyframes falling-delayed {
+  0% {
+    top: -20vh;
+    opacity: 0;
+    transform: rotate(0deg);
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    top: 100vh;
+    opacity: 0;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes falling-slow {
+  0% {
+    top: -20vh;
+    opacity: 0;
+    transform: rotate(0deg) scale(0.8);
+  }
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.9;
+  }
+  100% {
+    top: 100vh;
+    opacity: 0;
+    transform: rotate(180deg) scale(1.2);
+  }
+}
+
+.animate-falling { animation: falling 8s linear infinite; }
+.animate-falling-delayed { animation: falling-delayed 10s linear infinite 2s; }
+.animate-falling-slow { animation: falling-slow 12s linear infinite 4s; }
+
 /* Select Quiz Page Pixel Styles */
 .pixel-header-title {
   animation: pixel-card-glow 2.5s ease-in-out infinite;

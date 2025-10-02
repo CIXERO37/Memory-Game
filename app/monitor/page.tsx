@@ -268,6 +268,14 @@ function MonitorPageContent() {
     )
   }
 
+  // Function to truncate player names to 8 characters with "..."
+  const truncatePlayerName = (name: string) => {
+    if (name.length <= 8) {
+      return name
+    }
+    return name.substring(0, 8) + "..."
+  }
+
   const players = room.players.filter((p) => !p.isHost)
   const sortedPlayers = [...players].sort((a, b) => {
     const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
@@ -454,7 +462,7 @@ function MonitorPageContent() {
                           />
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg text-white">{player.username}</h3>
+                          <h3 className="font-bold text-lg text-white">{truncatePlayerName(player.username)}</h3>
                         </div>
                       </div>
                       <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-3 py-1">
