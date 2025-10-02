@@ -31,6 +31,7 @@ export interface Room {
 class SupabaseRoomManager {
   private listeners: Set<(room: Room | null) => void> = new Set()
   private subscriptions: Map<string, any> = new Map()
+  private connectionStatus: boolean = true
 
   generateRoomCode(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -77,7 +78,7 @@ class SupabaseRoomManager {
         gameStarted: false
       }
 
-      console.log('[SupabaseRoomManager] Room created:', room)
+      // Room created successfully
       return room
     } catch (error) {
       console.error('[SupabaseRoomManager] Error creating room:', error)
@@ -95,7 +96,7 @@ class SupabaseRoomManager {
         .single()
 
       if (roomError || !roomData) {
-        console.log('[SupabaseRoomManager] Room not found:', roomCode)
+        // Room not found
         return null
       }
 
@@ -183,7 +184,7 @@ class SupabaseRoomManager {
         return false
       }
 
-      console.log('[SupabaseRoomManager] Player joined:', playerData)
+      // Player joined successfully
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error joining room:', error)
@@ -230,7 +231,7 @@ class SupabaseRoomManager {
           return false
         }
 
-        console.log('[SupabaseRoomManager] Player rejoined (existing):', existingPlayer)
+        // Player rejoined (existing)
         return true
       } else {
         // Player doesn't exist, create new one
@@ -251,7 +252,7 @@ class SupabaseRoomManager {
           return false
         }
 
-        console.log('[SupabaseRoomManager] Player rejoined (new):', playerData)
+        // Player rejoined (new)
         return true
       }
     } catch (error) {
@@ -286,7 +287,7 @@ class SupabaseRoomManager {
         return false
       }
 
-      console.log('[SupabaseRoomManager] Player left:', playerId)
+      // Player left successfully
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error leaving room:', error)
@@ -341,7 +342,7 @@ class SupabaseRoomManager {
         return false
       }
 
-      console.log('[SupabaseRoomManager] Player kicked:', playerId, 'Username:', playerData.username)
+      // Player kicked successfully
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error kicking player:', error)
@@ -380,7 +381,7 @@ class SupabaseRoomManager {
         return false
       }
 
-      console.log('[SupabaseRoomManager] Countdown started:', roomCode, 'Duration:', duration)
+      // Countdown started
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error starting countdown:', error)
@@ -418,7 +419,7 @@ class SupabaseRoomManager {
         return false
       }
 
-      console.log('[SupabaseRoomManager] Game started:', roomCode, 'at:', startedAtTime)
+      // Game started
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error starting game:', error)
@@ -453,20 +454,89 @@ class SupabaseRoomManager {
       if (memoryScore !== undefined) updateData.memory_game_score = memoryScore
       if (questionsAnswered !== undefined) updateData.questions_answered = questionsAnswered
 
-      const { error } = await supabase
+      console.log('[SupabaseRoomManager] 🚀 ATTEMPTING player score update:', {
+        playerId,
+        roomCode,
+        updateData,
+        timestamp: new Date().toISOString()
+      })
+
+      const { data, error, count } = await supabase
         .from('players')
         .update(updateData)
         .eq('id', playerId)
+        .select()
 
       if (error) {
-        console.error('[SupabaseRoomManager] Error updating player score:', error)
+        console.error('[SupabaseRoomManager] ❌ ERROR updating player score:', {
+          error,
+          playerId,
+          updateData,
+          errorCode: error.code,
+          errorMessage: error.message
+        })
         return false
       }
 
-      console.log('[SupabaseRoomManager] Player score updated:', playerId, updateData)
+      // Verify the update was successful
+      if (!data || data.length === 0) {
+        console.error('[SupabaseRoomManager] ⚠️ WARNING: Update returned no data, player may not exist:', {
+          playerId,
+          updateData,
+          returnedData: data
+        })
+        return false
+      }
+
+      console.log('[SupabaseRoomManager] ✅ Player score updated successfully:', {
+        playerId,
+        updateData,
+        updatedRecord: data[0],
+        timestamp: new Date().toISOString()
+      })
+
+      // Double-check the update by reading back the data
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('players')
+        .select('quiz_score, memory_game_score, questions_answered')
+        .eq('id', playerId)
+        .single()
+
+      if (verifyError) {
+        console.warn('[SupabaseRoomManager] ⚠️ Could not verify update:', verifyError)
+      } else {
+        console.log('[SupabaseRoomManager] 🔍 VERIFICATION - Current player data:', {
+          playerId,
+          currentData: verifyData,
+          expectedData: updateData
+        })
+
+        // Check if the update was actually applied
+        const isVerified = (
+          (quizScore === undefined || verifyData.quiz_score === quizScore) &&
+          (memoryScore === undefined || verifyData.memory_game_score === memoryScore) &&
+          (questionsAnswered === undefined || verifyData.questions_answered === questionsAnswered)
+        )
+
+        if (!isVerified) {
+          console.error('[SupabaseRoomManager] 💥 VERIFICATION FAILED - Update not applied correctly:', {
+            expected: updateData,
+            actual: verifyData
+          })
+          return false
+        }
+
+        console.log('[SupabaseRoomManager] ✅ VERIFICATION PASSED - Update confirmed')
+      }
+
       return true
     } catch (error) {
-      console.error('[SupabaseRoomManager] Error updating player score:', error)
+      console.error('[SupabaseRoomManager] 💥 EXCEPTION during player score update:', {
+        error,
+        playerId,
+        roomCode,
+        updateData: { quizScore, memoryScore, questionsAnswered }
+      })
       return false
     }
   }
@@ -484,7 +554,7 @@ class SupabaseRoomManager {
       return () => {}
     }
 
-    console.log('[SupabaseRoomManager] Setting up subscription for room:', roomCode, 'with room ID:', roomId)
+    // Setting up subscription for room
 
     // Subscribe to room changes
     const roomSubscription = supabase
@@ -497,10 +567,8 @@ class SupabaseRoomManager {
           filter: `room_code=eq.${roomCode}`
         }, 
         async (payload) => {
-          console.log('[SupabaseRoomManager] Room data changed:', payload.eventType, payload)
           const updatedRoom = await this.getRoom(roomCode)
           if (updatedRoom) {
-            console.log('[SupabaseRoomManager] Calling callback with updated room data')
             callback(updatedRoom)
           }
         }
@@ -547,8 +615,13 @@ class SupabaseRoomManager {
         if (status === 'SUBSCRIBED') {
           console.log('[SupabaseRoomManager] ✅ Successfully subscribed to room updates for:', roomCode)
           console.log('[SupabaseRoomManager] Now listening for player changes in room ID:', roomId)
+          this.connectionStatus = true
         } else if (status === 'CHANNEL_ERROR') {
           console.error('[SupabaseRoomManager] ❌ Subscription error for room:', roomCode)
+          this.connectionStatus = false
+        } else if (status === 'CLOSED') {
+          console.warn('[SupabaseRoomManager] ⚠️ Subscription closed for room:', roomCode)
+          this.connectionStatus = false
         }
       })
 
@@ -577,6 +650,10 @@ class SupabaseRoomManager {
       console.error('[SupabaseRoomManager] Error getting room ID:', error)
       return null
     }
+  }
+
+  isChannelConnected(): boolean {
+    return this.connectionStatus
   }
 
   cleanup() {

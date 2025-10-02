@@ -25,6 +25,7 @@ export interface Room {
  * Uses startedAt for accurate timing, falls back to createdAt
  * Uses Math.ceil for more precise countdown display
  * Optimized for real-time updates with minimal delay
+ * Enhanced with better synchronization logic
  */
 export function calculateTimerState(room: Room): TimerState {
   if (!room) {
@@ -40,10 +41,13 @@ export function calculateTimerState(room: Room): TimerState {
   // Use startedAt for more accurate timing, fallback to createdAt
   const gameStartTime = room.startedAt ? new Date(room.startedAt).getTime() : new Date(room.createdAt).getTime()
   const elapsedSeconds = Math.floor((now - gameStartTime) / 1000)
+  
+  // Add small buffer to prevent timing discrepancies between host and players
+  const syncBuffer = 0.5 // 500ms buffer for network latency
 
   // Calculate remaining time for quiz (total time limit - elapsed time)
   const totalTimeLimitSeconds = room.settings.totalTimeLimit * 60 // Convert minutes to seconds
-  const remainingTime = Math.max(0, totalTimeLimitSeconds - elapsedSeconds)
+  const remainingTime = Math.max(0, Math.floor(totalTimeLimitSeconds - elapsedSeconds + syncBuffer))
 
   // Calculate countdown if in countdown phase
   let countdown: number | null = null
@@ -65,8 +69,10 @@ export function calculateTimerState(room: Room): TimerState {
  * Format time in MM:SS format
  */
 export function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
+  // Ensure seconds is always an integer
+  const totalSeconds = Math.floor(seconds)
+  const minutes = Math.floor(totalSeconds / 60)
+  const remainingSeconds = totalSeconds % 60
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
@@ -75,7 +81,7 @@ export function formatTime(seconds: number): string {
  */
 export function getTimerDisplayText(timerState: TimerState): string {
   if (timerState.countdown !== null) {
-    return `${timerState.countdown}s`
+    return `${Math.floor(timerState.countdown)}s`
   }
   return formatTime(timerState.remainingTime)
 }
