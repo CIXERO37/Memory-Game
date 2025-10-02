@@ -19,16 +19,9 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
 
   useEffect(() => {
     if (!room.countdownStartTime || !room.countdownDuration) {
-      console.log("[CountdownTimer] No countdown data:", { countdownStartTime: room.countdownStartTime, countdownDuration: room.countdownDuration })
       setIsActive(false)
       return
     }
-
-    console.log("[CountdownTimer] Starting countdown:", { 
-      startTime: room.countdownStartTime, 
-      duration: room.countdownDuration,
-      roomStatus: room.status 
-    })
 
     const updateCountdown = () => {
       const timerState = calculateTimerState(room)
@@ -39,12 +32,10 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
         setPreviousTime(remaining)
       }
       
-      console.log("[CountdownTimer] Time remaining:", remaining)
       setTimeLeft(remaining)
       setIsActive(remaining > 0)
 
       if (remaining <= 0) {
-        console.log("[CountdownTimer] Countdown completed, calling onCountdownComplete")
         onCountdownComplete()
       }
     }
@@ -52,10 +43,12 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
     // Initial calculation
     updateCountdown()
 
-    // Use requestAnimationFrame for smoother animation with 50ms updates
+    // Use requestAnimationFrame for smoother animation
     const animate = () => {
       updateCountdown()
-      if (isActive && timeLeft > 0) {
+      const timerState = calculateTimerState(room)
+      const remaining = timerState.countdown || 0
+      if (remaining > 0) {
         animationRef.current = requestAnimationFrame(animate)
       }
     }
@@ -68,7 +61,7 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [room.countdownStartTime, room.countdownDuration, onCountdownComplete, isActive, previousTime])
+  }, [room.countdownStartTime, room.countdownDuration, onCountdownComplete])
 
   // Show loading state if countdown data is not ready yet
   if (!room.countdownStartTime || !room.countdownDuration) {

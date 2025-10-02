@@ -55,8 +55,6 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     if (timeUpHandled) return // Prevent multiple calls
     setTimeUpHandled(true)
     
-    console.log("[Quiz] Timer expired! Ending game automatically...")
-    
     try {
       // End the game automatically
       await roomManager.updateGameStatus(params.roomCode, "finished")
@@ -70,7 +68,6 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           timestamp: Date.now()
         })
         broadcastChannel.close()
-        console.log("[Quiz] Broadcasted game end event to players")
       }
       
       // Redirect based on user type
@@ -80,7 +77,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         window.location.href = `/leaderboard?roomCode=${params.roomCode}`
       }
     } catch (error) {
-      console.error("[Quiz] Error ending game due to timer expiration:", error)
+      // Silent error handling
       // Fallback redirect
       if (!isHost) {
         window.location.href = `/result?roomCode=${params.roomCode}`
@@ -324,6 +321,45 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }
   }, [searchParams, params.roomCode, room, loading])
 
+  // FAILED UPDATE RECOVERY MECHANISM
+  useEffect(() => {
+    const recoverFailedUpdates = async () => {
+      if (!playerId) return
+      
+      const failedUpdateKey = `failed-progress-update-${params.roomCode}-${playerId}`
+      const failedUpdateData = localStorage.getItem(failedUpdateKey)
+      
+      if (failedUpdateData) {
+        try {
+          const failedUpdate = JSON.parse(failedUpdateData)
+          console.log("[Quiz] 🔄 RECOVERING failed progress update:", failedUpdate)
+          
+          const success = await roomManager.updatePlayerScore(
+            failedUpdate.roomCode,
+            failedUpdate.playerId,
+            failedUpdate.updateData.quizScore,
+            undefined,
+            failedUpdate.updateData.questionsAnswered
+          )
+          
+          if (success) {
+            console.log("[Quiz] ✅ RECOVERED failed progress update successfully")
+            localStorage.removeItem(failedUpdateKey)
+          } else {
+            console.log("[Quiz] ❌ Failed to recover progress update, will try again later")
+          }
+        } catch (error) {
+          console.error("[Quiz] Error recovering failed update:", error)
+        }
+      }
+    }
+    
+    // Try to recover failed updates every 5 seconds
+    const recoveryInterval = setInterval(recoverFailedUpdates, 5000)
+    
+    return () => clearInterval(recoveryInterval)
+  }, [playerId, params.roomCode])
+
   useEffect(() => {
     const checkMemoryGameReturn = async () => {
       const memoryReturn = localStorage.getItem(`memory-return-${params.roomCode}`)
@@ -341,20 +377,35 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           setCorrectAnswers(progress.correctAnswers || 0)
           setQuestionsAnswered(progress.questionsAnswered || 0)
           
-          // Sync restored data with database
+          // Sync restored data with database with enhanced reliability
           if (playerId) {
-            try {
-              await roomManager.updatePlayerScore(
-                params.roomCode, 
-                playerId, 
-                progress.score || 0, 
-                undefined, 
-                progress.questionsAnswered || 0
-              )
-              console.log("[Quiz] Successfully synced restored data with database")
-            } catch (error) {
-              console.error("[Quiz] Error syncing restored data with database:", error)
+            const syncAttempt = async (attempt = 1, maxAttempts = 3) => {
+              try {
+                const success = await roomManager.updatePlayerScore(
+                  params.roomCode, 
+                  playerId, 
+                  progress.score || 0, 
+                  undefined, 
+                  progress.questionsAnswered || 0
+                )
+                
+                if (success) {
+                  console.log(`[Quiz] ✅ Successfully synced restored data with database (attempt ${attempt})`)
+                } else if (attempt < maxAttempts) {
+                  console.log(`[Quiz] 🔄 Retrying sync (attempt ${attempt + 1}/${maxAttempts})`)
+                  setTimeout(() => syncAttempt(attempt + 1, maxAttempts), 2000)
+                } else {
+                  console.error("[Quiz] ❌ Failed to sync restored data after all attempts")
+                }
+              } catch (error) {
+                console.error(`[Quiz] Error syncing restored data (attempt ${attempt}):`, error)
+                if (attempt < maxAttempts) {
+                  setTimeout(() => syncAttempt(attempt + 1, maxAttempts), 2000)
+                }
+              }
             }
+            
+            syncAttempt()
           }
           
           // Clean up localStorage after restore
@@ -405,23 +456,27 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     setSelectedAnswer(answerIndex)
     setShowResult(true)
 
-    // Always increment questions answered
+    // Always increment questions answered - IMMEDIATE optimistic update
     const newQuestionsAnswered = questionsAnswered + 1
     setQuestionsAnswered(newQuestionsAnswered)
     
-    // Immediate optimistic update for better UX
-    console.log("[Quiz] Optimistic update - questionsAnswered:", newQuestionsAnswered)
+    console.log("[Quiz] 🚀 OPTIMISTIC UPDATE - questionsAnswered:", newQuestionsAnswered)
 
     // Check if correct
-    if (answerIndex === questions[currentQuestion].correct) {
-      const newScore = score + 1
+    const isCorrect = answerIndex === questions[currentQuestion].correct
+    let newScore = score
+    let newCorrectAnswers = correctAnswers
+    
+    if (isCorrect) {
+      newScore = score + 1
       setScore(newScore)
-      const newCorrectAnswers = correctAnswers + 1
+      newCorrectAnswers = correctAnswers + 1
       setCorrectAnswers(newCorrectAnswers)
 
       if (newCorrectAnswers === 3) {
-        // Update quiz score and questions answered immediately
+        // Update quiz score and questions answered immediately before memory game
         if (playerId) {
+          console.log("[Quiz] 🎯 MEMORY GAME TRIGGER - Updating final scores before redirect")
           roomManager.updatePlayerScore(params.roomCode, playerId, newScore, undefined, newQuestionsAnswered)
         }
 
@@ -444,52 +499,83 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       }
     }
 
-    // Update score and questions answered in real-time for host monitoring
+    // ENHANCED PROGRESS BAR RELIABILITY FIX
     if (playerId) {
-      console.log("[Quiz] Updating player score:", {
-        playerId,
-        quizScore: score + (answerIndex === questions[currentQuestion].correct ? 1 : 0),
-        questionsAnswered: newQuestionsAnswered
-      })
-      
-      // Update immediately with optimistic update
       const updateData = {
-        quizScore: score + (answerIndex === questions[currentQuestion].correct ? 1 : 0),
+        quizScore: newScore,
         questionsAnswered: newQuestionsAnswered
       }
       
-      roomManager.updatePlayerScore(
-        params.roomCode,
+      console.log("[Quiz] 📊 PROGRESS UPDATE:", {
         playerId,
-        updateData.quizScore,
-        undefined,
-        updateData.questionsAnswered
-      ).then((success) => {
-        if (success) {
-          console.log("[Quiz] Player score updated successfully")
-        } else {
-          console.error("[Quiz] Failed to update player score, retrying...")
-          // Retry with exponential backoff
-          setTimeout(() => {
-            roomManager.updatePlayerScore(
-              params.roomCode,
-              playerId,
-              updateData.quizScore,
-              undefined,
-              updateData.questionsAnswered
-            ).then((retrySuccess) => {
-              if (!retrySuccess) {
-                console.error("[Quiz] Retry also failed, will sync on next room update")
-              }
-            })
-          }, 2000)
-        }
-      }).catch((error) => {
-        console.error("[Quiz] Update error:", error)
+        currentQuestion: currentQuestion + 1,
+        ...updateData,
+        isCorrect,
+        timestamp: new Date().toISOString()
       })
+      
+      // ENHANCED MULTIPLE RETRY STRATEGY untuk memastikan progress bar update dengan sinkronisasi yang lebih baik
+      const attemptUpdate = async (attempt = 1, maxAttempts = 5) => {
+        try {
+          const success = await roomManager.updatePlayerScore(
+            params.roomCode,
+            playerId,
+            updateData.quizScore,
+            undefined,
+            updateData.questionsAnswered
+          )
+          
+          if (success) {
+            console.log(`[Quiz] ✅ Progress updated successfully (attempt ${attempt})`)
+            return true
+          } else {
+            throw new Error(`Update failed on attempt ${attempt}`)
+          }
+        } catch (error) {
+          console.error(`[Quiz] ❌ Update failed (attempt ${attempt}):`, error)
+          
+          if (attempt < maxAttempts) {
+            const delay = Math.pow(2, attempt) * 500 // Faster exponential backoff: 1s, 2s, 4s, 8s, 16s
+            console.log(`[Quiz] 🔄 Retrying in ${delay}ms... (attempt ${attempt + 1}/${maxAttempts})`)
+            
+            setTimeout(() => {
+              attemptUpdate(attempt + 1, maxAttempts)
+            }, delay)
+          } else {
+            console.error(`[Quiz] 💥 All ${maxAttempts} attempts failed. Progress may not be reflected in monitor.`)
+            
+            // IMMEDIATE FALLBACK: Broadcast progress update to monitor for instant sync
+            if (typeof window !== 'undefined') {
+              const broadcastChannel = new BroadcastChannel(`progress-update-${params.roomCode}`)
+              broadcastChannel.postMessage({ 
+                type: 'progress-update', 
+                playerId,
+                updateData,
+                timestamp: Date.now()
+              })
+              broadcastChannel.close()
+              console.log("[Quiz] 📡 Broadcasted progress update as fallback")
+            }
+            
+            // FALLBACK: Store failed update for later sync
+            const failedUpdate = {
+              playerId,
+              roomCode: params.roomCode,
+              updateData,
+              timestamp: Date.now()
+            }
+            localStorage.setItem(`failed-progress-update-${params.roomCode}-${playerId}`, JSON.stringify(failedUpdate))
+            console.log("[Quiz] 💾 Stored failed update for later sync:", failedUpdate)
+          }
+          return false
+        }
+      }
+      
+      // Start the update attempt chain
+      attemptUpdate()
     }
 
-    // Auto advance after 2 seconds
+    // Auto advance after 1 second
     setTimeout(() => {
       handleNextQuestion()
     }, 1000)

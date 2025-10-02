@@ -21,9 +21,7 @@ export function useRoom(roomCode: string | null) {
         const initialRoom = await roomManager.getRoom(roomCode)
         setRoom(initialRoom)
         setLoading(false)
-        console.log("[useRoom] Initial room loaded:", initialRoom?.players?.length, "players")
       } catch (error) {
-        console.error("[useRoom] Error loading room:", error)
         setLoading(false)
       }
     }
@@ -37,21 +35,12 @@ export function useRoom(roomCode: string | null) {
     const setupSubscription = async () => {
       try {
         unsubscribe = await roomManager.subscribe(roomCode, (updatedRoom) => {
-          console.log("[useRoom] Room updated via Supabase subscription:", updatedRoom)
-          console.log("[useRoom] Players in updated room:", updatedRoom?.players?.map(p => ({ id: p.id, username: p.username, avatar: p.avatar })))
-          
           // Always update the room data when subscription triggers
           setRoom(updatedRoom)
           setIsConnected(true) // Supabase is always connected
-          
-          // Log player count changes for debugging
-          if (updatedRoom?.players) {
-            console.log(`[useRoom] Player count changed to: ${updatedRoom.players.length}`)
-          }
         })
-        console.log("[useRoom] Subscription set up successfully for room:", roomCode)
       } catch (error) {
-        console.error("[useRoom] Error setting up subscription:", error)
+        // Silent error handling
       }
     }
     
@@ -67,26 +56,22 @@ export function useRoom(roomCode: string | null) {
           const previousPlayerCount = room?.players?.length || 0
           
           if (currentPlayerCount !== previousPlayerCount) {
-            console.log("[useRoom] Player count changed via polling:", previousPlayerCount, "->", currentPlayerCount)
             setRoom(currentRoom)
             return
           }
           
           // Check for critical status changes
           if (currentRoom.status === "countdown" && room?.status !== "countdown") {
-            console.log("[useRoom] Countdown detected via polling - updating immediately")
             setRoom(currentRoom)
             return
           }
           
           if (currentRoom.status === "quiz" && room?.status !== "quiz") {
-            console.log("[useRoom] Game started detected via polling - updating immediately")
             setRoom(currentRoom)
             return
           }
           
           if (currentRoom.status === "finished" && room?.status !== "finished") {
-            console.log("[useRoom] Game finished detected via polling - updating immediately")
             setRoom(currentRoom)
             return
           }
@@ -94,7 +79,7 @@ export function useRoom(roomCode: string | null) {
       } catch (error) {
         console.error("[useRoom] Error polling room:", error)
       }
-    }, 1500) // Increased frequency - poll every 1.5 seconds for better player updates
+    }, 1000) // Increased frequency - poll every 1 second for better sync
 
     const connectionCheck = setInterval(() => {
       setIsConnected(roomManager.isChannelConnected())

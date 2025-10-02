@@ -100,17 +100,80 @@ function MonitorPageContent() {
 
   // Timer is now handled by useSynchronizedTimer hook
 
-  // Force refresh effect for progress bar updates
+  // ENHANCED PROGRESS BAR MONITORING
   useEffect(() => {
     if (room && room.players.length > 0) {
-      // Force refresh every 2 seconds to ensure progress bar updates
+      // Enhanced refresh for progress bar reliability - every 500ms for better sync
       const refreshInterval = setInterval(() => {
         setForceRefresh(prev => prev + 1)
-      }, 2000)
+        console.log("[Monitor] 🔄 Force refresh triggered for progress bar reliability")
+      }, 500)
       
       return () => clearInterval(refreshInterval)
     }
   }, [room])
+
+  // REAL-TIME PROGRESS BROADCAST LISTENER untuk sinkronisasi instant
+  useEffect(() => {
+    if (roomCode) {
+      const broadcastChannel = new BroadcastChannel(`progress-update-${roomCode}`)
+      
+      broadcastChannel.onmessage = (event) => {
+        if (event.data.type === 'progress-update') {
+          console.log("[Monitor] 📡 Received progress broadcast:", event.data)
+          // Force immediate refresh when receiving progress update
+          setForceRefresh(prev => prev + 1)
+        }
+      }
+
+      return () => {
+        broadcastChannel.close()
+      }
+    }
+  }, [roomCode])
+
+  // PROGRESS BAR VALIDATION - Check for inconsistencies
+  useEffect(() => {
+    if (room && room.players.length > 0) {
+      const validationInterval = setInterval(() => {
+        room.players.forEach(player => {
+          if (!player.isHost) {
+            const questionsAnswered = player.questionsAnswered || 0
+            const quizScore = player.quizScore || 0
+            const maxQuestions = quizSettings.questionCount
+            
+            // Log potential inconsistencies
+            if (questionsAnswered > maxQuestions) {
+              console.warn(`[Monitor] ⚠️ Player ${player.username} has answered more questions than available:`, {
+                questionsAnswered,
+                maxQuestions,
+                playerId: player.id
+              })
+            }
+            
+            if (quizScore > questionsAnswered) {
+              console.warn(`[Monitor] ⚠️ Player ${player.username} has higher score than questions answered:`, {
+                quizScore,
+                questionsAnswered,
+                playerId: player.id
+              })
+            }
+            
+            // Log progress for debugging
+            console.log(`[Monitor] 📊 Player ${player.username} progress:`, {
+              questionsAnswered,
+              quizScore,
+              progress: Math.min((questionsAnswered / maxQuestions) * 100, 100).toFixed(1) + '%',
+              playerId: player.id,
+              timestamp: new Date().toISOString()
+            })
+          }
+        })
+      }, 2000) // Check every 2 seconds for better sync
+      
+      return () => clearInterval(validationInterval)
+    }
+  }, [room, quizSettings.questionCount])
 
   // Monitor ranking calculation effect
   useEffect(() => {
@@ -429,12 +492,17 @@ function MonitorPageContent() {
                 const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
                 const rankingChange = rankingChanges[player.id]
 
-                // Debug logging for progress bar
-                console.log(`[Monitor] Player ${player.username}:`, {
+                // Enhanced debug logging for progress bar reliability
+                console.log(`[Monitor] 📊 Player ${player.username} DETAILED:`, {
                   questionsAnswered,
                   questionCount: quizSettings.questionCount,
                   progress: quizProgress,
-                  forceRefresh
+                  quizScore,
+                  memoryScore,
+                  totalScore,
+                  forceRefresh,
+                  timestamp: new Date().toISOString(),
+                  progressStatus: questionsAnswered >= quizSettings.questionCount ? 'COMPLETED' : 'IN_PROGRESS'
                 })
 
                 return (
@@ -470,20 +538,60 @@ function MonitorPageContent() {
                       </div>
                     </div>
 
-                    {/* Progress Bars */}
+                    {/* Enhanced Progress Bars */}
                     <div className="space-y-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-bold text-white">PROGRESS</span>
-                          <span className="text-sm text-blue-300">
+                          <div className="flex items-center gap-2">
+                            
+                            {questionsAnswered >= quizSettings.questionCount && (
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-green-400 font-bold">SELESAI</span>
+                              </div>
+                            )}
+                            {questionsAnswered === 0 && (
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                <span className="text-xs text-gray-400">BELUM MULAI</span>
+                              </div>
+                            )}
+                            {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
+                              <div className="flex items-center gap-1">
+                                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-yellow-400 font-bold">SEDANG BERMAIN</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className={`text-sm font-bold ${
+                            questionsAnswered >= quizSettings.questionCount 
+                              ? 'text-green-300' 
+                              : questionsAnswered > 0 
+                                ? 'text-blue-300' 
+                                : 'text-gray-400'
+                          }`}>
                             {questionsAnswered}/{quizSettings.questionCount} ({Math.round(quizProgress)}%)
                           </span>
                         </div>
-                        <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3">
+                        <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-4 relative overflow-hidden">
                           <div 
-                            className="h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg transition-all duration-300"
-                            style={{ width: `${quizProgress}%` }}
+                            className={`h-full rounded-lg transition-all duration-500 ${
+                              questionsAnswered >= quizSettings.questionCount
+                                ? 'bg-gradient-to-r from-green-400 to-emerald-400'
+                                : questionsAnswered > 0
+                                  ? 'bg-gradient-to-r from-blue-400 to-purple-400'
+                                  : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                            }`}
+                            style={{ width: `${Math.max(quizProgress, 2)}%` }}
                           />
+                          {/* Progress bar animation for active players */}
+                          {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                          )}
+                          {/* Completion celebration effect */}
+                          {questionsAnswered >= quizSettings.questionCount && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-300/30 to-transparent animate-ping"></div>
+                          )}
                         </div>
                       </div>
                     </div>

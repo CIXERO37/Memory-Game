@@ -30,8 +30,8 @@ export function useSynchronizedTimer(room: Room | null, timeLimit?: number, onTi
     const updateTimer = () => {
       const now = Date.now()
       
-      // Update more frequently for better synchronization (every 50ms)
-      if (now - lastUpdateRef.current < 50) {
+      // Update more frequently for better synchronization (every 100ms for better performance)
+      if (now - lastUpdateRef.current < 100) {
         animationRef.current = requestAnimationFrame(updateTimer)
         return
       }
@@ -51,7 +51,6 @@ export function useSynchronizedTimer(room: Room | null, timeLimit?: number, onTi
       // Check if time is up and trigger callback
       if (newTimerState.remainingTime <= 0 && !timeUpTriggered.current && onTimeUp) {
         timeUpTriggered.current = true
-        console.log("[useSynchronizedTimer] Time is up! Triggering callback...")
         onTimeUp()
       }
       
