@@ -1115,6 +1115,279 @@
   }
 }
 
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  /* Container adjustments */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Button scaling */
+  .pixel-button-host,
+  .pixel-button-join {
+    height: 3rem !important;
+    font-size: 1.25rem !important;
+  }
+  
+  /* Card scaling */
+  .pixel-quiz-card {
+    width: 240px !important;
+    height: 160px !important;
+  }
+  
+  /* Title scaling */
+  .pixel-title {
+    font-size: 2.5rem !important;
+  }
+  
+  /* Brain icon scaling */
+  .pixel-brain {
+    width: 6rem !important;
+    height: 6rem !important;
+  }
+  
+  /* Pixel card scaling */
+  .pixel-card-float {
+    width: 5rem !important;
+    height: 6rem !important;
+  }
+  
+  /* Grid adjustments */
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Avatar selector mobile */
+  .avatar-selector .grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Memory game mobile */
+  .memory-game .grid-cols-4 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Lobby player grid mobile */
+  .lobby-players .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Input scaling */
+  .room-code-input {
+    font-size: 1.25rem !important;
+    padding: 0.75rem !important;
+  }
+  
+  /* Slider mobile adjustments */
+  .pixel-slider {
+    height: 8px !important;
+  }
+  
+  .pixel-slider .slider-thumb {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small mobile adjustments */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Button scaling for small screens */
+  .pixel-button-host,
+  .pixel-button-join {
+    height: 2.5rem !important;
+    font-size: 1rem !important;
+    padding: 0.5rem 1rem !important;
+  }
+  
+  /* Card scaling for small screens */
+  .pixel-quiz-card {
+    width: 200px !important;
+    height: 140px !important;
+  }
+  
+  /* Title scaling for small screens */
+  .pixel-title {
+    font-size: 2rem !important;
+  }
+  
+  /* Brain icon scaling for small screens */
+  .pixel-brain {
+    width: 5rem !important;
+    height: 5rem !important;
+  }
+  
+  /* Pixel card scaling for small screens */
+  .pixel-card-float {
+    width: 4rem !important;
+    height: 5rem !important;
+  }
+  
+  /* Grid adjustments for small screens */
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Avatar selector small mobile */
+  .avatar-selector .grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Memory game small mobile */
+  .memory-game .grid-cols-4 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.125rem !important;
+  }
+  
+  /* Lobby player grid small mobile */
+  .lobby-players .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Input scaling for small screens */
+  .room-code-input {
+    font-size: 1rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  /* Slider small mobile adjustments */
+  .pixel-slider {
+    height: 6px !important;
+  }
+  
+  .pixel-slider .slider-thumb {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  
+  /* Text scaling for small screens */
+  .pixel-font-sm {
+    font-size: 8px !important;
+  }
+  
+  /* Header scaling for small screens */
+  .pixel-header-title h1 {
+    font-size: 1rem !important;
+  }
+  
+  /* Description scaling for small screens */
+  .pixel-description p {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  button, .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+  
+  .hover\:bg-gray-100:hover {
+    background-color: inherit;
+  }
+  
+  /* Add active states for touch */
+  .pixel-button-host:active,
+  .pixel-button-join:active {
+    transform: scale(0.95);
+  }
+  
+  .pixel-quiz-card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Landscape mobile adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .container {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .pixel-title {
+    font-size: 2rem !important;
+  }
+  
+  .pixel-buttons-container {
+    flex-direction: row !important;
+    gap: 1rem !important;
+  }
+  
+  .pixel-button-host,
+  .pixel-button-join {
+    height: 2.5rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* High DPI display adjustments */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .pixel-grid {
+    background-size: 10px 10px;
+  }
+  
+  .scanlines {
+    background-size: 1px 2px;
+  }
+}
+
+/* Dark mode mobile adjustments */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+  .pixel-quiz-card {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .pixel-button-host,
+  .pixel-button-join {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-delayed,
+  .animate-float-slow,
+  .animate-float-delayed-slow,
+  .animate-float-card,
+  .animate-bounce-slow,
+  .animate-fade-in-up,
+  .animate-fade-in-up-delayed,
+  .animate-fade-in-up-delayed-2,
+  .animate-pulse,
+  .animate-ping,
+  .animate-spin {
+    animation: none;
+  }
+  
+  .pixel-float,
+  .pixel-block-float,
+  .pixel-block-float-delayed,
+  .pixel-block-float-slow,
+  .pixel-block-float-delayed-slow {
+    animation: none;
+  }
+}
+
 .pixel-qr-card {
   animation: pixel-card-bounce 0.8s ease-out;
 }
@@ -1351,5 +1624,38 @@
     right: 0;
     background: white;
     padding-left: 2px;
+  }
+}
+
+/* Room code mobile overflow protection */
+@media (max-width: 480px) {
+  .room-code-text {
+    font-size: 1.5rem !important;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+    line-height: 1.1 !important;
+  }
+  
+  .pixel-room-code {
+    padding: 0.75rem !important;
+    overflow: hidden !important;
+  }
+  
+  .pixel-room-code .text-center {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .room-code-text {
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
+  }
+  
+  .pixel-room-code {
+    overflow: hidden !important;
   }
 }

@@ -166,23 +166,23 @@ function QuizSettingsPageContent() {
         <PixelBackgroundElements />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Pixel Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Link href="/select-quiz">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <Button variant="outline" size="sm" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200">
+              <Button variant="outline" size="sm" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 min-h-[44px] min-w-[44px]">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
-              <Settings className="h-5 w-5 text-white" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
-            <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
-              <h1 className="text-xl font-bold text-black pixel-font">SETTINGS</h1>
+            <div className="inline-block bg-white border-2 border-black rounded px-3 sm:px-4 py-1 sm:py-2 pixel-header-title">
+              <h1 className="text-lg sm:text-xl font-bold text-black pixel-font">SETTINGS</h1>
             </div>
           </div>
         </div>
@@ -192,34 +192,34 @@ function QuizSettingsPageContent() {
           {/* Pixel Settings Card */}
           <div className="relative pixel-settings-container">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg border-4 border-black shadow-2xl pixel-settings-card">
-              <div className="p-6 space-y-6">
+            <div className="relative bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-settings-card">
+              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Pixel Header */}
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 bg-white border-4 border-black rounded-lg flex items-center justify-center mx-auto mb-4 pixel-settings-icon">
-                    <Settings className="h-8 w-8 text-black" />
+                <div className="text-center space-y-3 sm:space-y-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white border-2 sm:border-4 border-black rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 pixel-settings-icon">
+                    <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
                   </div>
-                  <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
-                    <h2 className="text-xl font-bold text-black pixel-font">QUIZ SETTINGS</h2>
+                  <div className="inline-block bg-white border-2 border-black rounded px-3 sm:px-4 py-1 sm:py-2 pixel-header-title">
+                    <h2 className="text-lg sm:text-xl font-bold text-black pixel-font">QUIZ SETTINGS</h2>
                   </div>
                   <div className="bg-black/20 border border-white/30 rounded px-3 py-2">
-                    <p className="text-sm text-white font-medium pixel-font-sm">CONFIGURE YOUR QUIZ PREFERENCES</p>
+                    <p className="text-xs sm:text-sm text-white font-medium pixel-font-sm">CONFIGURE YOUR QUIZ PREFERENCES</p>
                   </div>
                 </div>
 
                 {/* Pixel Time Limit Section */}
-                <div className="bg-white border-2 border-black rounded p-4 pixel-setting-section">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-white border-2 border-black rounded p-3 sm:p-4 pixel-setting-section">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-white" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                       </div>
                       <div className="inline-block bg-blue-500 border border-black rounded px-2 py-1">
                         <Label className="text-white font-bold text-xs pixel-font-sm">TIME LIMIT</Label>
                       </div>
                     </div>
-                    <div className="bg-yellow-400 border-2 border-black rounded px-3 py-1">
-                      <span className="text-black font-bold text-sm pixel-font-sm">{timeLimit[0]} MIN</span>
+                    <div className="bg-yellow-400 border-2 border-black rounded px-2 sm:px-3 py-1">
+                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{timeLimit[0]} MIN</span>
                     </div>
                   </div>
                   <div className="relative">
@@ -239,18 +239,18 @@ function QuizSettingsPageContent() {
                 </div>
 
                 {/* Pixel Question Count Section */}
-                <div className="bg-white border-2 border-black rounded p-4 pixel-setting-section">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="bg-white border-2 border-black rounded p-3 sm:p-4 pixel-setting-section">
+                  <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-green-500 border border-black rounded flex items-center justify-center">
-                        <HelpCircle className="h-4 w-4 text-white" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 border border-black rounded flex items-center justify-center">
+                        <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                       </div>
                       <div className="inline-block bg-green-500 border border-black rounded px-2 py-1">
                         <Label className="text-white font-bold text-xs pixel-font-sm">QUESTIONS</Label>
                       </div>
                     </div>
-                    <div className="bg-orange-400 border-2 border-black rounded px-3 py-1">
-                      <span className="text-black font-bold text-sm pixel-font-sm">{questionCount[0]} Q'S</span>
+                    <div className="bg-orange-400 border-2 border-black rounded px-2 sm:px-3 py-1">
+                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{questionCount[0]} Q'S</span>
                     </div>
                   </div>
                   <div className="relative">
@@ -270,16 +270,16 @@ function QuizSettingsPageContent() {
                 </div>
 
                 {/* Pixel Action Buttons */}
-                <div className="flex gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
                   <div className="flex-1 relative pixel-button-container">
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                     <Button 
                       variant="outline" 
                       onClick={() => router.push("/select-quiz")} 
-                      className="relative w-full bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold"
+                      className="relative w-full bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold min-h-[44px]"
                     >
                       <ArrowLeft className="h-4 w-4 mr-2" />
-                      <span className="pixel-font-sm">BACK</span>
+                      <span className="pixel-font-sm text-sm sm:text-base">BACK</span>
                     </Button>
                   </div>
                   <div className="flex-1 relative pixel-button-container">
@@ -287,9 +287,9 @@ function QuizSettingsPageContent() {
                     <Button 
                       onClick={handleSettingsComplete} 
                       disabled={isCreatingRoom}
-                      className="relative w-full bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-green-400 hover:to-emerald-400 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      className="relative w-full bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-green-400 hover:to-emerald-400 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 min-h-[44px]"
                     >
-                      <span className="pixel-font-sm">{isCreatingRoom ? "CREATING..." : "CREATE ROOM"}</span>
+                      <span className="pixel-font-sm text-sm sm:text-base">{isCreatingRoom ? "CREATING..." : "CREATE ROOM"}</span>
                     </Button>
                   </div>
                 </div>

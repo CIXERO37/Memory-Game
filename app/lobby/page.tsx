@@ -714,51 +714,51 @@ function LobbyPageContent() {
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 py-6">
-        <div className="mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6">
+        <div className="mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
           {/* Pixel Room Info */}
           <div className="relative pixel-lobby-container">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl pixel-lobby-card">
-              <div className="p-6 space-y-2 ">
+            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
+              <div className="p-4 sm:p-6 space-y-2">
                
                 {/* Quiz Info Pills */}
-                <div className="flex justify-center gap-4 mb-4">
+                <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-4">
                   {/* Time Pill */}
-                  <div className="bg-blue-100 border border-blue-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
-                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                  <div className="bg-blue-100 border border-blue-300 rounded-full px-3 sm:px-4 py-2 flex items-center gap-2 shadow-sm">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">⏱️</span>
                     </div>
-                    <span className="text-blue-700 font-medium text-sm">
+                    <span className="text-blue-700 font-medium text-xs sm:text-sm">
                       {currentRoom?.settings.totalTimeLimit || 30}:00
                     </span>
                   </div>
                   
                   {/* Questions Pill */}
-                  <div className="bg-green-100 border border-green-300 rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
-                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="bg-green-100 border border-green-300 rounded-full px-3 sm:px-4 py-2 flex items-center gap-2 shadow-sm">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">❓</span>
                     </div>
-                    <span className="text-green-700 font-medium text-sm">
+                    <span className="text-green-700 font-medium text-xs sm:text-sm">
                       {currentRoom?.settings.questionCount || 10} Questions
                     </span>
                   </div>
                 </div>
 
                 {/* Simplified Room Code Display */}
-                <div className="bg-white border-2 border-black rounded p-6 pixel-room-code relative">
+                <div className="bg-white border-2 border-black rounded p-3 sm:p-4 md:p-6 pixel-room-code relative">
                   {/* Copy icon di pojok kanan atas */}
                   <button
                     onClick={copyRoomCode}
                     aria-label="Copy room code"
-                    className={`absolute top-4 right-4 w-8 h-8 rounded border-2 border-black flex items-center justify-center ${copiedCode ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+                    className={`absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded border-2 border-black flex items-center justify-center ${copiedCode ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
                   >
-                    {copiedCode ? <span className="font-bold text-lg">✓</span> : <Copy className="h-6 w-6" />}
+                    {copiedCode ? <span className="font-bold text-xs sm:text-sm md:text-lg">✓</span> : <Copy className="h-3 w-3 sm:h-4 sm:w-4 md:h-6 md:w-6" />}
                   </button>
                   
-                  {/* Room code di tengah - diperbesar */}
-                  <div className="text-center pt-2">
-                    <div className="text-5xl md:text-6xl lg:text-7xl font-black font-mono text-black room-code-text">
+                  {/* Room code di tengah - diperbesar dengan overflow protection */}
+                  <div className="text-center pt-1 sm:pt-2 px-8 sm:px-12 md:px-16">
+                    <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black font-mono text-black room-code-text break-all leading-tight">
                       {roomCode}
                     </div>
                   </div>
@@ -766,34 +766,31 @@ function LobbyPageContent() {
 
                 {/* Pixel QR Card */}
                 {smallQrUrl && (
-                  <div className="bg-white border-2 border-black rounded p-4 pixel-qr-card">
+                  <div className="bg-white border-2 border-black rounded p-3 sm:p-4 pixel-qr-card">
                     <div className="flex justify-end items-center mb-3">
                       <button
                         onClick={() => setQrOpen(true)}
                         aria-label="Enlarge QR"
-                        className="w-8 h-8 bg-gray-200 border-2 border-black rounded flex items-center justify-center hover:bg-gray-300"
+                        className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border-2 border-black rounded flex items-center justify-center hover:bg-gray-300 min-h-[44px] min-w-[44px]"
                       >
-                        {/* komen */}
-                        <Maximize2 className="h-4 w-4" />
+                        <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />
                       </button>
                     </div>
                     <div className="flex flex-col items-center">
                       <img
                         src={smallQrUrl}
                         alt="Room share QR"
-                        className="rounded border-2 border-black bg-white p-2"
-                        width={384}
-                        height={384}
+                        className="rounded border-2 border-black bg-white p-2 w-48 h-48 sm:w-96 sm:h-96 object-contain"
                       />
                       {shareUrl && (
-                        <div className="mt-4 relative mx-auto">
+                        <div className="mt-4 relative mx-auto max-w-full">
                           <div className="inline-block bg-gray-100 border-2 border-black rounded pl-3 pr-10 py-2 text-xs font-medium break-all">
                             {shareUrl}
                           </div>
                           <button
                             onClick={copyShareLink}
                             aria-label="Copy share link"
-                            className={`absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded ${copiedLink ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+                            className={`absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-6 w-6 sm:h-7 sm:w-7 rounded ${copiedLink ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
                           >
                             {copiedLink ? <span className="font-bold text-xs">✓</span> : <Copy className="h-3 w-3" />}
                           </button>
@@ -828,33 +825,33 @@ function LobbyPageContent() {
           {/* Pixel Players List */}
           <div className="relative pixel-lobby-container">
             <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl pixel-lobby-card">
-              <div className="p-6">
+            <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
+              <div className="p-4 sm:p-6">
                 {/* Pixel Players Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-white border border-black rounded flex items-center justify-center">
-                      <Users className="h-4 w-4 text-black" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white border border-black rounded flex items-center justify-center">
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                     </div>
                     <div className={`inline-block bg-white border border-black rounded px-2 py-1 transition-all duration-500 ${
                       playerCountChanged ? 'animate-pulse bg-green-100 border-green-400' : 
                       playerLeft ? 'animate-pulse bg-red-100 border-red-400' : ''
                     }`}>
-                      <span className="text-black font-bold text-sm pixel-font-sm">
+                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">
                         {playerCountChanged ? '🎉 ' : playerLeft ? '👋 ' : ''}PLAYERS ({currentRoom?.players.length || 0})
                       </span>
                     </div>
                   </div>
                   {currentRoom && !gameStarted && (
-                    <div className="space-y-3">
+                    <div className="w-full sm:w-auto">
                       <div className="relative pixel-button-container">
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                         <button 
                           onClick={startGame}
                           disabled={!roomCode || !hostId || !currentRoom || currentRoom.players.length === 0}
-                          className="relative bg-gradient-to-br from-purple-500 to-purple-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-purple-400 hover:to-purple-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-3 flex items-center justify-center gap-3 text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                          className="relative w-full sm:w-auto bg-gradient-to-br from-purple-500 to-purple-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-purple-400 hover:to-purple-500 transform hover:scale-105 transition-all duration-200 font-bold px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none min-h-[44px]"
                         >
-                          <Play className="h-4 w-4" />
+                          <Play className="h-3 w-3 sm:h-4 sm:w-4" />
                           <span className="pixel-font-sm">START QUIZ</span>
                         </button>
                       </div>
@@ -870,7 +867,7 @@ function LobbyPageContent() {
                 {/* Pixel Status */}
                 <div className="mb-4">
                   <div className="bg-black/20 border border-white/30 rounded px-3 py-2">
-                    <span className="text-white text-sm pixel-font-sm">
+                    <span className="text-white text-xs sm:text-sm pixel-font-sm">
                       {currentRoom && currentRoom.players.length === 0
                         ? "WAITING FOR PLAYERS TO JOIN..."
                         : gameStarted
@@ -882,33 +879,33 @@ function LobbyPageContent() {
                 </div>
                 {/* Pixel Players List */}
                 {currentRoom && currentRoom.players.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                      <Users className="h-8 w-8 text-black" />
+                  <div className="text-center py-6 sm:py-8">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                      <Users className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
                     </div>
-                    <div className="bg-white border-2 border-black rounded px-4 py-2 inline-block">
-                      <p className="text-black font-bold pixel-font-sm">NO PLAYERS YET</p>
+                    <div className="bg-white border-2 border-black rounded px-3 sm:px-4 py-2 inline-block">
+                      <p className="text-black font-bold text-xs sm:text-sm pixel-font-sm">NO PLAYERS YET</p>
                       <p className="text-black text-xs pixel-font-sm">SHARE THE ROOM CODE TO GET STARTED!</p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Players Grid - 4 columns x 5 rows */}
-                    <div className="grid grid-cols-4 gap-2">
+                    {/* Players Grid - 2 columns on mobile, 4 on desktop */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lobby-players">
                       {currentPlayers.map((player: any) => (
                         <div key={player.id} className="bg-white border-2 border-black rounded p-2 pixel-player-card relative">
                           {/* Kick button - only show for host */}
                           {hostId && (
                             <button
                               onClick={() => handleKickPlayer(player)}
-                              className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 border-2 border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                              className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 border-2 border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10 min-h-[44px] min-w-[44px]"
                               title={`Kick ${player.username}`}
                             >
-                              <X className="h-3 w-3 text-white" />
+                              <X className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
                             </button>
                           )}
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="w-12 h-12 bg-gray-100 border border-black rounded flex items-center justify-center overflow-hidden">
+                          <div className="flex flex-col items-center gap-1 sm:gap-2">
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-100 border border-black rounded flex items-center justify-center overflow-hidden">
                               <img 
                                 src={player.avatar} 
                                 alt={`${player.username} avatar`}
@@ -933,15 +930,15 @@ function LobbyPageContent() {
                           <Button 
                             onClick={goToPreviousPage}
                             disabled={currentPage === 0}
-                            className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
                           >
-                            <ChevronLeft className="h-4 w-4 mr-1" />
-                            <span className="pixel-font-sm">PREV</span>
+                            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                            <span className="pixel-font-sm text-xs sm:text-sm">PREV</span>
                           </Button>
                         </div>
 
-                        <div className="bg-white border-2 border-black rounded px-3 py-1">
-                          <span className="text-black font-bold text-sm pixel-font-sm">
+                        <div className="bg-white border-2 border-black rounded px-2 sm:px-3 py-1">
+                          <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">
                             {currentPage + 1} / {totalPages}
                           </span>
                         </div>
@@ -951,10 +948,10 @@ function LobbyPageContent() {
                           <Button 
                             onClick={goToNextPage}
                             disabled={currentPage === totalPages - 1}
-                            className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
                           >
-                            <span className="pixel-font-sm">NEXT</span>
-                            <ChevronRight className="h-4 w-4 ml-1" />
+                            <span className="pixel-font-sm text-xs sm:text-sm">NEXT</span>
+                            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
                           </Button>
                         </div>
                       </div>

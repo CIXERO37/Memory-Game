@@ -70,26 +70,26 @@ export default function HomePage() {
         <FallingPixelCards />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8 min-h-screen flex flex-col justify-center">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 min-h-screen flex flex-col justify-center">
         {/* Main Content */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 sm:mb-16">
           {/* Pixel Brain Icon with Card */}
-          <div className="relative inline-block mb-8 pixel-logo-container">
+          <div className="relative inline-block mb-4 sm:mb-8 pixel-logo-container">
             <div className="relative">
               {/* Pixel Brain */}
-              <div className="w-32 h-32 mx-auto relative pixel-brain">
+              <div className="w-20 h-20 sm:w-32 sm:h-32 mx-auto relative pixel-brain">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg opacity-20 blur-lg animate-pulse"></div>
-                <div className="relative w-full h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-4 border-white shadow-2xl flex items-center justify-center">
-                  <Brain className="w-16 h-16 text-white" />
+                <div className="relative w-full h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 sm:border-4 border-white shadow-2xl flex items-center justify-center">
+                  <Brain className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
                 </div>
               </div>
               
               {/* Pixel Card */}
-              <div className="absolute -right-8 top-4 w-24 h-32 bg-white rounded-lg shadow-2xl border-4 border-black pixel-card-float">
-                <div className="p-3 h-full flex flex-col items-center justify-center">
-                  <div className="w-6 h-6 bg-yellow-400 border-2 border-black rounded mb-2"></div>
-                  <div className="w-8 h-8 bg-blue-600 border-2 border-black rounded flex items-center justify-center">
-                    <HelpCircle className="w-6 h-6 text-white" />
+              <div className="absolute -right-4 sm:-right-8 top-2 sm:top-4 w-16 h-20 sm:w-24 sm:h-32 bg-white rounded-lg shadow-2xl border-2 sm:border-4 border-black pixel-card-float">
+                <div className="p-2 sm:p-3 h-full flex flex-col items-center justify-center">
+                  <div className="w-4 h-4 sm:w-6 sm:h-6 bg-yellow-400 border-2 border-black rounded mb-1 sm:mb-2"></div>
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 border-2 border-black rounded flex items-center justify-center">
+                    <HelpCircle className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                   </div>
                 </div>
               </div>
@@ -97,18 +97,18 @@ export default function HomePage() {
           </div>
 
           {/* Pixel Title */}
-          <div className="mb-6">
-            <div className="inline-block bg-white border-4 border-black rounded-lg px-8 py-4 shadow-2xl pixel-title-container">
-              <h1 className="text-5xl md:text-6xl font-bold text-black pixel-title">
+          <div className="mb-4 sm:mb-6">
+            <div className="inline-block bg-white border-2 sm:border-4 border-black rounded-lg px-4 sm:px-8 py-2 sm:py-4 shadow-2xl pixel-title-container">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black pixel-title">
                 MEMORY QUIZ
               </h1>
             </div>
           </div>
           
           {/* Pixel Description */}
-          <div className="max-w-2xl mx-auto mb-12">
-            <div className="bg-black/20 border-2 border-white/30 rounded-lg px-6 py-4 pixel-description">
-              <p className="text-lg text-white font-medium pixel-font-sm">
+          <div className="max-w-2xl mx-auto mb-6 sm:mb-12">
+            <div className="bg-black/20 border-2 border-white/30 rounded-lg px-4 sm:px-6 py-3 sm:py-4 pixel-description">
+              <p className="text-sm sm:text-base lg:text-lg text-white font-medium pixel-font-sm">
                 CHALLENGE YOUR MIND WITH MEMORY GAMES AND EDUCATIONAL QUIZZES
               </p>
             </div>
@@ -116,16 +116,16 @@ export default function HomePage() {
         </div>
 
         {/* Pixel Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
           <Link href="/select-quiz" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-24 bg-gradient-to-br from-green-500 to-emerald-500 border-4 border-black rounded-lg shadow-2xl font-bold text-black text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-6">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="w-8 h-8 bg-black rounded border-2 border-white flex items-center justify-center">
-                    <Server className="w-5 h-5 text-white" />
+              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-gradient-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-lg sm:text-2xl lg:text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
+                <div className="flex items-center justify-center gap-2 sm:gap-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black rounded border-2 border-white flex items-center justify-center">
+                    <Server className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <span className="text-3xl font-bold">HOST</span>
+                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold">HOST</span>
                 </div>
               </button>
             </div>
@@ -134,12 +134,12 @@ export default function HomePage() {
           <Link href="/join" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-24 bg-gradient-to-br from-blue-500 to-purple-500 border-4 border-black rounded-lg shadow-2xl font-bold text-white text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-6">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="w-8 h-8 bg-white rounded border-2 border-black flex items-center justify-center">
-                    <Play className="w-5 h-5 text-black" />
+              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-gradient-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg sm:text-2xl lg:text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
+                <div className="flex items-center justify-center gap-2 sm:gap-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded border-2 border-black flex items-center justify-center">
+                    <Play className="w-3 h-3 sm:w-5 sm:h-5 text-black" />
                   </div>
-                  <span className="text-3xl font-bold">JOIN</span>
+                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold">JOIN</span>
                 </div>
               </button>
             </div>

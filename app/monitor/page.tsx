@@ -307,8 +307,8 @@ function MonitorPageContent() {
           <div className="pixel-grid"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-4 border-white/30 rounded-lg p-8 text-center pixel-lobby-card">
-            <div className="text-white">LOADING HOST MONITOR...</div>
+          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
+            <div className="text-white text-sm sm:text-base">LOADING HOST MONITOR...</div>
           </div>
         </div>
       </div>
@@ -322,17 +322,25 @@ function MonitorPageContent() {
           <div className="pixel-grid"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-4 border-white/30 rounded-lg p-8 text-center pixel-lobby-card">
-            <div className="text-white">LOADING ROOM...</div>
-            <div className="text-blue-200 text-sm mt-2">Please wait while we connect to the game</div>
+          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
+            <div className="text-white text-sm sm:text-base">LOADING ROOM...</div>
+            <div className="text-blue-200 text-xs sm:text-sm mt-2">Please wait while we connect to the game</div>
           </div>
         </div>
       </div>
     )
   }
 
-  // Function to truncate player names to 8 characters with "..."
+  // Function to truncate player names responsively
   const truncatePlayerName = (name: string) => {
+    // More aggressive truncation for mobile
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      if (name.length <= 6) {
+        return name
+      }
+      return name.substring(0, 6) + "..."
+    }
+    // Standard truncation for larger screens
     if (name.length <= 8) {
       return name
     }
@@ -404,48 +412,50 @@ function MonitorPageContent() {
         </svg>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Monitor Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-4 border-white shadow-2xl flex items-center justify-center pixel-brain">
-                <Users className="w-8 h-8 text-white" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 sm:border-4 border-white shadow-2xl flex items-center justify-center pixel-brain">
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div>
-                <div className="flex items-center gap-4">
-                  <h1 className="text-4xl font-bold text-white pixel-header-title">PLAYER PROGRESS</h1>
-                  <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2">
-                    <span className="text-blue-400 font-bold text-sm">{players.length} PLAYERS</span>
-                  </div>
-                  <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-4 py-2 flex items-center gap-2`}>
-                    <Clock className={`w-4 h-4 ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`} />
-                    <span className={`font-bold text-sm ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`}>
-                      {getTimerDisplayText(timerState)}
-                    </span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white pixel-header-title">PLAYER PROGRESS</h1>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-2 sm:px-4 py-1 sm:py-2">
+                      <span className="text-blue-400 font-bold text-xs sm:text-sm">{players.length} PLAYERS</span>
+                    </div>
+                    <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-2 sm:px-4 py-1 sm:py-2 flex items-center gap-2`}>
+                      <Clock className={`w-3 h-3 sm:w-4 sm:h-4 ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`} />
+                      <span className={`font-bold text-xs sm:text-sm ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`}>
+                        {getTimerDisplayText(timerState)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <p className="text-lg text-blue-200">Room: {roomCode}</p>
+                <p className="text-sm sm:text-base lg:text-lg text-blue-200">Room: {roomCode}</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button 
               onClick={endGame} 
-              className="relative pixel-button-container"
+              className="relative pixel-button-container w-full sm:w-auto"
               onMouseDown={(e) => {
                 console.log("Button clicked, calling endGame...")
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative bg-gradient-to-br from-blue-500 to-cyan-500 border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-6 py-3">
+              <button className="relative bg-gradient-to-br from-blue-500 to-cyan-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-sm sm:text-base lg:text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto min-h-[44px]">
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 bg-black rounded border-2 border-white flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">✕</span>
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 bg-black rounded border-2 border-white flex items-center justify-center">
+                    <span className="text-white font-bold text-xs sm:text-sm">✕</span>
                   </div>
-                  <span className="text-lg font-bold">END GAME</span>
+                  <span className="text-sm sm:text-base lg:text-lg font-bold">END GAME</span>
                 </div>
               </button>
             </button>
@@ -454,15 +464,15 @@ function MonitorPageContent() {
 
         {/* Time Warning */}
         {showTimeWarning && (
-          <div className="mb-6 bg-red-500/20 border-2 border-red-500/50 rounded-lg p-4 animate-pulse">
+          <div className="mb-4 sm:mb-6 bg-red-500/20 border-2 border-red-500/50 rounded-lg p-3 sm:p-4 animate-pulse">
             <div className="flex items-center justify-center gap-2">
-              <Clock className="w-5 h-5 text-red-400" />
-              <span className="text-red-400 font-bold text-lg">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
+              <span className="text-red-400 font-bold text-sm sm:text-base lg:text-lg">
                 {timerState.remainingTime <= 0 ? "WAKTU HABIS!" : "WAKTU HAMPIR HABIS!"}
               </span>
-              <Clock className="w-5 h-5 text-red-400" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
             </div>
-            <p className="text-red-300 text-center text-sm mt-1">
+            <p className="text-red-300 text-center text-xs sm:text-sm mt-1">
               {timerState.remainingTime <= 0 
                 ? "Game akan berakhir secara otomatis..." 
                 : "Game akan berakhir secara otomatis ketika waktu habis!"
@@ -472,17 +482,17 @@ function MonitorPageContent() {
         )}
 
         {/* Player Progress Cards */}
-        <div className="space-y-8 mb-8">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-4 border-white/30 rounded-lg p-6 pixel-lobby-card">
+        <div className="space-y-6 sm:space-y-8 mb-6 sm:mb-8">
+          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-4 sm:p-6 pixel-lobby-card">
             {players.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-blue-400 rounded border-4 border-white mx-auto mb-6 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-white" />
+              <div className="text-center py-8 sm:py-12">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-400 rounded border-2 sm:border-4 border-white mx-auto mb-4 sm:mb-6 flex items-center justify-center">
+                  <Users className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <p className="text-lg text-white">NO PLAYERS HAVE JOINED THE GAME YET</p>
+                <p className="text-sm sm:text-base lg:text-lg text-white">NO PLAYERS HAVE JOINED THE GAME YET</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3   xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {sortedPlayers.map((player, index) => {
                 const rank = index + 1
                 const quizScore = player.quizScore || 0
@@ -506,19 +516,19 @@ function MonitorPageContent() {
                 })
 
                 return (
-                  <div key={player.id} className="relative bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
+                  <div key={player.id} className="relative bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <div
-                            className={`text-lg font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
+                            className={`text-sm sm:text-base lg:text-lg font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
                           >
                             #{rank}
                           </div>
-                          {rankingChange === "up" && <TrendingUp className="h-4 w-4 text-green-500" />}
-                          {rankingChange === "down" && <TrendingDown className="h-4 w-4 text-red-500" />}
+                          {rankingChange === "up" && <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                          {rankingChange === "down" && <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />}
                         </div>
-                        <div className="w-12 h-12 rounded border-2 border-white overflow-hidden">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded border-2 border-white overflow-hidden">
                           <img
                             src={player.avatar}
                             alt={`${player.username}'s avatar`}
@@ -530,40 +540,40 @@ function MonitorPageContent() {
                           />
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg text-white">{truncatePlayerName(player.username)}</h3>
+                          <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white">{truncatePlayerName(player.username)}</h3>
                         </div>
                       </div>
-                      <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-3 py-1">
-                        <span className="text-yellow-400 font-bold text-sm">{totalScore} POINTS</span>
+                      <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
+                        <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} POINTS</span>
                       </div>
                     </div>
 
                     {/* Enhanced Progress Bars */}
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             
                             {questionsAnswered >= quizSettings.questionCount && (
                               <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
                                 <span className="text-xs text-green-400 font-bold">SELESAI</span>
                               </div>
                             )}
                             {questionsAnswered === 0 && (
                               <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full"></div>
                                 <span className="text-xs text-gray-400">BELUM MULAI</span>
                               </div>
                             )}
                             {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
                               <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                                 <span className="text-xs text-yellow-400 font-bold">SEDANG BERMAIN</span>
                               </div>
                             )}
                           </div>
-                          <span className={`text-sm font-bold ${
+                          <span className={`text-xs sm:text-sm font-bold ${
                             questionsAnswered >= quizSettings.questionCount 
                               ? 'text-green-300' 
                               : questionsAnswered > 0 
@@ -573,7 +583,7 @@ function MonitorPageContent() {
                             {questionsAnswered}/{quizSettings.questionCount} ({Math.round(quizProgress)}%)
                           </span>
                         </div>
-                        <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-4 relative overflow-hidden">
+                        <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3 sm:h-4 relative overflow-hidden">
                           <div 
                             className={`h-full rounded-lg transition-all duration-500 ${
                               questionsAnswered >= quizSettings.questionCount
@@ -662,8 +672,8 @@ export default function MonitorPage() {
           <div className="pixel-grid"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-4 border-white/30 rounded-lg p-8 text-center">
-            <div className="text-white">LOADING...</div>
+          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center">
+            <div className="text-white text-sm sm:text-base">LOADING...</div>
           </div>
         </div>
       </div>

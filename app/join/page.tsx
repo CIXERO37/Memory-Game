@@ -213,18 +213,18 @@ function JoinPageContent() {
         <div className="scanlines"></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 min-h-[44px] min-w-[44px]">
+              <ArrowLeft className="h-4 w-4 sm:mr-2" />
              
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <Play className="h-6 w-6 text-blue-400" />
-            <h1 className="text-2xl font-bold text-white">Join a Game</h1>
+            <Play className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
+            <h1 className="text-lg sm:text-2xl font-bold text-white">Join a Game</h1>
           </div>
         </div>
 
@@ -232,20 +232,20 @@ function JoinPageContent() {
             <div className="relative pixel-card-container">
               {/* Pixel Card Background */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-card-shadow"></div>
-              <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl pixel-card-main">
-                <div className="p-6 space-y-6">
+              <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-card-main">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   {/* Pixel Header */}
                   <div className="text-center space-y-2">
-                    <div className="inline-block bg-white rounded px-4 py-2 border-2 border-black transform -rotate-1 shadow-lg">
-                      <h2 className="text-xl font-bold text-black pixel-font">JOIN ROOM</h2>
+                    <div className="inline-block bg-white rounded px-3 sm:px-4 py-1 sm:py-2 border-2 border-black transform -rotate-1 shadow-lg">
+                      <h2 className="text-lg sm:text-xl font-bold text-black pixel-font">JOIN ROOM</h2>
                     </div>
                    
                   </div>
                   {/* Pixel Input Fields */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <div className="space-y-2">
                       <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                        <Label htmlFor="username" className="text-black font-bold text-sm">USERNAME</Label>
+                        <Label htmlFor="username" className="text-black font-bold text-xs sm:text-sm">USERNAME</Label>
                       </div>
                       <div className="relative">
                         <Input
@@ -253,7 +253,7 @@ function JoinPageContent() {
                           placeholder="Enter your username"
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
-                          className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600"
+                          className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 h-12 sm:h-auto"
                         />
                       </div>
                     </div>
@@ -261,7 +261,7 @@ function JoinPageContent() {
                     {!searchParams.get("room") && (
                       <div className="space-y-2">
                         <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                          <Label htmlFor="roomCode" className="text-black font-bold text-sm">ROOM CODE</Label>
+                          <Label htmlFor="roomCode" className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
                         </div>
                         <div className="relative">
                           <Input
@@ -277,12 +277,12 @@ function JoinPageContent() {
                             }}
                             onPaste={handlePaste}
                             maxLength={6}
-                            className="room-code-input"
+                            className="room-code-input h-12 sm:h-auto"
                           />
                         </div>
                         {roomError && (
                           <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-sm text-white font-bold">{roomError}</p>
+                            <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
                           </div>
                         )}
                       </div>
@@ -291,16 +291,16 @@ function JoinPageContent() {
                     {searchParams.get("room") && (
                       <div className="space-y-2">
                         <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                          <Label className="text-black font-bold text-sm">ROOM CODE</Label>
+                          <Label className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
                         </div>
-                        <div className="bg-yellow-400 border-2 border-black rounded px-4 py-3 text-center shadow-lg">
-                          <div className="font-mono text-2xl font-bold text-black">
+                        <div className="bg-yellow-400 border-2 border-black rounded px-3 sm:px-4 py-2 sm:py-3 text-center shadow-lg">
+                          <div className="font-mono text-xl sm:text-2xl font-bold text-black">
                             {roomCode}
                           </div>
                         </div>
                         {roomError && (
                           <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-sm text-white font-bold">{roomError}</p>
+                            <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
                           </div>
                         )}
                       </div>
@@ -309,17 +309,17 @@ function JoinPageContent() {
                     {/* Pixel Avatar Section */}
                     <div className="space-y-2">
                       <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                        <Label className="text-black font-bold text-sm">CHOOSE AVATAR</Label>
+                        <Label className="text-black font-bold text-xs sm:text-sm">CHOOSE AVATAR</Label>
                       </div>
-                      <div className="bg-white border-2 border-black rounded p-3">
+                      <div className="bg-white border-2 border-black rounded p-2 sm:p-3">
                         <AvatarSelector selectedAvatar={selectedAvatar} onAvatarSelect={setSelectedAvatar} />
                       </div>
                     </div>
 
                     {/* Pixel Button */}
-                    <div className="pt-4">
+                    <div className="pt-3 sm:pt-4">
                       <Button
-                        className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-lg py-3 transform hover:scale-105 transition-all duration-200"
+                        className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-base sm:text-lg py-3 sm:py-3 transform hover:scale-105 transition-all duration-200 min-h-[44px]"
                         onClick={handleJoinRoom}
                         disabled={!username.trim() || !roomCode.trim() || isJoining || hasClickedJoin}
                       >
