@@ -63,23 +63,23 @@ export default function SelectQuizPage() {
         <PixelBackgroundElements />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Pixel Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Link href="/">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <Button variant="outline" size="default" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10">
+              <Button variant="outline" size="default" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-[44px] min-w-[44px]">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </div>
           </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
-              <FileSearch className="h-5 w-5 text-white" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
+              <FileSearch className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
-            <div className="inline-block bg-white border-2 border-black rounded px-3 py-2 pixel-header-title">
-              <h1 className="text-xl font-bold text-black">SELECT QUIZ</h1>
+            <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 py-1 sm:py-2 pixel-header-title">
+              <h1 className="text-lg sm:text-xl font-bold text-black">SELECT QUIZ</h1>
             </div>
           </div>
         </div>
@@ -87,23 +87,23 @@ export default function SelectQuizPage() {
         {/* Quiz Selector Content */}
         <div className="max-w-4xl mx-auto">
           {/* Pixel Search and Filter Section */}
-          <div className="mb-8 space-y-4">
+          <div className="mb-6 sm:mb-8 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Pixel Search Input */}
               <div className="relative flex-1">
                 <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-sm">SEARCH</label>
+                  <label className="text-black font-bold text-xs sm:text-sm">SEARCH</label>
                 </div>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
-                    <Search className="h-4 w-4 text-white" />
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
+                    <Search className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                   </div>
                   <Input
                     placeholder="Search by title or description..."
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleSearch}
-                    className="pl-12 h-10 bg-white border-2 border-black rounded-none shadow-lg font-mono text-base text-black placeholder:text-gray-500 focus:border-blue-600"
+                    className="pl-10 sm:pl-12 h-10 sm:h-10 bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-blue-600"
                   />
                 </div>
               </div>
@@ -111,28 +111,28 @@ export default function SelectQuizPage() {
               {/* Pixel Difficulty Filter */}
               <div className="sm:w-56">
                 <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-sm">FILTER</label>
+                  <label className="text-black font-bold text-xs sm:text-sm">FILTER</label>
                 </div>
                 <div className="relative">
                   <div className="relative">
                     <Button
                       onClick={() => setIsSelectAllExpanded(!isSelectAllExpanded)}
-                      className="w-full h-10 bg-white border-2 border-black rounded-none shadow-lg text-base text-black hover:bg-gray-100 focus:border-blue-600 flex items-center justify-between px-3"
+                      className="w-full h-10 bg-white border-2 border-black rounded-none shadow-lg text-sm sm:text-base text-black hover:bg-gray-100 focus:border-blue-600 flex items-center justify-between px-3 min-h-[44px]"
                     >
                       <div className="flex items-center">
-                        <div className="w-6 h-6 bg-green-500 border border-black rounded mr-2 flex items-center justify-center">
-                          <Filter className="h-4 w-4 text-white" />
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 border border-black rounded mr-2 flex items-center justify-center">
+                          <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                         </div>
-                        <span className="font-bold">
+                        <span className="font-bold text-xs sm:text-sm">
                           {difficultyFilter === "all" ? "ALL DIFFICULTIES" : 
                            difficultyFilter === "Easy" ? "EASY" :
                            difficultyFilter === "Medium" ? "MEDIUM" : "HARD"}
                         </span>
                       </div>
                       {isSelectAllExpanded ? (
-                        <ChevronUp className="h-5 w-5" />
+                        <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5" />
                       ) : (
-                        <ChevronDown className="h-5 w-5" />
+                        <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" />
                       )}
                     </Button>
                     
@@ -144,7 +144,7 @@ export default function SelectQuizPage() {
                             setDifficultyFilter("all")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-base hover:bg-gray-200 flex items-center justify-between ${
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-gray-200 flex items-center justify-between min-h-[44px] ${
                             difficultyFilter === "all" ? "bg-gray-200" : "text-black"
                           }`}
                         >
@@ -158,7 +158,7 @@ export default function SelectQuizPage() {
                             setDifficultyFilter("Easy")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-base hover:bg-green-200 flex items-center justify-between ${
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-green-200 flex items-center justify-between min-h-[44px] ${
                             difficultyFilter === "Easy" ? "bg-green-200" : "text-black"
                           }`}
                         >
@@ -172,7 +172,7 @@ export default function SelectQuizPage() {
                             setDifficultyFilter("Medium")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-base hover:bg-yellow-200 flex items-center justify-between ${
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-yellow-200 flex items-center justify-between min-h-[44px] ${
                             difficultyFilter === "Medium" ? "bg-yellow-200" : "text-black"
                           }`}
                         >
@@ -186,7 +186,7 @@ export default function SelectQuizPage() {
                             setDifficultyFilter("Hard")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-base hover:bg-red-200 flex items-center justify-between ${
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-red-200 flex items-center justify-between min-h-[44px] ${
                             difficultyFilter === "Hard" ? "bg-red-200" : "text-black"
                           }`}
                         >
@@ -203,7 +203,7 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-6 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
             {loading ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">

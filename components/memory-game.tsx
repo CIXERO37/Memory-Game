@@ -84,9 +84,9 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto memory-game">
       <div className="text-center mb-4">
-        <h2 className="text-xl font-bold text-white mb-2">MEMORY GAME</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-2">MEMORY GAME</h2>
         {showAll && (
           <p className="text-xs text-blue-200 animate-pulse">
             Memorize the positions... {Math.ceil((3000 - (Date.now() % 3000)) / 1000)}
@@ -94,14 +94,15 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-2 p-3 bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg">
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-2 p-2 sm:p-3 bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg">
         {cards.map((card) => (
           <div
             key={card.id}
             className={cn(
               "aspect-square cursor-pointer transition-all duration-300 hover:scale-105",
-              "flex items-center justify-center text-2xl",
+              "flex items-center justify-center text-lg sm:text-2xl",
               "border-2 bg-gradient-to-br from-white/20 to-white/10 rounded-lg",
+              "min-h-[44px] min-w-[44px]", // Touch-friendly minimum size
               card.isMatched && "border-green-400 bg-green-500/20 scale-95",
               (card.isFlipped || card.isMatched || showAll) && "border-blue-400 bg-blue-500/20",
               disabled && "cursor-not-allowed opacity-50",
@@ -118,7 +119,7 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
             </div>
             {!card.isFlipped && !card.isMatched && !showAll && (
               <div className="w-full h-full bg-gradient-to-br from-white/30 to-white/10 rounded-lg flex items-center justify-center">
-                <div className="w-6 h-6 bg-white/20 rounded border border-white/30" />
+                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white/20 rounded border border-white/30" />
               </div>
             )}
           </div>
