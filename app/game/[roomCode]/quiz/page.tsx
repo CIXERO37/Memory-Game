@@ -23,6 +23,28 @@ interface QuizPageProps {
   }
 }
 
+// Function to shuffle array while preserving original indices
+function shuffleArrayWithIndices<T>(array: T[]): { shuffled: T[], originalIndices: number[] } {
+  const originalIndices = array.map((_, index) => index)
+  const shuffled = [...array]
+  const shuffledIndices = [...originalIndices]
+  
+  // Fisher-Yates shuffle algorithm
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j: number = Math.floor(Math.random() * (i + 1))
+    // Swap elements
+    const tempElement = shuffled[i]
+    shuffled[i] = shuffled[j]
+    shuffled[j] = tempElement
+    // Swap indices
+    const tempIndex = shuffledIndices[i]
+    shuffledIndices[i] = shuffledIndices[j]
+    shuffledIndices[j] = tempIndex
+  }
+  
+  return { shuffled, originalIndices: shuffledIndices }
+}
+
 export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestion, setCurrentQuestion] = useState(0)
@@ -40,6 +62,10 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [isInMemoryGame, setIsInMemoryGame] = useState(false)
   const [showTimeWarning, setShowTimeWarning] = useState(false)
   const [timeUpHandled, setTimeUpHandled] = useState(false)
+  const [countdownToNext, setCountdownToNext] = useState(0)
+  const [isShowingResult, setIsShowingResult] = useState(false)
+  // Store shuffled options for each question
+  const [shuffledOptions, setShuffledOptions] = useState<{ [questionIndex: number]: { shuffled: string[], originalIndices: number[] } }>({})
   // Removed memory game score - memory game is now just an obstacle
   const [playerId] = useState(() => {
     const player = localStorage.getItem("currentPlayer")
@@ -55,6 +81,8 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     if (timeUpHandled) return // Prevent multiple calls
     setTimeUpHandled(true)
     
+    console.log("[Quiz] Timer expired! Ending game automatically...")
+    
     try {
       // End the game automatically
       await roomManager.updateGameStatus(params.roomCode, "finished")
@@ -68,6 +96,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           timestamp: Date.now()
         })
         broadcastChannel.close()
+        console.log("[Quiz] Broadcasted game end event to players")
       }
       
       // Redirect based on user type
@@ -77,7 +106,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         window.location.href = `/leaderboard?roomCode=${params.roomCode}`
       }
     } catch (error) {
-      // Silent error handling
+      console.error("[Quiz] Error ending game due to timer expiration:", error)
       // Fallback redirect
       if (!isHost) {
         window.location.href = `/result?roomCode=${params.roomCode}`
@@ -150,14 +179,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           setScore(dbQuizScore)
         }
         
-        // Sync currentQuestion with questionsAnswered
-        if (dbQuestionsAnswered !== currentQuestion) {
+        // Sync currentQuestion with questionsAnswered ONLY if not showing result
+        // This prevents the next question from showing while player is viewing the result
+        if (dbQuestionsAnswered !== currentQuestion && !isShowingResult) {
           console.log("[Quiz] Syncing currentQuestion with questionsAnswered:", dbQuestionsAnswered)
           setCurrentQuestion(dbQuestionsAnswered)
         }
       }
     }
-  }, [room, playerId, questionsAnsweredInitialized, questionsAnswered, score, currentQuestion])
+  }, [room, playerId, questionsAnsweredInitialized, questionsAnswered, score, currentQuestion, isShowingResult])
 
   // Timer is now handled by useSynchronizedTimer hook
 
@@ -318,6 +348,14 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setQuizTitle(quiz.title)
       // Removed per-question timer - players can think without time pressure
       setTotalTimeSelected(timeLimit) // Total durasi quiz
+      
+      // Create shuffled options for each question
+      const shuffledOptionsMap: { [questionIndex: number]: { shuffled: string[], originalIndices: number[] } } = {}
+      selectedQuestions.forEach((question, index) => {
+        const shuffled = shuffleArrayWithIndices(question.options)
+        shuffledOptionsMap[index] = shuffled
+      })
+      setShuffledOptions(shuffledOptionsMap)
     }
   }, [searchParams, params.roomCode, room, loading])
 
@@ -452,51 +490,66 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   // Removed per-question timer countdown - players can take their time to think
 
   const handleAnswerSelect = (answerIndex: number) => {
+    // Prevent multiple selections while showing result
     if (selectedAnswer !== null || showResult) return
+    
+    // STEP 1: Set the selected answer and show result immediately
     setSelectedAnswer(answerIndex)
     setShowResult(true)
+    setIsShowingResult(true) // Prevent question from changing while showing result
 
-    // Always increment questions answered - IMMEDIATE optimistic update
-    const newQuestionsAnswered = questionsAnswered + 1
-    setQuestionsAnswered(newQuestionsAnswered)
+    // STEP 2: Check if the answer is correct BEFORE updating any scores
+    // Get the shuffled options for current question
+    const currentShuffled = shuffledOptions[currentQuestion]
+    if (!currentShuffled) {
+      console.error("[Quiz] No shuffled options found for question", currentQuestion)
+      return
+    }
     
-    console.log("[Quiz] 🚀 OPTIMISTIC UPDATE - questionsAnswered:", newQuestionsAnswered)
-
-    // Check if correct
-    const isCorrect = answerIndex === questions[currentQuestion].correct
+    // Find the original index of the selected answer in the shuffled array
+    const originalIndex = currentShuffled.originalIndices[answerIndex]
+    const isCorrect = originalIndex === questions[currentQuestion].correct
     let newScore = score
     let newCorrectAnswers = correctAnswers
     
+    // STEP 3: Update scores based on correctness
     if (isCorrect) {
       newScore = score + 1
       setScore(newScore)
       newCorrectAnswers = correctAnswers + 1
       setCorrectAnswers(newCorrectAnswers)
+    }
 
-      if (newCorrectAnswers === 3) {
-        // Update quiz score and questions answered immediately before memory game
-        if (playerId) {
-          console.log("[Quiz] 🎯 MEMORY GAME TRIGGER - Updating final scores before redirect")
-          roomManager.updatePlayerScore(params.roomCode, playerId, newScore, undefined, newQuestionsAnswered)
-        }
+    // STEP 4: Always increment questions answered after checking correctness
+    const newQuestionsAnswered = questionsAnswered + 1
+    setQuestionsAnswered(newQuestionsAnswered)
+    
+    console.log("[Quiz] ✅ ANSWER CHECKED - Correct:", isCorrect, "Score:", newScore, "Questions Answered:", newQuestionsAnswered)
 
-        // Store current progress and redirect to memory game
-        localStorage.setItem(
-          `quiz-progress-${params.roomCode}`,
-          JSON.stringify({
-            currentQuestion: currentQuestion + 1,
-            score: newScore,
-            correctAnswers: newCorrectAnswers,
-            questionsAnswered: newQuestionsAnswered,
-            timeLimit: room?.settings.totalTimeLimit || 30,
-          }),
-        )
-
-        setTimeout(() => {
-          window.location.href = `/game/${params.roomCode}/memory-challenge`
-        }, 2000)
-        return
+    // STEP 5: Check if player has answered 3 correct questions (memory game trigger)
+    if (isCorrect && newCorrectAnswers === 3) {
+      // Update quiz score and questions answered immediately before memory game
+      if (playerId) {
+        console.log("[Quiz] 🎯 MEMORY GAME TRIGGER - Updating final scores before redirect")
+        roomManager.updatePlayerScore(params.roomCode, playerId, newScore, undefined, newQuestionsAnswered)
       }
+
+      // Store current progress and redirect to memory game
+      localStorage.setItem(
+        `quiz-progress-${params.roomCode}`,
+        JSON.stringify({
+          currentQuestion: currentQuestion + 1,
+          score: newScore,
+          correctAnswers: newCorrectAnswers,
+          questionsAnswered: newQuestionsAnswered,
+          timeLimit: room?.settings.totalTimeLimit || 30,
+        }),
+      )
+
+      setTimeout(() => {
+        window.location.href = `/game/${params.roomCode}/memory-challenge`
+      }, 2000)
+      return
     }
 
     // ENHANCED PROGRESS BAR RELIABILITY FIX
@@ -575,9 +628,19 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       attemptUpdate()
     }
 
-    // Auto advance after 1 second
-    setTimeout(() => {
-      handleNextQuestion()
+    // STEP 6: Start countdown timer to give players time to see the result
+    // Players will see the correct/incorrect answer for 1 second before next question
+    setCountdownToNext(1)
+    const countdownInterval = setInterval(() => {
+      setCountdownToNext((prev: number) => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval)
+          // STEP 7: Move to next question after countdown finishes
+          handleNextQuestion()
+          return 0
+        }
+        return prev - 1
+      })
     }, 1000)
   }
 
@@ -586,6 +649,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setCurrentQuestion(currentQuestion + 1)
       setSelectedAnswer(null)
       setShowResult(false)
+      setCountdownToNext(0) // Reset countdown
       // No timer reset needed - players can think without time pressure
     } else {
       // Quiz completed - end the game for all players
@@ -689,6 +753,24 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   }
 
   const question = questions[currentQuestion]
+  const currentShuffled = shuffledOptions[currentQuestion]
+
+  // Don't render if shuffled options are not ready
+  if (!currentShuffled) {
+    return (
+      <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">LOADING QUESTION...</h2>
+            <p className="text-sm text-blue-200">Preparing answer choices</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
@@ -827,52 +909,51 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
               <h2 className="text-xl font-bold text-white mb-3">{question.question}</h2>
             </div>
             <div className="grid gap-3">
-              {question.options.map((option, index) => (
-                <button
-                  key={index}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-300 hover:scale-105 ${
-                    showResult
-                      ? index === question.correct
-                        ? "bg-green-500/20 border-green-400 text-green-300"
-                        : selectedAnswer === index
-                          ? "bg-red-500/20 border-red-400 text-red-300"
-                          : "bg-white/5 border-white/20 text-white"
-                      : selectedAnswer === index
-                        ? "bg-blue-500/20 border-blue-400 text-blue-300"
-                        : "bg-white/5 border-white/20 text-white hover:bg-white/10"
-                  }`}
-                  onClick={() => handleAnswerSelect(index)}
-                  disabled={selectedAnswer !== null}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded border border-white flex items-center justify-center font-bold text-sm ${
+              {currentShuffled.shuffled.map((option, index) => {
+                // Find the original index of this option to check if it's correct
+                const originalIndex = currentShuffled.originalIndices[index]
+                const isCorrectAnswer = originalIndex === question.correct
+                
+                return (
+                  <button
+                    key={index}
+                    className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-300 hover:scale-105 ${
                       showResult
-                        ? index === question.correct
-                          ? "bg-green-400 text-white"
+                        ? isCorrectAnswer
+                          ? "bg-green-500/20 border-green-400 text-green-300"
                           : selectedAnswer === index
-                            ? "bg-red-400 text-white"
-                            : "bg-gray-400 text-white"
+                            ? "bg-red-500/20 border-red-400 text-red-300"
+                            : "bg-white/5 border-white/20 text-white"
                         : selectedAnswer === index
-                          ? "bg-blue-400 text-white"
-                          : "bg-white/20 text-white"
-                    }`}>
-                      {String.fromCharCode(65 + index)}
+                          ? "bg-blue-500/20 border-blue-400 text-blue-300"
+                          : "bg-white/5 border-white/20 text-white hover:bg-white/10"
+                    }`}
+                    onClick={() => handleAnswerSelect(index)}
+                    disabled={selectedAnswer !== null}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded border border-white flex items-center justify-center font-bold text-sm ${
+                        showResult
+                          ? isCorrectAnswer
+                            ? "bg-green-400 text-white"
+                            : selectedAnswer === index
+                              ? "bg-red-400 text-white"
+                              : "bg-gray-400 text-white"
+                          : selectedAnswer === index
+                            ? "bg-blue-400 text-white"
+                            : "bg-white/20 text-white"
+                      }`}>
+                        {String.fromCharCode(65 + index)}
+                      </div>
+                      <span className="text-sm font-medium">{option}</span>
                     </div>
-                    <span className="text-sm font-medium">{option}</span>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
 
-        {showResult && (
-          <div className="text-center mt-4">
-            <p className="text-sm text-muted-foreground">
-              {selectedAnswer === question.correct ? "Correct! 🎉" : "Incorrect. The correct answer was highlighted."}
-            </p>
-          </div>
-        )}
       </div>
       
       {/* Pixel Background Elements */}
