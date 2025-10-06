@@ -226,14 +226,14 @@ function QuizSettingsPageContent() {
                     <Slider 
                       value={timeLimit} 
                       onValueChange={setTimeLimit} 
-                      max={60} 
+                      max={30} 
                       min={5} 
                       step={5} 
                       className="w-full pixel-slider"
                     />
                     <div className="flex justify-between text-xs text-black mt-2 pixel-font-sm">
                       <span>5 MIN</span>
-                      <span>60 MIN</span>
+                      <span>30 MIN</span>
                     </div>
                   </div>
                 </div>
@@ -258,12 +258,12 @@ function QuizSettingsPageContent() {
                       value={questionCount}
                       onValueChange={setQuestionCount}
                       max={maxQuestions}
-                      min={1}
-                      step={1}
+                      min={5}
+                      step={5}
                       className="w-full pixel-slider"
                     />
                     <div className="flex justify-between text-xs text-black mt-2 pixel-font-sm">
-                      <span>1</span>
+                      <span>5</span>
                       <span>{maxQuestions}</span>
                     </div>
                   </div>
