@@ -832,20 +832,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white pixel-header-title">QUIZ GAME</h1>
-              <p className="text-sm text-blue-200">Room: {params.roomCode}</p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="relative">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
+              <Users className="w-6 h-6 text-white" />
             </div>
           </div>
-          <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg px-3 py-1">
-            <span className="text-blue-400 font-bold text-xs">Question {questionsAnswered + 1} of {room?.settings.questionCount || questions.length}</span>
+          <div>
+            <h1 className="text-3xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
+            <p className="text-sm text-blue-200">Room: {params.roomCode}</p>
           </div>
         </div>
 
@@ -884,21 +879,19 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
         {/* Timer, Score, and Correct Answers */}
         <div className="flex justify-center gap-4 mb-6">
+          <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
+            <span className="text-blue-400 font-bold text-sm">Question {questionsAnswered + 1} of {room?.settings.questionCount || questions.length}</span>
+          </div>
+
+          <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
+            <span className="text-yellow-400 font-bold text-sm">Points: {score}</span>
+          </div>
+
           <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-4 py-2 flex items-center gap-2`}>
             <Clock className={`w-4 h-4 ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`} />
             <span className={`font-bold text-sm ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`}>
               {getTimerDisplayText(timerState)}
             </span>
-          </div>
-
-          <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-yellow-400" />
-            <span className="text-yellow-400 font-bold text-sm">{score}</span>
-          </div>
-
-          <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-            <Target className="w-4 h-4 text-blue-400" />
-            <span className="text-blue-400 font-bold text-sm">{correctAnswers}/3</span>
           </div>
         </div>
 
