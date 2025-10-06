@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
-// Cute emojis matching the design from the image
-const emojis = ["🐌", "🍃", "🌈", "🐞", "🐛", "🦋"]
+// Animal emojis matching the homepage design
+const emojis = ["🐱", "🐶", "🐰", "🐸", "🐨", "🐼"]
 
 interface MemoryCard {
   id: number
