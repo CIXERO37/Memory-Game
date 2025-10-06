@@ -898,10 +898,10 @@ function LobbyPageContent() {
                           {hostId && (
                             <button
                               onClick={() => handleKickPlayer(player)}
-                              className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 border-2 border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10 min-h-[44px] min-w-[44px]"
+                              className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 border border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
                               title={`Kick ${player.username}`}
                             >
-                              <X className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
+                              <X className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white" />
                             </button>
                           )}
                           <div className="flex flex-col items-center gap-1 sm:gap-2">
