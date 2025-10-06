@@ -424,7 +424,7 @@ function MonitorPageContent() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white pixel-header-title">PLAYER PROGRESS</h1>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-2 sm:px-4 py-1 sm:py-2">
                       <span className="text-blue-400 font-bold text-xs sm:text-sm">{players.length} PLAYERS</span>
@@ -543,8 +543,19 @@ function MonitorPageContent() {
                           <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white">{truncatePlayerName(player.username)}</h3>
                         </div>
                       </div>
-                      <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
-                        <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} POINTS</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs sm:text-sm font-bold ${
+                          questionsAnswered >= quizSettings.questionCount 
+                            ? 'text-green-300' 
+                            : questionsAnswered > 0 
+                              ? 'text-blue-300' 
+                              : 'text-gray-400'
+                        }`}>
+                          {questionsAnswered}/{quizSettings.questionCount}
+                        </span>
+                        <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
+                          <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} POINTS</span>
+                        </div>
                       </div>
                     </div>
 
@@ -553,35 +564,7 @@ function MonitorPageContent() {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1 sm:gap-2">
-                            
-                            {questionsAnswered >= quizSettings.questionCount && (
-                              <div className="flex items-center gap-1">
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                <span className="text-xs text-green-400 font-bold">SELESAI</span>
-                              </div>
-                            )}
-                            {questionsAnswered === 0 && (
-                              <div className="flex items-center gap-1">
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full"></div>
-                                <span className="text-xs text-gray-400">BELUM MULAI</span>
-                              </div>
-                            )}
-                            {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
-                              <div className="flex items-center gap-1">
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                                <span className="text-xs text-yellow-400 font-bold">SEDANG BERMAIN</span>
-                              </div>
-                            )}
                           </div>
-                          <span className={`text-xs sm:text-sm font-bold ${
-                            questionsAnswered >= quizSettings.questionCount 
-                              ? 'text-green-300' 
-                              : questionsAnswered > 0 
-                                ? 'text-blue-300' 
-                                : 'text-gray-400'
-                          }`}>
-                            {questionsAnswered}/{quizSettings.questionCount} ({Math.round(quizProgress)}%)
-                          </span>
                         </div>
                         <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3 sm:h-4 relative overflow-hidden">
                           <div 
@@ -684,4 +667,3 @@ export default function MonitorPage() {
 }
 
 
-// ikan
