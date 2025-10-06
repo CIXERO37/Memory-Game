@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -255,18 +255,54 @@ export default function SelectQuizPage() {
                     onClick={() => handleQuizSelect(quiz.id)}
                   >
                     <div className="relative pixel-quiz-card">
-                      {/* Pixel Difficulty badge */}
-                      <div className={`absolute -top-2 -right-2 ${difficultyColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform rotate-3`}>
-                        <div className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                          <span className="text-white font-bold text-xs tracking-wide">
-                            {quiz.difficulty.toUpperCase()}
-                          </span>
+                      {/* Mobile Layout - Stacked */}
+                      <div className="sm:hidden flex flex-col h-full p-2 overflow-hidden">
+                        {/* Header with title and difficulty */}
+                        <div className="flex items-start justify-between mb-2 gap-1">
+                          <div className="bg-white border-2 border-black rounded px-1.5 py-0.5 shadow-lg flex-1 min-w-0 overflow-hidden">
+                            <h3 className="text-xs font-bold text-black leading-tight overflow-hidden mobile-title-ellipsis">
+                              {quiz.title.toUpperCase()}
+                            </h3>
+                          </div>
+                          <div className={`${difficultyColor} border-2 border-black rounded px-1 py-0.5 shadow-xl flex-shrink-0`}>
+                            <div className="flex items-center gap-0.5">
+                              <div className="w-1 h-1 bg-white rounded-full"></div>
+                              <span className="text-white font-bold text-xs">
+                                {quiz.difficulty.toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Description */}
+                        <div className="bg-black/20 border border-white/30 rounded px-1.5 py-0.5 mb-2 flex-1 min-h-0 overflow-hidden">
+                          <div className="mobile-description-scroll">
+                            <p className="text-xs text-white font-medium leading-tight">
+                              {quiz.description.toUpperCase()}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Question count */}
+                        <div className="bg-blue-500 border-2 border-black rounded px-1.5 py-0.5 overflow-hidden">
+                          <div className="text-xs text-white font-bold break-words overflow-hidden">
+                            {quiz.questions.length} QUESTIONS
+                          </div>
                         </div>
                       </div>
-                      
-                      {/* Pixel Main content */}
-                      <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4 z-10">
+
+                      {/* Desktop Layout - Original */}
+                      <div className="hidden sm:flex absolute inset-0 flex-col justify-center items-center text-center px-4 z-10">
+                        {/* Pixel Difficulty badge */}
+                        <div className={`absolute -top-2 -right-2 ${difficultyColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform rotate-3`}>
+                          <div className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                            <span className="text-white font-bold text-xs tracking-wide">
+                              {quiz.difficulty.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                        
                         <div className="bg-white border-2 border-black rounded px-3 py-1 mb-2 shadow-lg">
                           <h3 className="text-base font-bold text-black">
                             {quiz.title.toUpperCase()}
