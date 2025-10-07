@@ -710,6 +710,13 @@ function LobbyPageContent() {
             <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
               <h1 className="text-lg font-bold text-black">LOBBY</h1>
             </div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
+            {/* GameForSmart Logo */}
+            <img 
+              src="/images/gameforsmartlogo.png" 
+              alt="GameForSmart Logo" 
+              className="h-12 w-auto sm:h-16 md:h-20 object-contain"
+            />
           </div>
         </div>
       </div>

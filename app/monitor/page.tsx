@@ -425,6 +425,12 @@ function MonitorPageContent() {
               <div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                   <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
+                  {/* GameForSmart Logo */}
+                  <img 
+                    src="/images/gameforsmartlogo.png" 
+                    alt="GameForSmart Logo" 
+                    className="h-12 w-auto sm:h-16 md:h-20 object-contain"
+                  />
                   <div className="flex flex-col sm:flex-row gap-2">
                     <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-2 sm:px-4 py-1 sm:py-2">
                       <span className="text-blue-400 font-bold text-xs sm:text-sm">{players.length} PLAYERS</span>

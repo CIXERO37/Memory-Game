@@ -839,7 +839,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             </div>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
+              {/* GameForSmart Logo */}
+              <img 
+                src="/images/gameforsmartlogo.png" 
+                alt="GameForSmart Logo" 
+                className="h-12 w-auto sm:h-16 md:h-20 object-contain"
+              />
+            </div>
             <p className="text-sm text-blue-200">Room: {params.roomCode}</p>
           </div>
         </div>
