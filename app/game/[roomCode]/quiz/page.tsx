@@ -830,6 +830,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         </svg>
       </div>
 
+      {/* GameForSmart Logo - Top Right Corner */}
+      <div className="absolute top-4 right-4 z-20">
+        <img 
+          src="/images/gameforsmartlogo.png" 
+          alt="GameForSmart Logo" 
+          className="h-16 w-auto sm:h-20 md:h-24 object-contain drop-shadow-lg"
+        />
+      </div>
+
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -839,14 +848,11 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             </div>
           </div>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
-              {/* GameForSmart Logo */}
-              <img 
-                src="/images/gameforsmartlogo.png" 
-                alt="GameForSmart Logo" 
-                className="h-12 w-auto sm:h-16 md:h-20 object-contain"
-              />
+            {/* Enhanced MEMORY QUIZ Title */}
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 border-2 border-white rounded-lg px-6 py-3 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
+                MEMORY QUIZ
+              </h1>
             </div>
             <p className="text-sm text-blue-200">Room: {params.roomCode}</p>
           </div>

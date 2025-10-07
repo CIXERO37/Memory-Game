@@ -138,14 +138,7 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
             </div>
             
             
-            {/* Countdown Message */}
-            <div className="bg-white border-2 border-black rounded px-6 py-3 inline-block countdown-message">
-              <p className={`text-black font-bold text-lg pixel-font-sm ${
-                timeLeft <= 3 ? 'text-red-600' : ''
-              }`}>
-                {timeLeft <= 3 ? 'GET READY! STARTING SOON!' : 'THE QUIZ IS ABOUT TO BEGIN!'}
-              </p>
-            </div>
+           
           </div>
         </div>
       </div>

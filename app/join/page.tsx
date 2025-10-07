@@ -24,6 +24,8 @@ function JoinPageContent() {
   const [playerId, setPlayerId] = useState<string>("")
   const [sessionId, setSessionId] = useState<string>("")
   const [hasClickedJoin, setHasClickedJoin] = useState(false)
+  const [usernameError, setUsernameError] = useState("")
+  const [roomCodeError, setRoomCodeError] = useState("")
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")
@@ -94,11 +96,31 @@ function JoinPageContent() {
   }
 
   const handleJoinRoom = async () => {
-    if (!username.trim() || !roomCode.trim() || hasClickedJoin) return
+    // Clear previous validation errors
+    setUsernameError("")
+    setRoomCodeError("")
+    setRoomError("")
+    
+    // Check for validation errors
+    let hasValidationError = false
+    
+    if (!username.trim()) {
+      setUsernameError("Username belum diisi")
+      hasValidationError = true
+    }
+    
+    if (!roomCode.trim()) {
+      setRoomCodeError("Room code belum diisi")
+      hasValidationError = true
+    }
+    
+    // If there are validation errors, don't proceed
+    if (hasValidationError) return
+    
+    if (hasClickedJoin) return
 
     setHasClickedJoin(true)
     setIsJoining(true)
-    setRoomError("")
 
     console.log("[Join] Attempting to join room:", roomCode)
 
@@ -247,15 +269,23 @@ function JoinPageContent() {
                       <div className="inline-block bg-white rounded px-2 py-1 border border-black">
                         <Label htmlFor="username" className="text-black font-bold text-xs sm:text-sm">USERNAME</Label>
                       </div>
-                      <div className="relative">
-                        <Input
-                          id="username"
-                          placeholder="Enter your username"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 h-12 sm:h-auto"
-                        />
-                      </div>
+                        <div className="relative">
+                          <Input
+                            id="username"
+                            placeholder="Enter your username"
+                            value={username}
+                            onChange={(e) => {
+                              setUsername(e.target.value)
+                              if (usernameError) setUsernameError("")
+                            }}
+                            className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 h-12 sm:h-auto"
+                          />
+                        </div>
+                        {usernameError && (
+                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                            <p className="text-xs sm:text-sm text-white font-bold">{usernameError}</p>
+                          </div>
+                        )}
                     </div>
 
                     {!searchParams.get("room") && (
@@ -274,12 +304,18 @@ function JoinPageContent() {
                               if (value.length <= 6) {
                                 setRoomCode(value);
                               }
+                              if (roomCodeError) setRoomCodeError("")
                             }}
                             onPaste={handlePaste}
                             maxLength={6}
                             className="room-code-input h-12 sm:h-auto"
                           />
                         </div>
+                        {roomCodeError && (
+                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                            <p className="text-xs sm:text-sm text-white font-bold">{roomCodeError}</p>
+                          </div>
+                        )}
                         {roomError && (
                           <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
                             <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
@@ -298,6 +334,11 @@ function JoinPageContent() {
                             {roomCode}
                           </div>
                         </div>
+                        {roomCodeError && (
+                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                            <p className="text-xs sm:text-sm text-white font-bold">{roomCodeError}</p>
+                          </div>
+                        )}
                         {roomError && (
                           <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
                             <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
@@ -321,7 +362,7 @@ function JoinPageContent() {
                       <Button
                         className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-base sm:text-lg py-3 sm:py-3 transform hover:scale-105 transition-all duration-200 min-h-[44px]"
                         onClick={handleJoinRoom}
-                        disabled={!username.trim() || !roomCode.trim() || isJoining || hasClickedJoin}
+                        disabled={isJoining || hasClickedJoin}
                       >
                         {isJoining ? "JOINING..." : hasClickedJoin ? "PROCESSING..." : "JOIN ROOM"}
                       </Button>
