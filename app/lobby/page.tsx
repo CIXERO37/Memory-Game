@@ -673,7 +673,7 @@ function LobbyPageContent() {
     }
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+    <div className={`min-h-screen relative overflow-hidden ${qrOpen ? 'blur-sm' : ''}`} style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
       {/* Pixel Grid Background */}
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
@@ -690,7 +690,7 @@ function LobbyPageContent() {
       </div>
 
       {/* Pixel Header */}
-      <div className="relative z-10 w-full px-4 pt-6">
+      <div className={`relative z-10 w-full px-4 pt-6 ${qrOpen ? 'blur-sm' : ''}`}>
         <div className="flex items-center gap-4">
           <div 
             onClick={() => handleNavigationAttempt("/quiz-settings")}
@@ -710,18 +710,27 @@ function LobbyPageContent() {
             <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
               <h1 className="text-lg font-bold text-black">LOBBY</h1>
             </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white pixel-header-title">MEMORY QUIZ</h1>
-            {/* GameForSmart Logo */}
-            <img 
-              src="/images/gameforsmartlogo.png" 
-              alt="GameForSmart Logo" 
-              className="h-12 w-auto sm:h-16 md:h-20 object-contain"
-            />
+            {/* Simple and Clean MEMORY QUIZ Title */}
+            <div className="bg-white border-2 border-black rounded-lg px-4 py-2 shadow-lg">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black tracking-wide">
+                MEMORY QUIZ
+              </h1>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6">
+      {/* GameForSmart Logo - Top Right Corner */}
+      <div className={`absolute top-4 right-4 z-20 ${qrOpen ? 'blur-sm' : ''}`}>
+        <img 
+        draggable={false}
+          src="/images/gameforsmartlogo.png" 
+          alt="GameForSmart Logo" 
+          className="h-16 w-auto sm:h-20 md:h-24 object-contain drop-shadow-lg"
+        />
+      </div>
+
+      <div className={`relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6 ${qrOpen ? 'blur-sm' : ''}`}>
         <div className="mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
           {/* Pixel Room Info */}
           <div className="relative pixel-lobby-container">
@@ -808,7 +817,7 @@ function LobbyPageContent() {
                 )}
 
               <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="max-w-lg z-50 backdrop-blur-sm">
                   <DialogHeader>
                     <DialogTitle>Share QR Code</DialogTitle>
                   </DialogHeader>
@@ -973,7 +982,7 @@ function LobbyPageContent() {
 
       {/* Leave Confirmation Dialog */}
       <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-        <DialogContent className="max-w-md bg-transparent border-none p-0">
+        <DialogContent className="max-w-md bg-transparent border-none p-0 z-50">
           <div className="relative pixel-dialog-container">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
             <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg border-4 border-black shadow-2xl p-6">
@@ -1019,7 +1028,7 @@ function LobbyPageContent() {
 
       {/* Kick Player Confirmation Dialog */}
       <Dialog open={showKickDialog} onOpenChange={setShowKickDialog}>
-        <DialogContent className="max-w-md bg-transparent border-none p-0">
+        <DialogContent className="max-w-md bg-transparent border-none p-0 z-50">
           <div className="relative pixel-dialog-container">
             <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
             <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">

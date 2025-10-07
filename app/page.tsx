@@ -271,7 +271,7 @@ function FallingPixelCards() {
           style={{ ['--x' as any]: c.x, ['--delay' as any]: c.delay, ['--dur' as any]: c.dur, ['--rot' as any]: c.rot, ['--w' as any]: c.w ?? '88px', ['--h' as any]: c.h ?? '124px' }}
         >
           <div className={`w-full h-full ${c.color} border-4 border-black rounded-lg shadow-lg flex items-center justify-center`}>
-            <span className="text-white font-bold text-3xl">{c.label}</span>
+            <span className="text-white font-bold text-6xl">{c.label}</span>
           </div>
         </div>
       ))}

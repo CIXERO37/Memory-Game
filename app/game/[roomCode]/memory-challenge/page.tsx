@@ -308,6 +308,15 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         </svg>
       </div>
 
+      {/* GameForSmart Logo - Top Right Corner */}
+      <div className="absolute top-4 right-4 z-20">
+        <img 
+          src="/images/gameforsmartlogo.png" 
+          alt="GameForSmart Logo" 
+          className="h-16 w-auto sm:h-20 md:h-24 object-contain drop-shadow-lg"
+        />
+      </div>
+
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-6">
@@ -315,13 +324,12 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
             <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
               <Target className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">MEMORY GAME</h1>
-            {/* GameForSmart Logo */}
-            <img 
-              src="/images/gameforsmartlogo.png" 
-              alt="GameForSmart Logo" 
-              className="h-12 w-auto sm:h-16 md:h-20 object-contain"
-            />
+            {/* Simple and Clean MEMORY GAME Title */}
+            <div className="bg-white border-2 border-black rounded-lg px-4 py-2 shadow-lg">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black tracking-wide">
+                MEMORY GAME
+              </h1>
+            </div>
           </div>
           <p className="text-sm text-blue-200">Find all matching pairs to continue!</p>
         </div>

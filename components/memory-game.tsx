@@ -99,7 +99,7 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
             key={card.id}
             className={cn(
               "aspect-square cursor-pointer transition-all duration-300 hover:scale-105",
-              "flex items-center justify-center text-lg sm:text-2xl",
+              "flex items-center justify-center text-3xl sm:text-4xl",
               "border-2 bg-gradient-to-br from-white/20 to-white/10 rounded-lg",
               "min-h-[44px] min-w-[44px]", // Touch-friendly minimum size
               card.isMatched && "border-green-400 bg-green-500/20 scale-95",
