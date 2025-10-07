@@ -86,7 +86,6 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
   return (
     <div className="w-full max-w-lg mx-auto memory-game">
       <div className="text-center mb-4">
-        <h2 className="text-lg sm:text-xl font-bold text-white mb-2">MEMORY GAME</h2>
         {showAll && (
           <p className="text-xs text-blue-200 animate-pulse">
             Memorize the positions... {Math.ceil((3000 - (Date.now() % 3000)) / 1000)}

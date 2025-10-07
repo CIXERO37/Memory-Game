@@ -315,7 +315,13 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
             <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
               <Target className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">MEMORY MINI-GAME</h1>
+            <h1 className="text-2xl font-bold text-white">MEMORY GAME</h1>
+            {/* GameForSmart Logo */}
+            <img 
+              src="/images/gameforsmartlogo.png" 
+              alt="GameForSmart Logo" 
+              className="h-12 w-auto sm:h-16 md:h-20 object-contain"
+            />
           </div>
           <p className="text-sm text-blue-200">Find all matching pairs to continue!</p>
         </div>
