@@ -849,31 +849,34 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         </svg>
       </div>
 
-      {/* GameForSmart Logo - Top Right Corner */}
-      <div className="absolute top-4 right-4 z-20">
-        <img 
-          src="/images/gameforsmartlogo.png" 
-          alt="GameForSmart Logo" 
-          className="h-16 w-auto sm:h-20 md:h-24 object-contain drop-shadow-lg"
-        />
-      </div>
-
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
-              <Users className="w-6 h-6 text-white" />
+        {/* Header with responsive layout */}
+        <div className="flex items-center justify-between gap-2 mb-6">
+          {/* Left side - Title and Room Code */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="relative flex-shrink-0">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
+                <Users className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+              </div>
             </div>
+              <div className="min-w-0">
+                {/* Enhanced MEMORY QUIZ Title */}
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 border-2 border-white rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-2xl transition-all duration-300 inline-block">
+                  <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-white tracking-wider uppercase drop-shadow-lg whitespace-nowrap">
+                    MEMORY QUIZ
+                  </h1>
+                </div>
+                <p className="text-xs sm:text-sm text-blue-200 mt-1">Room: {params.roomCode}</p>
+              </div>
           </div>
-          <div>
-            {/* Enhanced MEMORY QUIZ Title */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 border-2 border-white rounded-lg px-6 py-3 shadow-2xl transform hover:scale-105 transition-all duration-300">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
-                MEMORY QUIZ
-              </h1>
-            </div>
-            <p className="text-sm text-blue-200">Room: {params.roomCode}</p>
+          
+          {/* Right side - GameForSmart Logo */}
+          <div className="flex-shrink-0">
+            <img 
+              src="/images/gameforsmartlogo.png" 
+              alt="GameForSmart Logo" 
+              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+            />
           </div>
         </div>
 
