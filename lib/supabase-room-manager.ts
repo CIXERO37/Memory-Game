@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export interface Player {
   id: string
@@ -44,6 +44,12 @@ class SupabaseRoomManager {
 
   async createRoom(hostId: string, settings: Room["settings"], quizId: string, quizTitle: string): Promise<Room | null> {
     try {
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured()) {
+        console.warn('[SupabaseRoomManager] Supabase not configured, returning null')
+        return null
+      }
+
       const roomCode = this.generateRoomCode()
       
       // Create room in database
@@ -88,6 +94,12 @@ class SupabaseRoomManager {
 
   async getRoom(roomCode: string): Promise<Room | null> {
     try {
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured()) {
+        console.warn('[SupabaseRoomManager] Supabase not configured, returning null')
+        return null
+      }
+
       // Get room data
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')

@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export interface UserSession {
   id: string
@@ -38,6 +38,12 @@ class SupabaseSessionManager {
     roomCode?: string
   ): Promise<string> {
     try {
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured()) {
+        console.warn('[SupabaseSessionManager] Supabase not configured, using fallback session management')
+        return sessionId || this.generateSessionId()
+      }
+
       const finalSessionId = sessionId || this.generateSessionId()
       
       // Get device info
@@ -95,6 +101,12 @@ class SupabaseSessionManager {
 
   async getSessionData(sessionId: string): Promise<UserSession | null> {
     try {
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured()) {
+        console.warn('[SupabaseSessionManager] Supabase not configured, returning null')
+        return null
+      }
+
       const { data, error } = await supabase
         .from('game_sessions')
         .select('*')
