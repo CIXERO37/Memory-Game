@@ -227,7 +227,27 @@ export default function SelectQuizPage() {
                     </div>
                     <h3 className="text-lg font-bold text-white mb-2">ERROR LOADING QUIZZES</h3>
                     <p className="text-white/80 mb-4 text-sm">{error}</p>
-                    <p className="text-white/60 text-sm">PLEASE CHECK YOUR SUPABASE CONFIGURATION</p>
+                    <div className="text-white/60 text-xs mb-4 space-y-2">
+                      <p><strong>SOLUTION STEPS:</strong></p>
+                      <p>1. Create .env.local file in project root</p>
+                      <p>2. Add your Supabase credentials (see env.example.txt)</p>
+                      <p>3. Restart your development server</p>
+                      <p>4. For production: Add environment variables to deployment platform</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => window.location.reload()} 
+                        className="bg-white text-red-600 px-4 py-2 rounded font-bold hover:bg-gray-100 transition-colors"
+                      >
+                        RETRY
+                      </button>
+                      <button 
+                        onClick={() => window.open('https://supabase.com/dashboard', '_blank')} 
+                        className="bg-blue-500 text-white px-4 py-2 rounded font-bold hover:bg-blue-600 transition-colors"
+                      >
+                        SUPABASE DASHBOARD
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

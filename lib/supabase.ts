@@ -9,7 +9,24 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Helper function to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
-  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
+  const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const isValidUrl = hasUrl && !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+  const isValidKey = hasKey && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.includes('placeholder')
+  
+  return isValidUrl && isValidKey
+}
+
+// Helper function to get configuration status for debugging
+export const getSupabaseConfigStatus = () => {
+  return {
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    urlValue: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT_SET',
+    keyValue: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT_SET',
+    isConfigured: isSupabaseConfigured(),
+    isUsingPlaceholder: supabaseUrl.includes('placeholder') || supabaseAnonKey.includes('placeholder')
+  }
 }
 
 // Database types for TypeScript - Consolidated JSON structure
@@ -53,17 +70,38 @@ export interface Quiz {
 export const quizApi = {
   // Get all quizzes
   async getQuizzes(): Promise<Quiz[]> {
-    const { data, error } = await supabase
-      .from('quizzes')
-      .select('*')
-      .order('created_at', { ascending: false })
+    try {
+      // Check if Supabase is properly configured
+      if (!isSupabaseConfigured()) {
+        const configStatus = getSupabaseConfigStatus()
+        console.error('Supabase configuration error:', configStatus)
+        
+        if (configStatus.isUsingPlaceholder) {
+          throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file. See env.example.txt for instructions.')
+        } else {
+          throw new Error('Supabase configuration incomplete. Missing required environment variables.')
+        }
+      }
 
-    if (error) {
-      console.error('Error fetching quizzes:', error)
-      throw error
+      console.log('Supabase URL:', supabaseUrl)
+      console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing')
+      
+      const { data, error } = await supabase
+        .from('quizzes')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Supabase error fetching quizzes:', error)
+        throw new Error(`Database error: ${error.message}. Please check your Supabase project settings and database permissions.`)
+      }
+
+      console.log('Raw data from Supabase:', data)
+      return data || []
+    } catch (err) {
+      console.error('Error in getQuizzes:', err)
+      throw err
     }
-
-    return data || []
   },
 
   // Get quiz by ID
