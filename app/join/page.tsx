@@ -39,13 +39,18 @@ function JoinPageContent() {
         // Try to get existing session
         const existingSessionId = sessionManager.getSessionIdFromStorage()
         if (existingSessionId) {
-          const sessionData = await sessionManager.getSessionData(existingSessionId)
-          if (sessionData && sessionData.user_type === 'player') {
-            setPlayerId(sessionData.user_data.id)
-            setSessionId(existingSessionId)
-            setUsername(sessionData.user_data.username || "")
-            setSelectedAvatar(sessionData.user_data.avatar || "/ava1.png")
-            return
+          try {
+            const sessionData = await sessionManager.getSessionData(existingSessionId)
+            if (sessionData && sessionData.user_type === 'player') {
+              setPlayerId(sessionData.user_data.id)
+              setSessionId(existingSessionId)
+              setUsername(sessionData.user_data.username || "")
+              setSelectedAvatar(sessionData.user_data.avatar || "/ava1.png")
+              return
+            }
+          } catch (error) {
+            console.warn('[Join] Error getting session data:', error)
+            // Continue with fallback logic
           }
         }
         
@@ -192,8 +197,8 @@ function JoinPageContent() {
         setSessionId(newSessionId)
         console.log("[Join] Session created/updated:", newSessionId)
       } catch (error) {
-        console.error("[Join] Error creating session:", error)
-        // Fallback to localStorage if Supabase fails (temporary)
+        console.warn("[Join] Error creating session:", error)
+        // Fallback to localStorage if Supabase fails
         if (typeof window !== 'undefined') {
           localStorage.setItem(
             "currentPlayer",
