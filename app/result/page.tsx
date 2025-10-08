@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Trophy, Users, Home, Star, Medal } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
+import { sessionManager } from "@/lib/supabase-session-manager"
 
 interface Player {
   id: string
@@ -55,9 +56,30 @@ function ResultPageContent() {
           setRoom(roomData)
           
           // Find current player and calculate ranking
-          const playerData = localStorage.getItem("currentPlayer")
-          if (playerData) {
-            const player = JSON.parse(playerData)
+          let player = null
+          
+          // Try to get from session manager first
+          try {
+            const sessionId = sessionManager.getSessionIdFromStorage()
+            if (sessionId) {
+              const sessionData = await sessionManager.getSessionData(sessionId)
+              if (sessionData && sessionData.user_type === 'player') {
+                player = sessionData.user_data
+              }
+            }
+          } catch (error) {
+            console.error("Error getting session data:", error)
+          }
+          
+          // Fallback to localStorage
+          if (!player && typeof window !== 'undefined') {
+            const playerData = localStorage.getItem("currentPlayer")
+            if (playerData) {
+              player = JSON.parse(playerData)
+            }
+          }
+          
+          if (player) {
             const allPlayers = roomData.players.filter(p => !p.isHost)
             
             // Sort players by total score

@@ -11,6 +11,9 @@ import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
 import { getTimerDisplayText } from "@/lib/timer-utils"
 import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
+import { sessionManager } from "@/lib/supabase-session-manager"
+import { supabaseRoomManager } from "@/lib/supabase-room-manager"
+import { failedUpdatesManager } from "@/lib/failed-updates-manager"
 
 interface QuizPageProps {
   params: {
@@ -66,16 +69,46 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [isShowingResult, setIsShowingResult] = useState(false)
   // Store shuffled options for each question
   const [shuffledOptions, setShuffledOptions] = useState<{ [questionIndex: number]: { shuffled: string[], originalIndices: number[] } }>({})
-  // Removed memory game score - memory game is now just an obstacle
-  const [playerId] = useState(() => {
-    const player = localStorage.getItem("currentPlayer")
-    return player ? JSON.parse(player).id : null
-  })
+  // Get player ID from session manager
+  const [playerId, setPlayerId] = useState<string | null>(null)
+  const [playerData, setPlayerData] = useState<any>(null)
   const [isHost, setIsHost] = useState(false)
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
   const { room, loading } = useRoom(params.roomCode)
   
+  // Load player data from session manager
+  useEffect(() => {
+    const loadPlayerData = async () => {
+      try {
+        const sessionId = sessionManager.getSessionIdFromStorage()
+        if (sessionId) {
+          const sessionData = await sessionManager.getSessionData(sessionId)
+          if (sessionData && sessionData.user_type === 'player') {
+            setPlayerId(sessionData.user_data.id)
+            setPlayerData(sessionData.user_data)
+            console.log("[Quiz] Loaded player data from session:", sessionData.user_data)
+          }
+        }
+        
+        // Fallback to localStorage if session not found
+        if (!playerId && typeof window !== 'undefined') {
+          const player = localStorage.getItem("currentPlayer")
+          if (player) {
+            const playerInfo = JSON.parse(player)
+            setPlayerId(playerInfo.id)
+            setPlayerData(playerInfo)
+            console.log("[Quiz] Loaded player data from localStorage fallback:", playerInfo)
+          }
+        }
+      } catch (error) {
+        console.error("[Quiz] Error loading player data:", error)
+      }
+    }
+
+    loadPlayerData()
+  }, [])
+
   // Handle timer expiration
   const handleTimeUp = async () => {
     if (timeUpHandled) return // Prevent multiple calls
@@ -364,31 +397,24 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     const recoverFailedUpdates = async () => {
       if (!playerId) return
       
-      const failedUpdateKey = `failed-progress-update-${params.roomCode}-${playerId}`
-      const failedUpdateData = localStorage.getItem(failedUpdateKey)
-      
-      if (failedUpdateData) {
-        try {
-          const failedUpdate = JSON.parse(failedUpdateData)
-          console.log("[Quiz] 🔄 RECOVERING failed progress update:", failedUpdate)
-          
-          const success = await roomManager.updatePlayerScore(
-            failedUpdate.roomCode,
-            failedUpdate.playerId,
-            failedUpdate.updateData.quizScore,
-            undefined,
-            failedUpdate.updateData.questionsAnswered
-          )
-          
-          if (success) {
-            console.log("[Quiz] ✅ RECOVERED failed progress update successfully")
-            localStorage.removeItem(failedUpdateKey)
-          } else {
-            console.log("[Quiz] ❌ Failed to recover progress update, will try again later")
+      try {
+        const result = await failedUpdatesManager.processPendingUpdates(
+          params.roomCode,
+          playerId,
+          {
+            progress: async (updateData) => {
+              return await supabaseRoomManager.updateGameProgress(
+                params.roomCode,
+                playerId,
+                updateData
+              )
+            }
           }
-        } catch (error) {
-          console.error("[Quiz] Error recovering failed update:", error)
-        }
+        )
+        
+        console.log("[Quiz] 🔄 Processed failed updates:", result)
+      } catch (error) {
+        console.error("[Quiz] Error recovering failed updates:", error)
       }
     }
     
@@ -405,49 +431,20 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         console.log("[Quiz] Memory game return detected:", memoryReturn)
         const data = JSON.parse(memoryReturn)
         
-        // Restore progress data from localStorage
-        const progressData = localStorage.getItem(`quiz-progress-${params.roomCode}`)
-        if (progressData) {
-          const progress = JSON.parse(progressData)
-          console.log("[Quiz] Restoring progress data from localStorage:", progress)
-          setCurrentQuestion(progress.currentQuestion || data.resumeQuestion || currentQuestion)
-          setScore(progress.score || 0)
-          setCorrectAnswers(progress.correctAnswers || 0)
-          setQuestionsAnswered(progress.questionsAnswered || 0)
-          
-          // Sync restored data with database with enhanced reliability
-          if (playerId) {
-            const syncAttempt = async (attempt = 1, maxAttempts = 3) => {
-              try {
-                const success = await roomManager.updatePlayerScore(
-                  params.roomCode, 
-                  playerId, 
-                  progress.score || 0, 
-                  undefined, 
-                  progress.questionsAnswered || 0
-                )
-                
-                if (success) {
-                  console.log(`[Quiz] ✅ Successfully synced restored data with database (attempt ${attempt})`)
-                } else if (attempt < maxAttempts) {
-                  console.log(`[Quiz] 🔄 Retrying sync (attempt ${attempt + 1}/${maxAttempts})`)
-                  setTimeout(() => syncAttempt(attempt + 1, maxAttempts), 2000)
-                } else {
-                  console.error("[Quiz] ❌ Failed to sync restored data after all attempts")
-                }
-              } catch (error) {
-                console.error(`[Quiz] Error syncing restored data (attempt ${attempt}):`, error)
-                if (attempt < maxAttempts) {
-                  setTimeout(() => syncAttempt(attempt + 1, maxAttempts), 2000)
-                }
-              }
-            }
-            
-            syncAttempt()
+        // Restore progress data from Supabase
+        if (playerId) {
+          const progressData = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
+          if (progressData && progressData.game_progress) {
+            const progress = progressData.game_progress
+            console.log("[Quiz] Restoring progress data from Supabase:", progress)
+            setCurrentQuestion(progress.current_question || data.resumeQuestion || currentQuestion)
+            setScore(progress.quiz_score || 0)
+            setCorrectAnswers(progress.correct_answers || 0)
+            setQuestionsAnswered(progress.questions_answered || 0)
+          } else {
+            // Fallback to memory return data
+            setCurrentQuestion(data.resumeQuestion || currentQuestion)
           }
-          
-          // Clean up localStorage after restore
-          localStorage.removeItem(`quiz-progress-${params.roomCode}`)
         } else {
           // Fallback to memory return data
           setCurrentQuestion(data.resumeQuestion || currentQuestion)
@@ -489,7 +486,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
   // Removed per-question timer countdown - players can take their time to think
 
-  const handleAnswerSelect = (answerIndex: number) => {
+  const handleAnswerSelect = async (answerIndex: number) => {
     // Prevent multiple selections while showing result
     if (selectedAnswer !== null || showResult) return
     
@@ -525,28 +522,44 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     setQuestionsAnswered(newQuestionsAnswered)
     
     console.log("[Quiz] ✅ ANSWER CHECKED - Correct:", isCorrect, "Score:", newScore, "Questions Answered:", newQuestionsAnswered)
+    console.log("[Quiz] 🔍 DEBUG - correctAnswers:", correctAnswers, "newCorrectAnswers:", newCorrectAnswers, "isCorrect:", isCorrect)
 
     // STEP 5: Check if player has answered 3 correct questions (memory game trigger)
     if (isCorrect && newCorrectAnswers === 3) {
+      console.log("[Quiz] 🎯 MEMORY GAME TRIGGER CONDITION MET!")
+      console.log("[Quiz] 🎯 Player has answered 3 correct questions, redirecting to memory game...")
+      
       // Update quiz score and questions answered immediately before memory game
       if (playerId) {
         console.log("[Quiz] 🎯 MEMORY GAME TRIGGER - Updating final scores before redirect")
         roomManager.updatePlayerScore(params.roomCode, playerId, newScore, undefined, newQuestionsAnswered)
       }
 
-      // Store current progress and redirect to memory game
-      localStorage.setItem(
-        `quiz-progress-${params.roomCode}`,
-        JSON.stringify({
-          currentQuestion: currentQuestion + 1,
-          score: newScore,
-          correctAnswers: newCorrectAnswers,
-          questionsAnswered: newQuestionsAnswered,
-          timeLimit: room?.settings.totalTimeLimit || 30,
-        }),
-      )
+      // Store current progress in both Supabase and localStorage before redirect to memory game
+      const progressData = {
+        currentQuestion: currentQuestion + 1,
+        correctAnswers: newCorrectAnswers,
+        quizScore: newScore,
+        questionsAnswered: newQuestionsAnswered
+      }
 
+      // Save to localStorage for immediate access by memory challenge page
+      localStorage.setItem(`quiz-progress-${params.roomCode}`, JSON.stringify(progressData))
+      console.log("[Quiz] ✅ Progress saved to localStorage:", progressData)
+
+      // Also save to Supabase
+      if (playerId) {
+        try {
+          await supabaseRoomManager.updateGameProgress(params.roomCode, playerId, progressData)
+          console.log("[Quiz] ✅ Progress saved to Supabase successfully")
+        } catch (error) {
+          console.error("[Quiz] ❌ Error saving progress to Supabase:", error)
+        }
+      }
+
+      console.log("[Quiz] 🚀 Redirecting to memory challenge in 2 seconds...")
       setTimeout(() => {
+        console.log("[Quiz] 🔄 Executing redirect to memory challenge")
         window.location.href = `/game/${params.roomCode}/memory-challenge`
       }, 2000)
       return
@@ -617,8 +630,14 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
               updateData,
               timestamp: Date.now()
             }
-            localStorage.setItem(`failed-progress-update-${params.roomCode}-${playerId}`, JSON.stringify(failedUpdate))
-            console.log("[Quiz] 💾 Stored failed update for later sync:", failedUpdate)
+            // Store failed update in Supabase for retry
+            await failedUpdatesManager.storeFailedUpdate(
+              params.roomCode,
+              playerId,
+              'progress',
+              updateData
+            )
+            console.log("[Quiz] 💾 Stored failed update for later sync:", updateData)
           }
           return false
         }

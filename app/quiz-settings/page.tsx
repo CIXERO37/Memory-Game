@@ -7,6 +7,7 @@ import { ArrowLeft, Settings } from "lucide-react"
 import Link from "next/link"
 import { roomManager } from "@/lib/room-manager"
 import { getQuizById } from "@/lib/quiz-data"
+import { sessionManager } from "@/lib/supabase-session-manager"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Clock, HelpCircle } from "lucide-react"
@@ -79,7 +80,24 @@ function QuizSettingsPageContent() {
 
       console.log("[QuizSettings] Room verification successful:", verifyRoom)
 
-      // Store host info
+      // Store host info in session manager
+      try {
+        await sessionManager.createOrUpdateSession(
+          null, // Generate new session ID
+          'host',
+          {
+            id: hostId,
+            roomCode: room.code,
+            quizId: selectedQuiz,
+          },
+          room.code
+        )
+        console.log("[QuizSettings] Host session created in Supabase")
+      } catch (error) {
+        console.error("[QuizSettings] Error creating host session:", error)
+      }
+
+      // Store host info in localStorage as fallback
       localStorage.setItem(
         "currentHost",
         JSON.stringify({
@@ -89,7 +107,7 @@ function QuizSettingsPageContent() {
         }),
       )
 
-      // Store quiz settings for the game
+      // Store quiz settings for the game (keep in localStorage for now)
       localStorage.setItem(
         `game-${room.code}`,
         JSON.stringify({
