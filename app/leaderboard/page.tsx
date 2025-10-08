@@ -18,6 +18,7 @@ interface Room {
   code: string
   hostId: string
   players: Player[]
+  
   settings: {
     questionCount: number
     totalTimeLimit: number
@@ -171,54 +172,184 @@ function LeaderboardPageContent() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Enhanced Header */}
-        <div className="text-center mb-12 relative z-30">
-          <div className="relative inline-block">
-            {/* Header Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 to-amber-400/30 rounded-2xl blur-xl animate-pulse"></div>
-            
-            <div className="relative bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-4 border-yellow-400/50 rounded-2xl p-4 backdrop-blur-sm z-30">
-              <div className="flex items-center justify-center gap-4 mb-3">
-                {/* Trophy Icon */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-yellow-400/50 rounded-2xl blur-lg animate-pulse"></div>
-                  <div className="relative w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl border-3 border-white shadow-2xl flex items-center justify-center pixel-brain animate-bounce-slow">
-                    <Trophy className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                
-                {/* Title */}
-                <div className="relative">
-                  <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400 pixel-header-title drop-shadow-2xl">
-                    CHAMPIONS
-                  </h1>
-                  <div className="absolute inset-0 text-4xl font-bold text-yellow-400/20 pixel-header-title blur-sm">
-                    CHAMPIONS
-                  </div>
-                </div>
-                
-                {/* Star Icons */}
-                <div className="flex flex-col gap-1">
-                  <Star className="w-5 h-5 text-yellow-400 animate-pulse" />
-                  <Star className="w-3 h-3 text-amber-400 animate-pulse" style={{ animationDelay: '0.5s' }} />
-                </div>
-              </div>
+        {/* Mobile Layout - Horizontal with MEMORY QUIZ, CHAMPIONS, and Logo */}
+        <div className="flex flex-row justify-between items-center mb-8 relative z-30 gap-2 sm:hidden">
+          {/* MEMORY QUIZ Title - Mobile Left */}
+          <div className="relative">
+            <div className="relative inline-block">
+              {/* Pixel Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/30 to-purple-400/30 blur-lg animate-pulse"></div>
               
-              {/* Decorative Elements */}
-              <div className="absolute top-4 left-4 w-4 h-4 bg-yellow-400/60 rounded-full animate-ping"></div>
-              <div className="absolute top-4 right-4 w-4 h-4 bg-amber-400/60 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
-              <div className="absolute bottom-4 left-4 w-3 h-3 bg-yellow-300/60 rounded-full animate-ping" style={{ animationDelay: '2s' }}></div>
-              <div className="absolute bottom-4 right-4 w-3 h-3 bg-amber-300/60 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
+              <div className="relative bg-gradient-to-br from-blue-500/20 to-purple-600/20 border-2 border-blue-400/50 backdrop-blur-sm z-30 pixel-card">
+                <h2 className="text-xs font-bold text-white tracking-wider uppercase drop-shadow-lg px-2 py-1.5">
+                  MEMORY QUIZ
+                </h2>
+                
+                {/* Pixel Decorative Elements */}
+                <div className="absolute top-1 left-1 w-1 h-1 bg-blue-400/60 animate-ping pixel-dot"></div>
+                <div className="absolute top-1 right-1 w-1 h-1 bg-purple-400/60 animate-ping pixel-dot" style={{ animationDelay: '0.7s' }}></div>
+                <div className="absolute bottom-1 left-1 w-1 h-1 bg-cyan-400/60 animate-ping pixel-dot" style={{ animationDelay: '1.4s' }}></div>
+                <div className="absolute bottom-1 right-1 w-1 h-1 bg-blue-300/60 animate-ping pixel-dot" style={{ animationDelay: '2.1s' }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* CHAMPIONS Card - Mobile Center */}
+          <div className="relative">
+            <div className="relative inline-block">
+              {/* Pixel Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 to-amber-400/30 blur-lg animate-pulse"></div>
+              
+              <div className="relative bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-2 border-yellow-400/50 backdrop-blur-sm z-30 pixel-card">
+                <div className="flex items-center justify-center gap-1 mb-1 px-2 py-2">
+                  {/* Pixel Trophy Icon */}
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-yellow-400/50 blur-sm animate-pulse"></div>
+                    <div className="relative w-6 h-6 bg-gradient-to-r from-yellow-400 to-amber-500 border-2 border-white shadow-lg flex items-center justify-center pixel-icon animate-bounce-slow">
+                      <Trophy className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                  
+                  {/* Title */}
+                  <div className="relative">
+                    <h1 className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400 pixel-text drop-shadow-lg">
+                      CHAMPIONS
+                    </h1>
+                    <div className="absolute inset-0 text-sm font-bold text-yellow-400/20 pixel-text blur-sm">
+                      CHAMPIONS
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Pixel Decorative Elements */}
+                <div className="absolute top-1 left-1 w-1 h-1 bg-yellow-400/60 animate-ping pixel-dot"></div>
+                <div className="absolute top-1 right-1 w-1 h-1 bg-amber-400/60 animate-ping pixel-dot" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute bottom-1 left-1 w-1 h-1 bg-yellow-300/60 animate-ping pixel-dot" style={{ animationDelay: '2s' }}></div>
+                <div className="absolute bottom-1 right-1 w-1 h-1 bg-amber-300/60 animate-ping pixel-dot" style={{ animationDelay: '1.5s' }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* GameForSmart Logo - Mobile Right */}
+          <div className="relative">
+            <div className="relative inline-block">
+              {/* Pixel Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-400/30 to-green-400/30 blur-lg animate-pulse"></div>
+              
+              <div className="relative bg-gradient-to-br from-orange-500/20 to-green-600/20 border-2 border-orange-400/50 backdrop-blur-sm z-30 pixel-card">
+                <div className="px-1.5 py-1.5">
+                  <img
+                    src="/images/gameforsmartlogo.png"
+                    alt="GameForSmart Logo"
+                    className="h-6 w-auto object-contain pixel-image"
+                  />
+                </div>
+                
+                {/* Pixel Decorative Elements */}
+                <div className="absolute top-1 left-1 w-1 h-1 bg-orange-400/60 animate-ping pixel-dot"></div>
+                <div className="absolute top-1 right-1 w-1 h-1 bg-green-400/60 animate-ping pixel-dot" style={{ animationDelay: '0.7s' }}></div>
+                <div className="absolute bottom-1 left-1 w-1 h-1 bg-yellow-400/60 animate-ping pixel-dot" style={{ animationDelay: '1.4s' }}></div>
+                <div className="absolute bottom-1 right-1 w-1 h-1 bg-orange-300/60 animate-ping pixel-dot" style={{ animationDelay: '2.1s' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout - Three elements aligned horizontally */}
+        <div className="hidden sm:flex flex-row items-center relative z-30 mb-12">
+          {/* MEMORY QUIZ Title - Desktop Left */}
+          <div className="relative flex-1 flex justify-start">
+            <div className="relative inline-block">
+              {/* Pixel Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/30 to-purple-400/30 blur-xl animate-pulse"></div>
+              
+              <div className="relative bg-gradient-to-br from-blue-500/20 to-purple-600/20 border-4 border-blue-400/50 backdrop-blur-sm z-30 pixel-card-large">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-wider uppercase drop-shadow-lg px-4 py-3">
+                  MEMORY QUIZ
+                </h2>
+                
+                {/* Pixel Decorative Elements */}
+                <div className="absolute top-2 left-2 w-2 h-2 bg-blue-400/60 animate-ping pixel-dot-large"></div>
+                <div className="absolute top-2 right-2 w-2 h-2 bg-purple-400/60 animate-ping pixel-dot-large" style={{ animationDelay: '0.7s' }}></div>
+                <div className="absolute bottom-2 left-2 w-2 h-2 bg-cyan-400/60 animate-ping pixel-dot-large" style={{ animationDelay: '1.4s' }}></div>
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-blue-300/60 animate-ping pixel-dot-large" style={{ animationDelay: '2.1s' }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* CHAMPIONS Card - Desktop Center */}
+          <div className="relative flex-1 flex justify-center">
+            <div className="relative inline-block">
+              {/* Pixel Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 to-amber-400/30 blur-xl animate-pulse"></div>
+              
+              <div className="relative bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-4 border-yellow-400/50 backdrop-blur-sm z-30 pixel-card-large">
+                <div className="flex items-center justify-center gap-4 mb-3 px-4 py-4">
+                  {/* Pixel Trophy Icon */}
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-yellow-400/50 blur-lg animate-pulse"></div>
+                    <div className="relative w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-500 border-3 border-white shadow-2xl flex items-center justify-center pixel-icon-large animate-bounce-slow">
+                      <Trophy className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                  
+                  {/* Title */}
+                  <div className="relative">
+                    <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400 pixel-text-large drop-shadow-2xl">
+                      CHAMPIONS
+                    </h1>
+                    <div className="absolute inset-0 text-4xl font-bold text-yellow-400/20 pixel-text-large blur-sm">
+                      CHAMPIONS
+                    </div>
+                  </div>
+                  
+                  {/* Pixel Star Icons */}
+                  <div className="flex flex-col gap-1">
+                    <Star className="w-5 h-5 text-yellow-400 animate-pulse pixel-star" />
+                    <Star className="w-3 h-3 text-amber-400 animate-pulse pixel-star" style={{ animationDelay: '0.5s' }} />
+                  </div>
+                </div>
+                
+                {/* Pixel Decorative Elements */}
+                <div className="absolute top-2 left-2 w-3 h-3 bg-yellow-400/60 animate-ping pixel-dot-large"></div>
+                <div className="absolute top-2 right-2 w-3 h-3 bg-amber-400/60 animate-ping pixel-dot-large" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute bottom-2 left-2 w-2 h-2 bg-yellow-300/60 animate-ping pixel-dot-large" style={{ animationDelay: '2s' }}></div>
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-amber-300/60 animate-ping pixel-dot-large" style={{ animationDelay: '1.5s' }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* GameForSmart Logo - Desktop Right */}
+          <div className="relative flex-1 flex justify-end">
+            <div className="relative inline-block">
+              {/* Pixel Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-400/30 to-green-400/30 blur-xl animate-pulse"></div>
+              
+              <div className="relative bg-gradient-to-br from-orange-500/20 to-green-600/20 border-4 border-orange-400/50 backdrop-blur-sm z-30 pixel-card-large">
+                <div className="px-3 py-3">
+                  <img
+                    src="/images/gameforsmartlogo.png"
+                    alt="GameForSmart Logo"
+                    className="h-12 w-auto object-contain pixel-image-large"
+                  />
+                </div>
+                
+                {/* Pixel Decorative Elements */}
+                <div className="absolute top-2 left-2 w-2 h-2 bg-orange-400/60 animate-ping pixel-dot-large"></div>
+                <div className="absolute top-2 right-2 w-2 h-2 bg-green-400/60 animate-ping pixel-dot-large" style={{ animationDelay: '0.7s' }}></div>
+                <div className="absolute bottom-2 left-2 w-2 h-2 bg-yellow-400/60 animate-ping pixel-dot-large" style={{ animationDelay: '1.4s' }}></div>
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-orange-300/60 animate-ping pixel-dot-large" style={{ animationDelay: '2.1s' }}></div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Enhanced Podium - Top 3 Players */}
         <div className="max-w-6xl mx-auto mb-12 mt-8">
-          {/* Podium Platform */}
-          <div className="relative">
-            {/* Podium Base */}
-            <div className="flex justify-center items-end gap-2 relative">
+            {/* Podium Platform */}
+            <div className="relative">
+              {/* Podium Base */}
+              <div className="flex justify-center items-end gap-4 sm:gap-8 relative">
               
               {/* 2nd Place Platform */}
               {sortedPlayers[1] && (
@@ -266,22 +397,22 @@ function LeaderboardPageContent() {
                 <div className="flex flex-col items-center relative z-10 mt-0">
                   
                   {/* Champion Card */}
-                  <div className="bg-gradient-to-br from-yellow-500/30 to-amber-600/30 border-4 border-yellow-400/70 rounded-2xl p-8 pixel-lobby-card text-center relative w-64 hover:scale-105 transition-all duration-500 backdrop-blur-sm animate-pulse">
+                  <div className="bg-gradient-to-br from-yellow-500/30 to-amber-600/30 border-4 border-yellow-400/70 pixel-lobby-card text-center relative w-80 hover:scale-105 transition-all duration-500 backdrop-blur-sm animate-pulse pixel-card-champion">
                     {/* Ranking Number */}
-                    <div className="absolute top-3 left-3 w-10 h-10 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full border-2 border-white shadow-xl flex items-center justify-center z-20">
+                    <div className="absolute top-3 left-3 w-10 h-10 bg-gradient-to-br from-yellow-300 to-amber-500 border-2 border-white shadow-xl flex items-center justify-center z-20 pixel-rank-badge">
                       <span className="text-xl font-bold text-white">1</span>
                     </div>
                     
                     {/* Champion Glow Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-amber-400/30 rounded-2xl blur-2xl animate-pulse"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-amber-400/30 blur-2xl animate-pulse"></div>
                     
                     {/* Champion Avatar with Enhanced Glow */}
-                    <div className="w-24 h-24 rounded-full border-4 border-yellow-400 overflow-hidden mx-auto mb-6 relative z-10 shadow-2xl">
-                      <div className="absolute inset-0 bg-yellow-400/50 rounded-full blur-lg animate-pulse"></div>
+                    <div className="w-24 h-24 border-4 border-yellow-400 overflow-hidden mx-auto mb-6 relative z-10 shadow-2xl pixel-avatar-large">
+                      <div className="absolute inset-0 bg-yellow-400/50 blur-lg animate-pulse"></div>
                       <img
                         src={champion.avatar}
                         alt={`${champion.username}'s avatar`}
-                        className="w-full h-full object-cover relative z-10"
+                        className="w-full h-full object-cover relative z-10 pixel-image-avatar"
                         onError={(e) => {
                           e.currentTarget.src = "/ava1.png"
                         }}
@@ -289,13 +420,13 @@ function LeaderboardPageContent() {
                     </div>
                     
                     {/* Champion Name */}
-                    <h2 className="text-2xl font-bold text-yellow-300 mb-6 relative z-10">{champion.username}</h2>
+                    <h2 className="text-2xl font-bold text-yellow-300 mb-6 relative z-10 pixel-text-champion">{champion.username}</h2>
                     
                     {/* Champion Score with Enhanced Glow */}
-                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-xl px-8 py-4 relative z-10 shadow-2xl">
-                      <div className="absolute inset-0 bg-yellow-400/40 rounded-xl blur-lg animate-pulse"></div>
-                      <div className="text-4xl font-bold text-white relative z-10">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
-                      <div className="text-sm text-yellow-100 relative z-10 font-bold">POINTS</div>
+                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 px-8 py-4 relative z-10 shadow-2xl pixel-score-card">
+                      <div className="absolute inset-0 bg-yellow-400/40 blur-lg animate-pulse"></div>
+                      <div className="text-4xl font-bold text-white relative z-10 pixel-score-text">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
+                      <div className="text-sm text-yellow-100 relative z-10 font-bold pixel-points-text">POINTS</div>
                     </div>
                     
                   </div>
@@ -436,10 +567,10 @@ function LeaderboardPageContent() {
         <div className="text-center relative">
           <div className="relative inline-block">
             {/* Button Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur-xl opacity-50 animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-xl opacity-50 animate-pulse"></div>
             
             <button
-              className="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-4 border-white/40 rounded-2xl px-10 py-5 text-white font-bold text-xl transition-all duration-500 hover:scale-110 hover:shadow-2xl pixel-button flex items-center justify-center gap-4 backdrop-blur-sm group overflow-hidden"
+              className="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-4 border-white/40 px-10 py-5 text-white font-bold text-xl transition-all duration-500 hover:scale-110 hover:shadow-2xl pixel-button flex items-center justify-center gap-4 backdrop-blur-sm group overflow-hidden"
               onClick={() => {
                 router.push("/")
               }}
@@ -448,16 +579,16 @@ function LeaderboardPageContent() {
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               
               {/* Icon */}
-              <div className="relative z-10 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
+              <div className="relative z-10 w-8 h-8 bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform duration-300 pixel-icon">
                 <Home className="w-5 h-5" />
               </div>
               
               {/* Text */}
-              <span className="relative z-10">BACK TO DASHBOARD</span>
+              <span className="relative z-10 pixel-text-large">BACK TO DASHBOARD</span>
               
               {/* Decorative Elements */}
-              <div className="absolute top-2 right-2 w-2 h-2 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="absolute bottom-2 left-2 w-2 h-2 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute top-2 right-2 w-2 h-2 bg-white/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pixel-dot"></div>
+              <div className="absolute bottom-2 left-2 w-2 h-2 bg-white/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pixel-dot"></div>
             </button>
           </div>
         </div>

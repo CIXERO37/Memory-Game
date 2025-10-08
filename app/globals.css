@@ -1151,6 +1151,28 @@
     padding-right: 1rem;
   }
   
+  /* Header responsive fixes for logo and title overlap */
+  .header-responsive {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+  
+  .header-responsive .flex {
+    justify-content: center !important;
+  }
+  
+  /* Logo and title sizing */
+  .logo-mobile {
+    height: 3rem !important; /* 48px */
+    max-height: 3rem !important;
+  }
+  
+  .title-mobile {
+    font-size: 0.875rem !important; /* 14px */
+    padding: 0.5rem 0.75rem !important;
+  }
+  
   /* Button scaling */
   .pixel-button-host,
   .pixel-button-join {
@@ -1742,4 +1764,226 @@
   .pixel-room-code {
     overflow: hidden !important;
   }
+}
+
+/* Pixel Theme Styles */
+.pixel-card {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 2px 2px 0px rgba(255, 255, 255, 0.3),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.3),
+    2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-card-large {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 4px 4px 0px rgba(255, 255, 255, 0.3),
+    inset -4px -4px 0px rgba(0, 0, 0, 0.3),
+    4px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-card-champion {
+  border-radius: 0px !important;
+  padding: 2rem;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 4px 4px 0px rgba(255, 255, 255, 0.4),
+    inset -4px -4px 0px rgba(0, 0, 0, 0.4),
+    6px 6px 0px rgba(0, 0, 0, 0.6);
+  min-width: 20rem;
+  max-width: 24rem;
+}
+
+.pixel-icon {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 1px 1px 0px rgba(255, 255, 255, 0.5),
+    inset -1px -1px 0px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-icon-large {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 2px 2px 0px rgba(255, 255, 255, 0.5),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-avatar-large {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 2px 2px 0px rgba(255, 255, 255, 0.3),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.pixel-rank-badge {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 1px 1px 0px rgba(255, 255, 255, 0.5),
+    inset -1px -1px 0px rgba(0, 0, 0, 0.5);
+}
+
+.pixel-score-card {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 2px 2px 0px rgba(255, 255, 255, 0.4),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.4);
+}
+
+.pixel-dot {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-dot-large {
+  border-radius: 0px !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-text {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 0.75rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.05em !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-text-large {
+  font-family: 'Press Start 2P', monospace !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.05em !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-text-champion {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 1.25rem !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.05em !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-score-text {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 2rem !important;
+  line-height: 1.2 !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-points-text {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 0.75rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.1em !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-image {
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-image-large {
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-image-avatar {
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-star {
+  filter: contrast(1.2) saturate(1.3);
+}
+
+/* Pixel Button Styles */
+.pixel-button {
+  border-radius: 0px !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 0.875rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.05em !important;
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+  -moz-image-rendering: crisp-edges;
+  image-rendering: crisp-edges;
+  box-shadow: 
+    inset 2px 2px 0px rgba(255, 255, 255, 0.3),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.3),
+    4px 4px 0px rgba(0, 0, 0, 0.5);
+  transition: all 0.1s ease;
+}
+
+.pixel-button:hover {
+  box-shadow: 
+    inset 2px 2px 0px rgba(255, 255, 255, 0.4),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.4),
+    2px 2px 0px rgba(0, 0, 0, 0.6);
+  transform: translate(2px, 2px);
+}
+
+.pixel-button:active {
+  box-shadow: 
+    inset 1px 1px 0px rgba(255, 255, 255, 0.2),
+    inset -1px -1px 0px rgba(0, 0, 0, 0.6);
+  transform: translate(3px, 3px);
 }

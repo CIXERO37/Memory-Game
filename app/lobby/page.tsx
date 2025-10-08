@@ -503,7 +503,7 @@ function LobbyPageContent() {
 
   const shareUrl = roomCode && typeof window !== 'undefined' ? `${window.location.origin}/join?room=${roomCode}` : ""
   const smallQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=384x384&data=${encodeURIComponent(shareUrl)}` : ""
-  const largeQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(shareUrl)}` : ""
+  const largeQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=1500x1500&data=${encodeURIComponent(shareUrl)}` : ""
 
   const copyRoomCode = () => {
     if (!roomCode) return
@@ -673,64 +673,72 @@ function LobbyPageContent() {
     }
 
   return (
-    <div className={`min-h-screen relative overflow-hidden ${qrOpen ? 'blur-sm' : ''}`} style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      {/* Background blur overlay when QR is open */}
+      {qrOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-40" />
+      )}
+      
       {/* Pixel Grid Background */}
-      <div className="absolute inset-0 opacity-20">
+      <div className={`absolute inset-0 opacity-20 ${qrOpen ? 'blur-md' : ''}`}>
         <div className="pixel-grid"></div>
       </div>
       
       {/* Retro Scanlines */}
-      <div className="absolute inset-0 opacity-10">
+      <div className={`absolute inset-0 opacity-10 ${qrOpen ? 'blur-md' : ''}`}>
         <div className="scanlines"></div>
       </div>
       
       {/* Floating Pixel Elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className={`absolute inset-0 overflow-hidden ${qrOpen ? 'blur-md' : ''}`}>
         <PixelBackgroundElements />
       </div>
 
-      {/* Pixel Header */}
-      <div className={`relative z-10 w-full px-4 pt-6 ${qrOpen ? 'blur-sm' : ''}`}>
-        <div className="flex items-center gap-4">
-          <div 
-            onClick={() => handleNavigationAttempt("/quiz-settings")}
-            className="cursor-pointer"
-          >
-            <div className="relative pixel-button-container">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <Button variant="outline" size="sm" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
+      {/* Pixel Header with responsive layout */}
+      <div className={`relative z-10 w-full px-4 pt-6 ${qrOpen ? 'blur-md' : ''}`}>
+        <div className="flex items-center justify-between gap-2">
+          {/* Left side - Navigation and Title */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div 
+              onClick={() => handleNavigationAttempt("/quiz-settings")}
+              className="cursor-pointer flex-shrink-0"
+            >
+              <div className="relative pixel-button-container">
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <Button variant="outline" size="sm" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200">
+                  <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 border-2 border-black rounded flex items-center justify-center flex-shrink-0">
+                <Users className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 md:px-4 py-1 sm:py-2 pixel-header-title flex-shrink-0">
+                <h1 className="text-xs sm:text-sm md:text-lg font-bold text-black">LOBBY</h1>
+              </div>
+              {/* Simple and Clean MEMORY QUIZ Title */}
+              <div className="bg-white border-2 border-black rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-lg inline-block">
+                <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-black tracking-wide whitespace-nowrap">
+                  MEMORY QUIZ
+                </h1>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
-              <Users className="h-5 w-5 text-white" />
-            </div>
-            <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
-              <h1 className="text-lg font-bold text-black">LOBBY</h1>
-            </div>
-            {/* Simple and Clean MEMORY QUIZ Title */}
-            <div className="bg-white border-2 border-black rounded-lg px-4 py-2 shadow-lg">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-black tracking-wide">
-                MEMORY QUIZ
-              </h1>
-            </div>
+          
+          {/* Right side - GameForSmart Logo */}
+          <div className="flex-shrink-0">
+            <img 
+              draggable={false}
+              src="/images/gameforsmartlogo.png" 
+              alt="GameForSmart Logo" 
+              className={`h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg ${qrOpen ? 'blur-sm' : ''}`}
+            />
           </div>
         </div>
       </div>
 
-      {/* GameForSmart Logo - Top Right Corner */}
-      <div className={`absolute top-4 right-4 z-20 ${qrOpen ? 'blur-sm' : ''}`}>
-        <img 
-        draggable={false}
-          src="/images/gameforsmartlogo.png" 
-          alt="GameForSmart Logo" 
-          className="h-16 w-auto sm:h-20 md:h-24 object-contain drop-shadow-lg"
-        />
-      </div>
-
-      <div className={`relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6 ${qrOpen ? 'blur-sm' : ''}`}>
+      <div className={`relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6 ${qrOpen ? 'blur-md' : ''}`}>
         <div className="mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
           {/* Pixel Room Info */}
           <div className="relative pixel-lobby-container">
@@ -817,19 +825,22 @@ function LobbyPageContent() {
                 )}
 
               <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-                <DialogContent className="max-w-lg z-50 backdrop-blur-sm">
-                  <DialogHeader>
-                    <DialogTitle>Share QR Code</DialogTitle>
+                <DialogContent className="max-w-7xl w-full max-h-[98vh] z-50 backdrop-blur-sm bg-white/95 border-4 border-black shadow-2xl p-10">
+                  <DialogHeader className="mb-6">
+                    <DialogTitle className="text-3xl font-bold text-center pixel-font">Share QR Code</DialogTitle>
                   </DialogHeader>
-                  <div className="flex justify-center py-2">
+                  <div className="flex justify-center items-center">
                     {largeQrUrl && (
-                      <img
-                        src={largeQrUrl}
-                        alt="Room share QR large"
-                        className="rounded-lg border border-white/10 bg-white/5 p-4"
-                        width={512}
-                        height={512}
-                      />
+                      <div className="bg-white p-8 rounded-lg border-4 border-black shadow-xl">
+                        <img
+                          src={largeQrUrl}
+                          alt="Room share QR large"
+                          className="block mx-auto"
+                          width={1200}
+                          height={1200}
+                          style={{ maxWidth: '100%', height: 'auto' }}
+                        />
+                      </div>
                     )}
                   </div>
                 </DialogContent>
