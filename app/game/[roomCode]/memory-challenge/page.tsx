@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Target } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
 import { useRoom } from "@/hooks/use-room"
+import { sessionManager } from "@/lib/supabase-session-manager"
+import { supabaseRoomManager } from "@/lib/supabase-room-manager"
 
 interface MemoryChallengePageProps {
   params: {
@@ -22,11 +24,41 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
   const [loading, setLoading] = useState(true)
   
   console.log("[Memory Challenge] Component state:", { correctMatches, gameCompleted, gameWon, hasAccess, loading })
-  const [playerId] = useState(() => {
-    const player = localStorage.getItem("currentPlayer")
-    return player ? JSON.parse(player).id : null
-  })
+  const [playerId, setPlayerId] = useState<string | null>(null)
+  const [playerData, setPlayerData] = useState<any>(null)
   const { room } = useRoom(params.roomCode)
+
+  // Load player data from session manager
+  useEffect(() => {
+    const loadPlayerData = async () => {
+      try {
+        const sessionId = sessionManager.getSessionIdFromStorage()
+        if (sessionId) {
+          const sessionData = await sessionManager.getSessionData(sessionId)
+          if (sessionData && sessionData.user_type === 'player') {
+            setPlayerId(sessionData.user_data.id)
+            setPlayerData(sessionData.user_data)
+            console.log("[Memory Challenge] Loaded player data from session:", sessionData.user_data)
+          }
+        }
+        
+        // Fallback to localStorage if session not found
+        if (!playerId && typeof window !== 'undefined') {
+          const player = localStorage.getItem("currentPlayer")
+          if (player) {
+            const playerInfo = JSON.parse(player)
+            setPlayerId(playerInfo.id)
+            setPlayerData(playerInfo)
+            console.log("[Memory Challenge] Loaded player data from localStorage fallback:", playerInfo)
+          }
+        }
+      } catch (error) {
+        console.error("[Memory Challenge] Error loading player data:", error)
+      }
+    }
+
+    loadPlayerData()
+  }, [])
 
   // Monitor room status for game end
   useEffect(() => {
@@ -76,46 +108,92 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     }
   }, [params.roomCode])
 
-  // Initialize progress from localStorage on component mount
+  // Initialize progress from Supabase on component mount
   useEffect(() => {
-    const savedProgress = localStorage.getItem(`memory-progress-${params.roomCode}`)
-    if (savedProgress) {
-      const progressCount = parseInt(savedProgress)
-      console.log(`[Memory Challenge] Initializing with saved progress: ${progressCount}`)
-      setCorrectMatches(progressCount)
+    const loadProgress = async () => {
+      if (!playerId) return
       
-      // If already completed, redirect immediately
-      if (progressCount >= 6) {
-        console.log("[Memory Challenge] Game already completed on initialization, redirecting...")
-        handleGameEnd()
+      try {
+        const progressData = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
+        if (progressData && progressData.memory_game_progress) {
+          const progressCount = progressData.memory_game_progress.correct_matches || 0
+          console.log(`[Memory Challenge] Initializing with saved progress from Supabase: ${progressCount}`)
+          setCorrectMatches(progressCount)
+          
+          // If already completed, redirect immediately
+          if (progressCount >= 6) {
+            console.log("[Memory Challenge] Game already completed on initialization, redirecting...")
+            handleGameEnd()
+          }
+        }
+      } catch (error) {
+        console.error("[Memory Challenge] Error loading progress from Supabase:", error)
+        
+        // Fallback to localStorage
+        const savedProgress = localStorage.getItem(`memory-progress-${params.roomCode}`)
+        if (savedProgress) {
+          const progressCount = parseInt(savedProgress)
+          console.log(`[Memory Challenge] Fallback: Initializing with localStorage progress: ${progressCount}`)
+          setCorrectMatches(progressCount)
+          
+          if (progressCount >= 6) {
+            console.log("[Memory Challenge] Game already completed on initialization, redirecting...")
+            handleGameEnd()
+          }
+        }
       }
     }
-  }, [params.roomCode])
+
+    loadProgress()
+  }, [params.roomCode, playerId])
 
   useEffect(() => {
-    const checkAccess = () => {
-      const quizProgress = localStorage.getItem(`quiz-progress-${params.roomCode}`)
-
-      if (!quizProgress) {
-        window.location.href = "/"
-        return
-      }
-
-      const progressData = JSON.parse(quizProgress)
-      if (progressData.correctAnswers >= 3) {
-        setHasAccess(true)
+    const checkAccess = async () => {
+      try {
+        // First check localStorage
+        const quizProgress = localStorage.getItem(`quiz-progress-${params.roomCode}`)
         
-        // Progress restoration is now handled in initialization useEffect
-      } else {
+        if (quizProgress) {
+          const progressData = JSON.parse(quizProgress)
+          if (progressData.correctAnswers >= 3) {
+            console.log("[Memory Challenge] Access granted via localStorage:", progressData)
+            setHasAccess(true)
+            setLoading(false)
+            return
+          }
+        }
+
+        // If localStorage doesn't have the data, check Supabase
+        if (playerId) {
+          console.log("[Memory Challenge] Checking Supabase for quiz progress...")
+          const supabaseProgress = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
+          
+          if (supabaseProgress && supabaseProgress.correct_answers >= 3) {
+            console.log("[Memory Challenge] Access granted via Supabase:", supabaseProgress)
+            setHasAccess(true)
+            setLoading(false)
+            return
+          }
+        }
+
+        // If neither localStorage nor Supabase has valid progress, redirect to quiz
+        console.log("[Memory Challenge] No valid progress found, redirecting to quiz")
+        window.location.href = `/game/${params.roomCode}/quiz`
+        return
+
+      } catch (error) {
+        console.error("[Memory Challenge] Error checking access:", error)
+        // On error, redirect to quiz as fallback
         window.location.href = `/game/${params.roomCode}/quiz`
         return
       }
-
-      setLoading(false)
     }
 
-    checkAccess()
-  }, [params.roomCode])
+    // Only check access after playerId is loaded
+    if (playerId !== null) {
+      checkAccess()
+    }
+  }, [params.roomCode, playerId])
 
   // Removed timer countdown - memory game is now an obstacle without time pressure
 
@@ -180,22 +258,35 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     }
   }
 
-  const handleCorrectMatch = () => {
-    setCorrectMatches((prev) => {
-      const newCount = prev + 1
-      console.log(`[Memory Challenge] Match found! Total matches: ${newCount}`)
-      // Save progress to localStorage to prevent reset on refresh
-      localStorage.setItem(`memory-progress-${params.roomCode}`, newCount.toString())
-      
-      // Check if game is completed after this match
-      if (newCount >= 6) {
-        console.log("[Memory Challenge] Game completed via handleCorrectMatch!")
-        // Direct redirect without showing completion modal
-        handleGameEnd()
+  const handleCorrectMatch = async () => {
+    const newCount = correctMatches + 1
+    console.log(`[Memory Challenge] Match found! Total matches: ${newCount}`)
+    
+    // Save progress to Supabase to prevent reset on refresh
+    if (playerId) {
+      try {
+        await supabaseRoomManager.updateGameProgress(params.roomCode, playerId, {
+          memoryProgress: {
+            correct_matches: newCount,
+            last_updated: new Date().toISOString()
+          }
+        })
+      } catch (error) {
+        console.error("[Memory Challenge] Error saving progress to Supabase:", error)
       }
-      
-      return newCount
-    })
+    }
+    
+    // Fallback to localStorage
+    localStorage.setItem(`memory-progress-${params.roomCode}`, newCount.toString())
+    
+    setCorrectMatches(newCount)
+    
+    // Check if game is completed after this match
+    if (newCount >= 6) {
+      console.log("[Memory Challenge] Game completed via handleCorrectMatch!")
+      // Direct redirect without showing completion modal
+      handleGameEnd()
+    }
   }
 
   if (loading) {

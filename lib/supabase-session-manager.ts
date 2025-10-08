@@ -6,9 +6,24 @@ export interface UserSession {
   user_type: 'host' | 'player'
   user_data: any
   room_code?: string
+  device_info?: any
   created_at: string
   last_active: string
   expires_at: string
+  is_active: boolean
+}
+
+export interface GameSession {
+  id: string
+  session_id: string
+  user_type: 'host' | 'player'
+  user_data: any
+  room_code?: string
+  device_info: any
+  created_at: string
+  last_active: string
+  expires_at: string
+  is_active: boolean
 }
 
 class SupabaseSessionManager {
@@ -25,19 +40,52 @@ class SupabaseSessionManager {
     try {
       const finalSessionId = sessionId || this.generateSessionId()
       
-      const { data, error } = await supabase.rpc('get_or_create_session', {
-        p_session_id: finalSessionId,
-        p_user_type: userType,
-        p_user_data: userData,
-        p_room_code: roomCode || null
-      })
-
-      if (error) {
-        console.error('[SupabaseSessionManager] Error creating/updating session:', error)
-        throw error
+      // Get device info
+      const deviceInfo = this.getDeviceInfo()
+      
+      const sessionData = {
+        session_id: finalSessionId,
+        user_type: userType,
+        user_data: userData,
+        room_code: roomCode || null,
+        device_info: deviceInfo,
+        last_active: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+        is_active: true
       }
 
-      console.log('[SupabaseSessionManager] Session created/updated:', data)
+      // Try to update existing session first
+      const { data: existingSession } = await supabase
+        .from('game_sessions')
+        .select('id')
+        .eq('session_id', finalSessionId)
+        .eq('is_active', true)
+        .single()
+
+      if (existingSession) {
+        // Update existing session
+        const { error } = await supabase
+          .from('game_sessions')
+          .update(sessionData)
+          .eq('session_id', finalSessionId)
+
+        if (error) {
+          console.error('[SupabaseSessionManager] Error updating session:', error)
+          throw error
+        }
+      } else {
+        // Create new session
+        const { error } = await supabase
+          .from('game_sessions')
+          .insert(sessionData)
+
+        if (error) {
+          console.error('[SupabaseSessionManager] Error creating session:', error)
+          throw error
+        }
+      }
+
+      console.log('[SupabaseSessionManager] Session created/updated:', finalSessionId)
       return finalSessionId
     } catch (error) {
       console.error('[SupabaseSessionManager] Error in createOrUpdateSession:', error)
@@ -47,9 +95,12 @@ class SupabaseSessionManager {
 
   async getSessionData(sessionId: string): Promise<UserSession | null> {
     try {
-      const { data, error } = await supabase.rpc('get_session_data', {
-        p_session_id: sessionId
-      })
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .select('*')
+        .eq('session_id', sessionId)
+        .eq('is_active', true)
+        .single()
 
       if (error) {
         console.error('[SupabaseSessionManager] Error getting session data:', error)
@@ -65,16 +116,17 @@ class SupabaseSessionManager {
 
   async deleteSession(sessionId: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase.rpc('delete_session', {
-        p_session_id: sessionId
-      })
+      const { error } = await supabase
+        .from('game_sessions')
+        .update({ is_active: false })
+        .eq('session_id', sessionId)
 
       if (error) {
         console.error('[SupabaseSessionManager] Error deleting session:', error)
         return false
       }
 
-      return data
+      return true
     } catch (error) {
       console.error('[SupabaseSessionManager] Error in deleteSession:', error)
       return false
@@ -97,6 +149,63 @@ class SupabaseSessionManager {
   removeSessionIdFromStorage(): void {
     if (typeof window === 'undefined') return
     localStorage.removeItem('sessionId')
+  }
+
+  // Get device information
+  private getDeviceInfo(): any {
+    if (typeof window === 'undefined') return {}
+    
+    return {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      screen: {
+        width: screen.width,
+        height: screen.height
+      },
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      },
+      timestamp: new Date().toISOString()
+    }
+  }
+
+  // Get session by room code and user type
+  async getSessionByRoom(roomCode: string, userType: 'host' | 'player'): Promise<GameSession | null> {
+    try {
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .select('*')
+        .eq('room_code', roomCode)
+        .eq('user_type', userType)
+        .eq('is_active', true)
+        .order('last_active', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (error) {
+        console.error('[SupabaseSessionManager] Error getting session by room:', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error('[SupabaseSessionManager] Error in getSessionByRoom:', error)
+      return null
+    }
+  }
+
+  // Update session activity
+  async updateSessionActivity(sessionId: string): Promise<void> {
+    try {
+      await supabase
+        .from('game_sessions')
+        .update({ last_active: new Date().toISOString() })
+        .eq('session_id', sessionId)
+    } catch (error) {
+      console.error('[SupabaseSessionManager] Error updating session activity:', error)
+    }
   }
 
   // Get or create session with automatic session ID management

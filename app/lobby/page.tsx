@@ -404,7 +404,7 @@ function LobbyPageContent() {
           }
         }
         
-        // Fallback to localStorage if Supabase session not found
+        // Fallback to localStorage if Supabase session not found (temporary)
         if (typeof window !== 'undefined') {
           const hostData = localStorage.getItem("currentHost")
           if (hostData) {

@@ -11,6 +11,7 @@ import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
 import { getTimerDisplayText } from "@/lib/timer-utils"
 import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
+import { sessionManager } from "@/lib/supabase-session-manager"
 
 function MonitorPageContent() {
   const searchParams = useSearchParams()
@@ -87,14 +88,32 @@ function MonitorPageContent() {
     if (roomCodeParam) {
       setRoomCode(roomCodeParam)
     } else {
-      // Try to get from localStorage
-      const hostData = localStorage.getItem("currentHost")
-      if (hostData) {
-        const { roomCode: storedRoomCode } = JSON.parse(hostData)
-        setRoomCode(storedRoomCode)
-      } else {
-        router.push("/select-quiz")
+      // Try to get from session manager first
+      const loadHostData = async () => {
+        try {
+          const sessionId = sessionManager.getSessionIdFromStorage()
+          if (sessionId) {
+            const sessionData = await sessionManager.getSessionData(sessionId)
+            if (sessionData && sessionData.user_type === 'host' && sessionData.room_code) {
+              setRoomCode(sessionData.room_code)
+              return
+            }
+          }
+        } catch (error) {
+          console.error("Error getting host session:", error)
+        }
+        
+        // Fallback to localStorage
+        const hostData = localStorage.getItem("currentHost")
+        if (hostData) {
+          const { roomCode: storedRoomCode } = JSON.parse(hostData)
+          setRoomCode(storedRoomCode)
+        } else {
+          router.push("/select-quiz")
+        }
       }
+      
+      loadHostData()
     }
   }, [searchParams, router])
 

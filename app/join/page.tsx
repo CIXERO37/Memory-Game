@@ -193,7 +193,7 @@ function JoinPageContent() {
         console.log("[Join] Session created/updated:", newSessionId)
       } catch (error) {
         console.error("[Join] Error creating session:", error)
-        // Fallback to localStorage if Supabase fails
+        // Fallback to localStorage if Supabase fails (temporary)
         if (typeof window !== 'undefined') {
           localStorage.setItem(
             "currentPlayer",
@@ -205,6 +205,8 @@ function JoinPageContent() {
             }),
           )
         }
+        // Still set session ID for consistency
+        setSessionId(`fallback_${finalPlayerId}_${Date.now()}`)
       }
 
       console.log("[Join] Successfully joined, redirecting to waiting room")

@@ -46,7 +46,7 @@ export default function WaitingRoomPage() {
           }
         }
         
-        // Fallback to localStorage if Supabase session not found
+        // Fallback to localStorage if Supabase session not found (temporary)
         if (typeof window !== 'undefined') {
           const storedPlayer = localStorage.getItem("currentPlayer")
           if (storedPlayer) {

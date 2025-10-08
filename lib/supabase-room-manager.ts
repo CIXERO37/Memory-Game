@@ -449,7 +449,34 @@ class SupabaseRoomManager {
 
   async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, memoryScore?: number, questionsAnswered?: number): Promise<boolean> {
     try {
-      const updateData: any = {}
+      // Get current game progress
+      const { data: currentPlayer } = await supabase
+        .from('players')
+        .select('game_progress, quiz_score, memory_game_score, questions_answered')
+        .eq('id', playerId)
+        .single()
+
+      if (!currentPlayer) {
+        console.error('[SupabaseRoomManager] Player not found:', playerId)
+        return false
+      }
+
+      // Build new game progress
+      const currentProgress = currentPlayer.game_progress || {}
+      const newProgress = {
+        ...currentProgress,
+        quiz_score: quizScore !== undefined ? quizScore : currentPlayer.quiz_score || 0,
+        memory_score: memoryScore !== undefined ? memoryScore : currentPlayer.memory_game_score || 0,
+        questions_answered: questionsAnswered !== undefined ? questionsAnswered : currentPlayer.questions_answered || 0,
+        last_updated: new Date().toISOString()
+      }
+
+      // Update both old fields (for backward compatibility) and new JSONB field
+      const updateData: any = {
+        game_progress: newProgress,
+        last_activity: new Date().toISOString()
+      }
+      
       if (quizScore !== undefined) updateData.quiz_score = quizScore
       if (memoryScore !== undefined) updateData.memory_game_score = memoryScore
       if (questionsAnswered !== undefined) updateData.questions_answered = questionsAnswered
@@ -663,6 +690,153 @@ class SupabaseRoomManager {
     })
     this.subscriptions.clear()
     this.listeners.clear()
+  }
+
+  // Update detailed game progress
+  async updateGameProgress(
+    roomCode: string, 
+    playerId: string, 
+    progress: {
+      currentQuestion?: number
+      correctAnswers?: number
+      quizScore?: number
+      memoryScore?: number
+      questionsAnswered?: number
+      memoryProgress?: any
+    }
+  ): Promise<boolean> {
+    try {
+      // Get current progress
+      const { data: currentPlayer } = await supabase
+        .from('players')
+        .select('game_progress, memory_game_progress')
+        .eq('id', playerId)
+        .single()
+
+      if (!currentPlayer) {
+        console.error('[SupabaseRoomManager] Player not found:', playerId)
+        return false
+      }
+
+      // Build new progress
+      const currentGameProgress = currentPlayer.game_progress || {}
+      const currentMemoryProgress = currentPlayer.memory_game_progress || {}
+
+      const newGameProgress = {
+        ...currentGameProgress,
+        current_question: progress.currentQuestion !== undefined ? progress.currentQuestion : currentGameProgress.current_question || 0,
+        correct_answers: progress.correctAnswers !== undefined ? progress.correctAnswers : currentGameProgress.correct_answers || 0,
+        quiz_score: progress.quizScore !== undefined ? progress.quizScore : currentGameProgress.quiz_score || 0,
+        questions_answered: progress.questionsAnswered !== undefined ? progress.questionsAnswered : currentGameProgress.questions_answered || 0,
+        last_updated: new Date().toISOString()
+      }
+
+      const newMemoryProgress = {
+        ...currentMemoryProgress,
+        ...progress.memoryProgress,
+        last_updated: new Date().toISOString()
+      }
+
+      const updateData: any = {
+        game_progress: newGameProgress,
+        memory_game_progress: newMemoryProgress,
+        last_activity: new Date().toISOString()
+      }
+
+      // Also update legacy fields for backward compatibility
+      if (progress.quizScore !== undefined) updateData.quiz_score = progress.quizScore
+      if (progress.memoryScore !== undefined) updateData.memory_game_score = progress.memoryScore
+      if (progress.questionsAnswered !== undefined) updateData.questions_answered = progress.questionsAnswered
+      if (progress.currentQuestion !== undefined) updateData.current_question = progress.currentQuestion
+      if (progress.correctAnswers !== undefined) updateData.correct_answers = progress.correctAnswers
+
+      const { error } = await supabase
+        .from('players')
+        .update(updateData)
+        .eq('id', playerId)
+
+      if (error) {
+        console.error('[SupabaseRoomManager] Error updating game progress:', error)
+        return false
+      }
+
+      console.log('[SupabaseRoomManager] ✅ Game progress updated successfully:', {
+        playerId,
+        roomCode,
+        progress,
+        timestamp: new Date().toISOString()
+      })
+
+      return true
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Error in updateGameProgress:', error)
+      return false
+    }
+  }
+
+  // Get player game progress
+  async getPlayerGameProgress(roomCode: string, playerId: string): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('game_progress, memory_game_progress, quiz_score, memory_game_score, questions_answered, current_question, correct_answers')
+        .eq('id', playerId)
+        .single()
+
+      if (error) {
+        console.error('[SupabaseRoomManager] Error getting player game progress:', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Error in getPlayerGameProgress:', error)
+      return null
+    }
+  }
+
+  // Update room game state
+  async updateRoomGameState(roomCode: string, gameState: any): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('rooms')
+        .update({ 
+          game_state: gameState,
+          last_updated: new Date().toISOString()
+        })
+        .eq('room_code', roomCode)
+
+      if (error) {
+        console.error('[SupabaseRoomManager] Error updating room game state:', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Error in updateRoomGameState:', error)
+      return false
+    }
+  }
+
+  // Get room game state
+  async getRoomGameState(roomCode: string): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('game_state, status, memory_game_active, memory_game_players')
+        .eq('room_code', roomCode)
+        .single()
+
+      if (error) {
+        console.error('[SupabaseRoomManager] Error getting room game state:', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Error in getRoomGameState:', error)
+      return null
+    }
   }
 }
 
