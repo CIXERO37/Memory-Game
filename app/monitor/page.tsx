@@ -93,14 +93,19 @@ function MonitorPageContent() {
         try {
           const sessionId = sessionManager.getSessionIdFromStorage()
           if (sessionId) {
-            const sessionData = await sessionManager.getSessionData(sessionId)
-            if (sessionData && sessionData.user_type === 'host' && sessionData.room_code) {
-              setRoomCode(sessionData.room_code)
-              return
+            try {
+              const sessionData = await sessionManager.getSessionData(sessionId)
+              if (sessionData && sessionData.user_type === 'host' && sessionData.room_code) {
+                setRoomCode(sessionData.room_code)
+                return
+              }
+            } catch (error) {
+              console.warn("Error getting host session:", error)
+              // Continue with fallback logic
             }
           }
         } catch (error) {
-          console.error("Error getting host session:", error)
+          console.warn("Error accessing session manager:", error)
         }
         
         // Fallback to localStorage

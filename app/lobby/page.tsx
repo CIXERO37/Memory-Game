@@ -359,8 +359,9 @@ function LobbyPageContent() {
         // Try to get session from Supabase
         const sessionId = sessionManager.getSessionIdFromStorage()
         if (sessionId) {
-          const sessionData = await sessionManager.getSessionData(sessionId)
-          if (sessionData && sessionData.user_type === 'host') {
+          try {
+            const sessionData = await sessionManager.getSessionData(sessionId)
+            if (sessionData && sessionData.user_type === 'host') {
             const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = sessionData.user_data
             setHostId(storedHostId)
             setQuizId(storedQuizId)
@@ -401,6 +402,10 @@ function LobbyPageContent() {
               setRoomCode(roomCodeParam)
             }
             return
+          }
+          } catch (error) {
+            console.warn("[Lobby] Error getting session data:", error)
+            // Continue with fallback logic
           }
         }
         

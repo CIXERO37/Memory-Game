@@ -62,13 +62,18 @@ function ResultPageContent() {
           try {
             const sessionId = sessionManager.getSessionIdFromStorage()
             if (sessionId) {
-              const sessionData = await sessionManager.getSessionData(sessionId)
-              if (sessionData && sessionData.user_type === 'player') {
-                player = sessionData.user_data
+              try {
+                const sessionData = await sessionManager.getSessionData(sessionId)
+                if (sessionData && sessionData.user_type === 'player') {
+                  player = sessionData.user_data
+                }
+              } catch (error) {
+                console.warn("Error getting session data:", error)
+                // Continue with fallback logic
               }
             }
           } catch (error) {
-            console.error("Error getting session data:", error)
+            console.warn("Error accessing session manager:", error)
           }
           
           // Fallback to localStorage
