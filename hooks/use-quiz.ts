@@ -10,11 +10,17 @@ export function useQuizzes() {
   const fetchQuizzes = async () => {
     try {
       setLoading(true)
-      const data = await quizApi.getQuizzes()
-      setQuizzes(data)
       setError(null)
+      console.log('Fetching quizzes from Supabase...')
+      
+      const data = await quizApi.getQuizzes()
+      console.log('Quizzes fetched successfully:', data)
+      
+      setQuizzes(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch quizzes')
+      console.error('Error fetching quizzes:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch quizzes'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -114,21 +120,33 @@ export function useCategories() {
 }
 
 // Transform Supabase quiz data to match existing interface
-export function transformQuizData(quiz: Quiz): any {
-  return {
-    id: quiz.id,
-    title: quiz.title,
-    description: quiz.description || '',
-    difficulty: quiz.difficulty,
-    category: quiz.category?.name || 'General', // Provide default category if not available
-    questions: quiz.questions.map(q => ({
-      id: q.id,
-      question: q.question,
-      options: q.options || [],
-      correct: q.correct_answer,
-      explanation: q.explanation || '',
-      points: q.points || 10
-    }))
+export function transformQuizData(quiz: any): any {
+  try {
+    return {
+      id: quiz.id,
+      title: quiz.title,
+      description: quiz.description || '',
+      difficulty: quiz.difficulty,
+      category: 'General', // Default category since it's not in database
+      questions: Array.isArray(quiz.questions) ? quiz.questions.map((q: any) => ({
+        id: q.id,
+        question: q.question,
+        options: q.options || [],
+        correct: q.correct_answer,
+        explanation: q.explanation || '',
+        points: q.points || 10
+      })) : []
+    }
+  } catch (error) {
+    console.error('Error transforming quiz data:', error, quiz)
+    return {
+      id: quiz.id || 'unknown',
+      title: quiz.title || 'Unknown Quiz',
+      description: quiz.description || '',
+      difficulty: quiz.difficulty || 'Easy',
+      category: 'General',
+      questions: []
+    }
   }
 }
 
