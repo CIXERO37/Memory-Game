@@ -253,7 +253,7 @@ function ResultPageContent() {
             </div>
             
             {/* GameForSmart Logo - Top Right Corner */}
-            <div className="absolute top-4 right-4 flex items-center w-26 h-9 opacity-80 hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute top-4 right-4 flex items-center w-32 h-12 opacity-80 hover:opacity-100 transition-opacity duration-300">
               <img
                 src="/images/gameforsmartlogo.png"
                 alt="GameForSmart Logo"

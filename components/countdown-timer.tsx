@@ -129,12 +129,16 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
             <h3 className="text-2xl font-bold text-white mb-4 pixel-font countdown-message">GET READY!</h3>
             
             {/* Countdown Number with Smooth Animation */}
-            <div className={`text-9xl font-black text-white mb-6 countdown-number ${
+            <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
               timeLeft <= 1 ? 'pixel-countdown final' :
               timeLeft <= 3 ? 'pixel-countdown urgent' :
               'pixel-countdown'
-            } ${timeLeft <= 3 ? 'text-red-400' : 'text-white'}`}>
-              {timeLeft}
+            }`}>
+              <span className={`text-9xl font-black ${
+                timeLeft <= 3 ? 'text-red-400' : 'text-white'
+              }`}>
+                {timeLeft}
+              </span>
             </div>
             
             
