@@ -172,6 +172,7 @@ function LeaderboardPageContent() {
         <div className="scanlines"></div>
       </div>
       
+      
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Pixel Elements */}
@@ -220,42 +221,73 @@ function LeaderboardPageContent() {
 
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Modern Header Section */}
-        <div className="text-center mb-12">
-          {/* Main Title with Enhanced Effects */}
-          <div className="relative inline-block mb-8">
+        {/* Combined Memory Quiz and GameForSmart Card */}
+        <div className="text-center mb-8">
+          <div className="relative inline-block">
             {/* Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/40 via-amber-400/40 to-orange-400/40 blur-2xl animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/60 to-orange-400/60 blur-lg rounded-lg animate-pulse"></div>
             
-            {/* Title Container */}
-            <div className="relative bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border-4 border-yellow-400/60 backdrop-blur-sm rounded-2xl px-8 py-6 shadow-2xl">
-              <div className="flex items-center justify-center gap-6 mb-4">
-                {/* Crown Icon */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-yellow-400/50 blur-lg animate-pulse"></div>
-                  <div className="relative w-16 h-16 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
-                    <Crown className="w-8 h-8 text-white" />
-                  </div>
-                </div>
+            {/* Main Container */}
+            <div className="relative bg-gradient-to-r from-yellow-500 to-orange-500 border-4 border-white rounded-lg px-8 py-4 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              {/* Inner Shadow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-lg"></div>
+              
+              {/* Content Container */}
+              <div className="relative flex items-center justify-center gap-6">
+                {/* Memory Quiz Text */}
+                <h1 className="text-xl sm:text-2xl font-black text-white tracking-widest uppercase drop-shadow-lg" 
+                    style={{
+                      textShadow: '2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000',
+                      fontFamily: 'Arial Black, sans-serif'
+                    }}>
+                  MEMORY QUIZ
+                </h1>
                 
-                {/* Title */}
+                {/* GameForSmart Logo */}
                 <div className="relative">
-                  <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 drop-shadow-2xl">
-                    CHAMPIONS
-                  </h1>
-                  <div className="absolute inset-0 text-5xl md:text-6xl font-bold text-yellow-400/20 blur-sm">
-                    CHAMPIONS
-                  </div>
-                </div>
-                
-                {/* Sparkles */}
-                <div className="flex flex-col gap-2">
-                  <Sparkles className="w-8 h-8 text-yellow-400 animate-pulse" />
-                  <Star className="w-6 h-6 text-amber-400 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                  <img 
+                    src="/images/gameforsmartlogo.png" 
+                    alt="GameForSmart Logo" 
+                    className="h-10 sm:h-12 w-auto object-contain"
+                  />
+                  
+                  {/* Sparkle Effects */}
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-300 border border-white rounded-full animate-ping"></div>
+                  <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-lime-300 border border-white rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
                 </div>
               </div>
               
-             
+              {/* Decorative Elements */}
+              <div className="absolute -top-1 -left-1 w-3 h-3 bg-yellow-300 border-2 border-white rounded-full"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-300 border-2 border-white rounded-full"></div>
+              <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-orange-300 border-2 border-white rounded-full"></div>
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-300 border-2 border-white rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modern Header Section */}
+        <div className="text-center mb-6">
+          {/* Main Title with Enhanced Effects */}
+          <div className="relative inline-block mb-4">
+            <div className="flex items-center justify-center gap-6">
+              {/* Crown Icon */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-yellow-400/50 blur-lg animate-pulse"></div>
+                <div className="relative w-16 h-16 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              
+              {/* Title */}
+              <div className="relative">
+                <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 drop-shadow-2xl">
+                  CHAMPIONS
+                </h1>
+                <div className="absolute inset-0 text-5xl md:text-6xl font-bold text-yellow-400/20 blur-sm">
+                  CHAMPIONS
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -302,9 +334,9 @@ function LeaderboardPageContent() {
                       <h3 className="text-2xl font-bold text-slate-200 mb-6 text-center">{sortedPlayers[1].username}</h3>
                       
                       {/* Score */}
-                      <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-2xl px-6 py-4 shadow-xl">
-                        <div className="text-4xl font-bold text-white text-center">{(sortedPlayers[1].quizScore || 0) + (sortedPlayers[1].memoryScore || 0)}</div>
-                        <div className="text-sm text-slate-100 text-center font-bold">POINTS</div>
+                      <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-2xl px-8 py-6 shadow-2xl">
+                        <div className="text-5xl font-bold text-white text-center">{(sortedPlayers[1].quizScore || 0) + (sortedPlayers[1].memoryScore || 0)}</div>
+                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
                       </div>
                     </div>
                   </div>
@@ -349,7 +381,7 @@ function LeaderboardPageContent() {
                       {/* Champion Score */}
                       <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
-                        <div className="text-lg text-yellow-100 text-center font-bold">POINTS</div>
+                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
                       </div>
                       
                       {/* Champion Sparkles */}
@@ -406,9 +438,9 @@ function LeaderboardPageContent() {
                       <h3 className="text-2xl font-bold text-amber-200 mb-6 text-center">{sortedPlayers[2].username}</h3>
                       
                       {/* Score */}
-                      <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl px-6 py-4 shadow-xl">
-                        <div className="text-4xl font-bold text-white text-center">{(sortedPlayers[2].quizScore || 0) + (sortedPlayers[2].memoryScore || 0)}</div>
-                        <div className="text-sm text-amber-100 text-center font-bold">POINTS</div>
+                      <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl px-8 py-6 shadow-2xl">
+                        <div className="text-5xl font-bold text-white text-center">{(sortedPlayers[2].quizScore || 0) + (sortedPlayers[2].memoryScore || 0)}</div>
+                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
                       </div>
                     </div>
                   </div>
@@ -430,20 +462,20 @@ function LeaderboardPageContent() {
                <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-3xl blur-xl"></div>
                
                {/* Header */}
-               <div className="relative z-10 text-center mb-8">
-                 <div className="flex items-center justify-center gap-4 mb-6">
-                   <div className="w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full border-4 border-white shadow-2xl flex items-center justify-center">
-                     <Users className="w-8 h-8 text-white" />
+               <div className="relative z-10 text-center mb-6">
+                 <div className="flex items-center justify-center gap-3 mb-4">
+                   <div className="w-10 h-10 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full border-2 border-white shadow-xl flex items-center justify-center">
+                     <Users className="w-5 h-5 text-white" />
                    </div>
-                   <h3 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-400 drop-shadow-lg">
+                   <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-400 drop-shadow-lg">
                      OTHERS
                    </h3>
                  </div>
                
                </div>
                
-               {/* Participants Grid */}
-               <div className="relative z-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+               {/* Participants Grid - Horizontal Compact Cards */}
+               <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                  {sortedPlayers.slice(3).map((player, index) => {
                    const totalScore = (player.quizScore || 0) + (player.memoryScore || 0)
                    const rank = index + 4
@@ -451,45 +483,47 @@ function LeaderboardPageContent() {
                    return (
                      <div key={player.id} className="group relative">
                        {/* Card Glow */}
-                       <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/20 to-purple-400/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+                       <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-lg blur-md group-hover:blur-lg transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
                        
-                       {/* Card */}
-                       <div className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-6 border-2 border-slate-600/50 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:border-indigo-400/60 overflow-hidden">
-                         {/* Rank Badge */}
-                         <div className="absolute top-4 right-4 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center font-bold text-lg text-white group-hover:scale-110 transition-transform duration-300">
-                           #{rank}
-                         </div>
-                         
-                         {/* Avatar */}
-                         <div className="w-20 h-20 rounded-full border-4 border-slate-400 overflow-hidden mx-auto mb-4 shadow-xl group-hover:scale-110 transition-transform duration-300">
-                           <div className="absolute inset-0 bg-indigo-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                           <img
-                             src={player.avatar}
-                             alt={`${player.username}'s avatar`}
-                             className="w-full h-full object-cover relative z-10"
-                             onError={(e) => {
-                               e.currentTarget.src = "/ava1.png"
-                             }}
-                           />
-                         </div>
-                         
-                         {/* Player Info */}
-                         <div className="text-center mb-4">
-                           <h4 className="font-bold text-xl text-white group-hover:text-indigo-200 transition-colors duration-300 mb-2">{player.username}</h4>
+                       {/* Horizontal Compact Card */}
+                       <div className="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 rounded-lg p-3 border border-slate-600/50 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:border-indigo-400/60 overflow-hidden">
+                         {/* Content Layout - Horizontal */}
+                         <div className="flex items-center gap-4">
+                           {/* Rank - Left */}
+                           <div className="text-yellow-400 font-bold text-lg flex-shrink-0">
+                             #{rank}
+                           </div>
                            
-                         </div>
-                         
-                         {/* Score Display */}
-                         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl px-4 py-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                           <div className="flex items-center justify-center gap-2">
-                             <div className="text-2xl font-bold text-white">{totalScore}</div>
-                             <div className="text-xs text-indigo-100 font-bold">POINTS</div>
+                           {/* Avatar */}
+                           <div className="w-12 h-12 rounded-full border-2 border-slate-400 overflow-hidden shadow-md group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                             <div className="absolute inset-0 bg-indigo-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                             <img
+                               src={player.avatar}
+                               alt={`${player.username}'s avatar`}
+                               className="w-full h-full object-cover relative z-10"
+                               onError={(e) => {
+                                 e.currentTarget.src = "/ava1.png"
+                               }}
+                             />
+                           </div>
+                           
+                           {/* Player Name - Middle */}
+                           <div className="flex-1 min-w-0">
+                             <h4 className="font-bold text-lg text-white group-hover:text-indigo-200 transition-colors duration-300 truncate">{player.username}</h4>
+                           </div>
+                           
+                           {/* Points - Right */}
+                           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-3 py-2 shadow-sm group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                             <div className="text-center">
+                               <div className="text-lg font-bold text-white">{totalScore}</div>
+                               <div className="text-xs text-black font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
+                             </div>
                            </div>
                          </div>
                          
                          {/* Decorative Elements */}
-                         <div className="absolute top-2 left-2 w-2 h-2 bg-indigo-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
-                         <div className="absolute bottom-2 right-2 w-2 h-2 bg-purple-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                         <div className="absolute top-1 left-1 w-1 h-1 bg-indigo-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                         <div className="absolute bottom-1 right-1 w-1 h-1 bg-purple-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
                        </div>
                      </div>
                    )
