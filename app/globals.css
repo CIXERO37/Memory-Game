@@ -1414,6 +1414,181 @@
   }
 }
 
+/* Enhanced 3D Effects for Leaderboard */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.rotate-x-12 {
+  transform: rotateX(12deg);
+}
+
+/* Enhanced Glow Effects */
+@keyframes champion-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(251, 191, 36, 0.5),
+      0 0 40px rgba(251, 191, 36, 0.3),
+      0 0 60px rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(251, 191, 36, 0.8),
+      0 0 60px rgba(251, 191, 36, 0.6),
+      0 0 90px rgba(251, 191, 36, 0.4);
+  }
+}
+
+@keyframes medal-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 15px rgba(148, 163, 184, 0.4),
+      0 0 30px rgba(148, 163, 184, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 25px rgba(148, 163, 184, 0.7),
+      0 0 50px rgba(148, 163, 184, 0.4);
+  }
+}
+
+@keyframes bronze-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 15px rgba(245, 158, 11, 0.4),
+      0 0 30px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 25px rgba(245, 158, 11, 0.7),
+      0 0 50px rgba(245, 158, 11, 0.4);
+  }
+}
+
+.animate-champion-glow {
+  animation: champion-glow 3s ease-in-out infinite;
+}
+
+.animate-medal-glow {
+  animation: medal-glow 4s ease-in-out infinite;
+}
+
+.animate-bronze-glow {
+  animation: bronze-glow 4s ease-in-out infinite;
+}
+
+/* Enhanced Card Hover Effects */
+@keyframes card-lift {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(-10px) scale(1.05);
+  }
+}
+
+@keyframes card-glow-intensify {
+  0% {
+    filter: brightness(1) drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+  }
+  100% {
+    filter: brightness(1.1) drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+  }
+}
+
+.card-hover-effect:hover {
+  animation: card-lift 0.3s ease-out forwards, card-glow-intensify 0.3s ease-out forwards;
+}
+
+/* Enhanced Confetti Animation */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti-fall 6s linear infinite;
+}
+
+/* Particle System */
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) rotate(90deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-40px) translateX(-5px) rotate(180deg);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(-20px) translateX(-10px) rotate(270deg);
+    opacity: 1;
+  }
+}
+
+.animate-particle-float {
+  animation: particle-float 8s ease-in-out infinite;
+}
+
+/* Enhanced Button Effects */
+@keyframes button-pulse-enhanced {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(59, 130, 246, 0.4),
+      0 0 40px rgba(59, 130, 246, 0.2),
+      inset 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(59, 130, 246, 0.8),
+      0 0 60px rgba(59, 130, 246, 0.4),
+      inset 0 0 30px rgba(255, 255, 255, 0.2);
+  }
+}
+
+.animate-button-pulse-enhanced {
+  animation: button-pulse-enhanced 2s ease-in-out infinite;
+}
+
+/* Mobile Optimizations for Leaderboard */
+@media (max-width: 768px) {
+  .perspective-1000 {
+    perspective: 500px;
+  }
+  
+  .rotate-x-12 {
+    transform: rotateX(6deg);
+  }
+  
+  /* Reduce glow intensity on mobile */
+  .animate-champion-glow,
+  .animate-medal-glow,
+  .animate-bronze-glow {
+    animation-duration: 6s;
+  }
+  
+  /* Optimize particle count for mobile */
+  .animate-particle-float {
+    animation-duration: 10s;
+  }
+}
+
 /* Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
@@ -1427,7 +1602,13 @@
   .animate-fade-in-up-delayed-2,
   .animate-pulse,
   .animate-ping,
-  .animate-spin {
+  .animate-spin,
+  .animate-champion-glow,
+  .animate-medal-glow,
+  .animate-bronze-glow,
+  .animate-confetti,
+  .animate-particle-float,
+  .animate-button-pulse-enhanced {
     animation: none;
   }
   
@@ -1437,6 +1618,11 @@
   .pixel-block-float-slow,
   .pixel-block-float-delayed-slow {
     animation: none;
+  }
+  
+  .card-hover-effect:hover {
+    transform: none;
+    filter: none;
   }
 }
 

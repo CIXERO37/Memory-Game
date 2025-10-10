@@ -244,6 +244,23 @@ function ResultPageContent() {
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/8 to-blue-400/8 rounded-lg blur-xl -z-10"></div>
             {/* Card Inner Glow */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-lg"></div>
+            
+            {/* MEMORYQUIZ Identity - Top Left Corner */}
+            <div className="absolute top-4 left-4 flex items-center p-2 ">
+              <div className="text-xs font-bold text-white/90 bg-gradient-to-r from-blue-400/20 to-purple-400/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
+                MEMORYQUIZ
+              </div>
+            </div>
+            
+            {/* GameForSmart Logo - Top Right Corner */}
+            <div className="absolute top-4 right-4 flex items-center w-26 h-9 opacity-80 hover:opacity-100 transition-opacity duration-300">
+              <img
+                src="/images/gameforsmartlogo.png"
+                alt="GameForSmart Logo"
+                className="w-full h-full object-contain"
+                draggable={false}
+              />
+            </div>
             {/* Player Avatar with Glow */}
             <div className="w-24 h-24 rounded-full border-3 border-slate-300/50 overflow-hidden mx-auto mb-6 relative shadow-lg">
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/25 to-blue-400/25 rounded-full blur-lg"></div>
@@ -289,7 +306,7 @@ function ResultPageContent() {
             }}
           >
             <Home className="w-5 h-5" />
-            BACK TO DASHBOARD
+            BACK
           </button>
         </div>
       </div>
