@@ -2141,6 +2141,35 @@
   filter: contrast(1.2) saturate(1.3);
 }
 
+/* Memory Game Enhanced Styles */
+.memory-game img {
+  image-rendering: auto;
+  -webkit-image-rendering: auto;
+  -moz-image-rendering: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: all 0.3s ease;
+}
+
+.memory-game img:hover {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transform: scale(1.05);
+}
+
+/* Enhanced memory game card animations */
+.memory-game .aspect-square {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.memory-game .aspect-square:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.memory-game .aspect-square:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* Pixel Button Styles */
 .pixel-button {
   border-radius: 0px !important;

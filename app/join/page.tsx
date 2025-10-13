@@ -18,7 +18,7 @@ function JoinPageContent() {
   const router = useRouter()
   const [username, setUsername] = useState("")
   const [roomCode, setRoomCode] = useState("")
-  const [selectedAvatar, setSelectedAvatar] = useState("/ava1.png") // Set default avatar
+  const [selectedAvatar, setSelectedAvatar] = useState("") // Will be set to random avatar
   const [isJoining, setIsJoining] = useState(false)
   const [roomError, setRoomError] = useState("")
   const [playerId, setPlayerId] = useState<string>("")
@@ -26,6 +26,17 @@ function JoinPageContent() {
   const [hasClickedJoin, setHasClickedJoin] = useState(false)
   const [usernameError, setUsernameError] = useState("")
   const [roomCodeError, setRoomCodeError] = useState("")
+
+  // Function to get random avatar (will be overridden by first avatar in selector)
+  const getRandomAvatar = () => {
+    const avatars = [
+      "/ava1.png", "/ava2.png", "/ava3.png", "/ava4.png", 
+      "/ava5.png", "/ava6.png", "/ava7.png", "/ava8.png", 
+      "/ava9.png", "/ava10.png", "/ava11.png", "/ava12.png", 
+      "/ava13.png", "/ava14.png", "/ava15.png", "/ava16.png"
+    ]
+    return avatars[Math.floor(Math.random() * avatars.length)]
+  }
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")
@@ -57,15 +68,40 @@ function JoinPageContent() {
         // Generate new player ID if no valid session
         const newPlayerId = Math.random().toString(36).substr(2, 9)
         setPlayerId(newPlayerId)
+        
+        // Set random avatar as default if no existing session
+        if (!selectedAvatar) {
+          setSelectedAvatar(getRandomAvatar())
+        }
       } catch (error) {
         console.error("Error initializing session:", error)
         const newPlayerId = Math.random().toString(36).substr(2, 9)
         setPlayerId(newPlayerId)
+        
+        // Set random avatar as fallback
+        if (!selectedAvatar) {
+          setSelectedAvatar(getRandomAvatar())
+        }
       }
     }
 
     initializeSession()
   }, [searchParams, router])
+
+  // Set random avatar on component mount if not already set
+  useEffect(() => {
+    if (!selectedAvatar) {
+      setSelectedAvatar(getRandomAvatar())
+    }
+  }, [])
+
+  // Handle first avatar change from selector
+  const handleFirstAvatarChange = (avatar: string) => {
+    if (!selectedAvatar) {
+      setSelectedAvatar(avatar)
+    }
+  }
+
 
   // Function to extract room code from URL
   const extractRoomCodeFromUrl = (url: string): string => {
@@ -360,7 +396,11 @@ function JoinPageContent() {
                         <Label className="text-black font-bold text-xs sm:text-sm">CHOOSE AVATAR</Label>
                       </div>
                       <div className="bg-white border-2 border-black rounded p-2 sm:p-3">
-                        <AvatarSelector selectedAvatar={selectedAvatar} onAvatarSelect={setSelectedAvatar} />
+                        <AvatarSelector 
+                          selectedAvatar={selectedAvatar} 
+                          onAvatarSelect={setSelectedAvatar}
+                          onFirstAvatarChange={handleFirstAvatarChange}
+                        />
                       </div>
                     </div>
 
