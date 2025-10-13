@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Users, Play, Brain, Lightbulb, HelpCircle, Server } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 
 export default function HomePage() {
@@ -83,7 +84,7 @@ export default function HomePage() {
                   <Brain className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
                 </div>
               </div>
-              
+              //
               {/* Pixel Card */}
               <div className="absolute -right-4 sm:-right-8 top-2 sm:top-4 w-16 h-20 sm:w-24 sm:h-32 bg-white rounded-lg shadow-2xl border-2 sm:border-4 border-black pixel-card-float">
                 <div className="p-2 sm:p-3 h-full flex flex-col items-center justify-center">
@@ -199,19 +200,19 @@ function PixelBackgroundElements() {
 
 function FallingPixelCards() {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const stream: Array<{ id: string; label: string; color: string; x: string; delay: string; dur: string; rot: string; w?: string; h?: string; }> = [
-    { id: '1', label: '🐱', color: 'bg-red-500', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
-    { id: '2', label: '🐶', color: 'bg-blue-500', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
-    { id: '3', label: '🐰', color: 'bg-green-500', x: '20%', delay: '1.1s', dur: '13s', rot: '2deg' },
-    { id: '4', label: '🐸', color: 'bg-yellow-500', x: '28%', delay: '3.6s', dur: '12.2s', rot: '-10deg' },
-    { id: '5', label: '🐨', color: 'bg-purple-500', x: '36%', delay: '0.7s', dur: '14s', rot: '0deg' },
-    { id: '6', label: '🐼', color: 'bg-pink-500', x: '44%', delay: '2.1s', dur: '11.8s', rot: '6deg' },
-    { id: '7', label: '🦊', color: 'bg-cyan-500', x: '52%', delay: '4.1s', dur: '12.6s', rot: '-4deg' },
-    { id: '8', label: '🐯', color: 'bg-orange-500', x: '60%', delay: '1.5s', dur: '13.4s', rot: '3deg' },
-    { id: '9', label: '🦁', color: 'bg-lime-500', x: '68%', delay: '3.2s', dur: '12.1s', rot: '-8deg' },
-    { id: '10', label: '🐸', color: 'bg-indigo-500', x: '76%', delay: '0.3s', dur: '10.9s', rot: '5deg' },
-    { id: '11', label: '🐧', color: 'bg-emerald-500', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
-    { id: '12', label: '🦆', color: 'bg-violet-500', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
+  const stream: Array<{ id: string; image: string; color: string; x: string; delay: string; dur: string; rot: string; w?: string; h?: string; }> = [
+    { id: '1', image: '/memogame/cat.png', color: 'bg-red-500', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
+    { id: '2', image: '/memogame/cow.png', color: 'bg-blue-500', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
+    { id: '3', image: '/memogame/koala.png', color: 'bg-green-500', x: '20%', delay: '1.1s', dur: '13s', rot: '2deg' },
+    { id: '4', image: '/memogame/crab.png', color: 'bg-yellow-500', x: '28%', delay: '3.6s', dur: '12.2s', rot: '-10deg' },
+    { id: '5', image: '/memogame/parrot.png', color: 'bg-purple-500', x: '36%', delay: '0.7s', dur: '14s', rot: '0deg' },
+    { id: '6', image: '/memogame/whale.png', color: 'bg-pink-500', x: '44%', delay: '2.1s', dur: '11.8s', rot: '6deg' },
+    { id: '7', image: '/memogame/jellyfish.png', color: 'bg-cyan-500', x: '52%', delay: '4.1s', dur: '12.6s', rot: '-4deg' },
+    { id: '8', image: '/memogame/sea-turtle.png', color: 'bg-orange-500', x: '60%', delay: '1.5s', dur: '13.4s', rot: '3deg' },
+    { id: '9', image: '/memogame/cat.png', color: 'bg-lime-500', x: '68%', delay: '3.2s', dur: '12.1s', rot: '-8deg' },
+    { id: '10', image: '/memogame/cow.png', color: 'bg-indigo-500', x: '76%', delay: '0.3s', dur: '10.9s', rot: '5deg' },
+    { id: '11', image: '/memogame/koala.png', color: 'bg-emerald-500', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
+    { id: '12', image: '/memogame/crab.png', color: 'bg-violet-500', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
   ]
 
   useEffect(() => {
@@ -270,8 +271,14 @@ function FallingPixelCards() {
           className="pixel-card falling"
           style={{ ['--x' as any]: c.x, ['--delay' as any]: c.delay, ['--dur' as any]: c.dur, ['--rot' as any]: c.rot, ['--w' as any]: c.w ?? '88px', ['--h' as any]: c.h ?? '124px' }}
         >
-          <div className={`w-full h-full ${c.color} border-4 border-black rounded-lg shadow-lg flex items-center justify-center`}>
-            <span className="text-white font-bold text-6xl">{c.label}</span>
+          <div className={`w-full h-full ${c.color} border-4 border-black rounded-lg shadow-lg flex items-center justify-center p-2`}>
+            <Image 
+              src={c.image} 
+              alt="Memory card" 
+              width={60} 
+              height={60}
+              className="object-contain"
+            />
           </div>
         </div>
       ))}
