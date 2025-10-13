@@ -508,7 +508,7 @@ function LobbyPageContent() {
 
   const shareUrl = roomCode && typeof window !== 'undefined' ? `${window.location.origin}/join?room=${roomCode}` : ""
   const smallQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=384x384&data=${encodeURIComponent(shareUrl)}` : ""
-  const largeQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=1500x1500&data=${encodeURIComponent(shareUrl)}` : ""
+  const largeQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=4000x4000&data=${encodeURIComponent(shareUrl)}` : ""
 
   const copyRoomCode = () => {
     if (!roomCode) return
@@ -810,6 +810,7 @@ function LobbyPageContent() {
                         src={smallQrUrl}
                         alt="Room share QR"
                         className="rounded border-2 border-black bg-white p-2 w-48 h-48 sm:w-96 sm:h-96 object-contain"
+                        
                       />
                       {shareUrl && (
                         <div className="mt-4 relative mx-auto max-w-full">
@@ -830,20 +831,16 @@ function LobbyPageContent() {
                 )}
 
               <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-                <DialogContent className="max-w-7xl w-full max-h-[98vh] z-50 backdrop-blur-sm bg-white/95 border-4 border-black shadow-2xl p-10">
-                  <DialogHeader className="mb-6">
-                    <DialogTitle className="text-3xl font-bold text-center pixel-font">Share QR Code</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex justify-center items-center">
+                <DialogContent className="max-w-[75vw] w-full max-h-[75vh] z-50 backdrop-blur-sm bg-white/95 border-8 border-black shadow-2xl p-2 overflow-hidden">
+                  <div className="flex justify-center items-center h-full">
                     {largeQrUrl && (
-                      <div className="bg-white p-8 rounded-lg border-4 border-black shadow-xl">
+                      <div className="bg-white border-4 border-black rounded-lg shadow-2xl p-4 flex items-center justify-center" style={{ width: 'min(60vw, 55vh)', height: 'min(60vw, 60vh)' }}>
                         <img
                           src={largeQrUrl}
                           alt="Room share QR large"
-                          className="block mx-auto"
-                          width={1200}
-                          height={1200}
-                          style={{ maxWidth: '100%', height: 'auto' }}
+                          className="w-full h-full object-contain"
+                          width={4000}
+                          height={4000}
                         />
                       </div>
                     )}
