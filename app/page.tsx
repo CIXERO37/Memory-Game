@@ -84,7 +84,7 @@ export default function HomePage() {
                   <Brain className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
                 </div>
               </div>
-              
+              //
               {/* Pixel Card */}
               <div className="absolute -right-4 sm:-right-8 top-2 sm:top-4 w-16 h-20 sm:w-24 sm:h-32 bg-white rounded-lg shadow-2xl border-2 sm:border-4 border-black pixel-card-float">
                 <div className="p-2 sm:p-3 h-full flex flex-col items-center justify-center">
