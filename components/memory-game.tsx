@@ -4,12 +4,21 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
-// Animal emojis matching the homepage design
-const emojis = ["🐱", "🐶", "🐰", "🐸", "🐨", "🐼"]
+// Animal images from memogame folder
+const animalImages = [
+  { name: "cat", src: "/memogame/cat.png" },
+  { name: "cow", src: "/memogame/cow.png" },
+  { name: "crab", src: "/memogame/crab.png" },
+  { name: "jellyfish", src: "/memogame/jellyfish.png" },
+  { name: "koala", src: "/memogame/koala.png" },
+  { name: "parrot", src: "/memogame/parrot.png" },
+  { name: "sea-turtle", src: "/memogame/sea-turtle.png" },
+  { name: "whale", src: "/memogame/whale.png" }
+]
 
 interface MemoryCard {
   id: number
-  emoji: string
+  image: { name: string; src: string }
   isFlipped: boolean
   isMatched: boolean
 }
@@ -27,10 +36,12 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
 
   // Initialize cards
   useEffect(() => {
-    const shuffledEmojis = [...emojis, ...emojis].sort(() => Math.random() - 0.5)
-    const initialCards = shuffledEmojis.map((emoji, index) => ({
+    // Use first 6 animals for the game (12 cards total - 6 pairs)
+    const gameAnimals = animalImages.slice(0, 6)
+    const shuffledImages = [...gameAnimals, ...gameAnimals].sort(() => Math.random() - 0.5)
+    const initialCards = shuffledImages.map((image, index) => ({
       id: index,
-      emoji,
+      image,
       isFlipped: false,
       isMatched: false,
     }))
@@ -64,9 +75,9 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
       const firstCard = cards.find((c) => c.id === firstId)
       const secondCard = cards.find((c) => c.id === secondId)
 
-      if (firstCard && secondCard && firstCard.emoji === secondCard.emoji) {
+      if (firstCard && secondCard && firstCard.image.name === secondCard.image.name) {
         // Match found
-        console.log("[MemoryGame] Match found:", firstCard.emoji)
+        console.log("[MemoryGame] Match found:", firstCard.image.name)
         setTimeout(() => {
           setCards((prev) => prev.map((c) => (c.id === firstId || c.id === secondId ? { ...c, isMatched: true } : c)))
           setFlippedCards([])
@@ -99,9 +110,9 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
             key={card.id}
             className={cn(
               "aspect-square cursor-pointer transition-all duration-300 hover:scale-105",
-              "flex items-center justify-center text-3xl sm:text-4xl",
+              "flex items-center justify-center",
               "border-2 bg-gradient-to-br from-white/20 to-white/10 rounded-lg",
-              "min-h-[44px] min-w-[44px]", // Touch-friendly minimum size
+              "min-h-[60px] min-w-[60px] sm:min-h-[80px] sm:min-w-[80px]", // More reasonable size
               card.isMatched && "border-green-400 bg-green-500/20 scale-95",
               (card.isFlipped || card.isMatched || showAll) && "border-blue-400 bg-blue-500/20",
               disabled && "cursor-not-allowed opacity-50",
@@ -110,17 +121,28 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
           >
             <div
               className={cn(
-                "transition-all duration-300",
+                "transition-all duration-300 w-full h-full flex items-center justify-center",
                 card.isFlipped || card.isMatched || showAll ? "scale-100 opacity-100" : "scale-0 opacity-0",
               )}
             >
-              {card.isFlipped || card.isMatched || showAll ? card.emoji : ""}
+              {card.isFlipped || card.isMatched || showAll ? (
+                <img
+                  src={card.image.src}
+                  alt={card.image.name}
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                  onError={(e) => {
+                    // Fallback to emoji if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.textContent = '🐾';
+                    fallback.className = 'text-xl sm:text-2xl';
+                    target.parentNode?.appendChild(fallback);
+                  }}
+                />
+              ) : null}
             </div>
-            {!card.isFlipped && !card.isMatched && !showAll && (
-              <div className="w-full h-full bg-gradient-to-br from-white/30 to-white/10 rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white/20 rounded border border-white/30" />
-              </div>
-            )}
+            {!card.isFlipped && !card.isMatched && !showAll && null}
           </div>
         ))}
       </div>
