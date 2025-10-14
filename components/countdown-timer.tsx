@@ -2,66 +2,28 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Room } from "@/lib/room-manager"
-import { Clock } from "lucide-react"
-import { calculateTimerState } from "@/lib/timer-utils"
+import { Clock, Wifi, WifiOff } from "lucide-react"
+import { useServerSynchronizedCountdown } from "@/hooks/use-server-synchronized-countdown"
 import "@/styles/countdown.css"
 
 interface CountdownTimerProps {
   room: Room
+  playerId?: string
+  isHost?: boolean
   onCountdownComplete: () => void
 }
 
-export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProps) {
-  const [timeLeft, setTimeLeft] = useState<number>(0)
-  const [isActive, setIsActive] = useState(false)
-  const [previousTime, setPreviousTime] = useState<number>(0)
-  const animationRef = useRef<number>()
+export function CountdownTimer({ room, playerId, isHost = false, onCountdownComplete }: CountdownTimerProps) {
+  const handleCountdownComplete = () => {
+    console.log("[CountdownTimer] Countdown complete, isHost:", isHost)
+    onCountdownComplete()
+  }
 
-  useEffect(() => {
-    if (!room.countdownStartTime || !room.countdownDuration) {
-      setIsActive(false)
-      return
-    }
-
-    const updateCountdown = () => {
-      const timerState = calculateTimerState(room)
-      const remaining = timerState.countdown || 0
-      
-      // Track time changes for logging
-      if (remaining !== previousTime && remaining > 0) {
-        setPreviousTime(remaining)
-      }
-      
-      setTimeLeft(remaining)
-      setIsActive(remaining > 0)
-
-      if (remaining <= 0) {
-        onCountdownComplete()
-      }
-    }
-
-    // Initial calculation
-    updateCountdown()
-
-    // Use requestAnimationFrame for smoother animation
-    const animate = () => {
-      updateCountdown()
-      const timerState = calculateTimerState(room)
-      const remaining = timerState.countdown || 0
-      if (remaining > 0) {
-        animationRef.current = requestAnimationFrame(animate)
-      }
-    }
-
-    // Start animation loop
-    animationRef.current = requestAnimationFrame(animate)
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [room.countdownStartTime, room.countdownDuration, onCountdownComplete])
+  const { countdown, isActive, isConnected, isInDelayPeriod } = useServerSynchronizedCountdown(
+    room.code,
+    playerId,
+    handleCountdownComplete
+  )
 
   // Show loading state if countdown data is not ready yet
   if (!room.countdownStartTime || !room.countdownDuration) {
@@ -95,7 +57,7 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
     )
   }
 
-  if (!isActive || timeLeft <= 0) {
+  if (!isActive || countdown <= 0) {
     return null
   }
 
@@ -117,6 +79,8 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
       </div>
 
       <div className="relative z-10 text-center countdown-container">
+        
+
         <div className="relative inline-block mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
           <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-8">
@@ -126,18 +90,21 @@ export function CountdownTimer({ room, onCountdownComplete }: CountdownTimerProp
             </div>
             
             {/* Countdown Title */}
-            <h3 className="text-2xl font-bold text-white mb-4 pixel-font countdown-message">GET READY!</h3>
+            <h3 className="text-2xl font-bold text-white mb-4 pixel-font countdown-message">
+              {isInDelayPeriod ? "PREPARING..." : "GET READY!"}
+            </h3>
             
             {/* Countdown Number with Smooth Animation */}
             <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
-              timeLeft <= 1 ? 'pixel-countdown final' :
-              timeLeft <= 3 ? 'pixel-countdown urgent' :
+              countdown <= 1 ? 'pixel-countdown final' :
+              countdown <= 3 ? 'pixel-countdown urgent' :
               'pixel-countdown'
             }`}>
               <span className={`text-9xl font-black ${
-                timeLeft <= 3 ? 'text-red-400' : 'text-white'
+                isInDelayPeriod ? 'text-yellow-400' :
+                countdown <= 3 ? 'text-red-400' : 'text-white'
               }`}>
-                {timeLeft}
+                {countdown}
               </span>
             </div>
             

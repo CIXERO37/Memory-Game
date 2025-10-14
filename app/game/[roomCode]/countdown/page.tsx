@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Sparkles } from "lucide-react"
 import { useRoom } from "@/hooks/use-room"
+import { CountdownTimer } from "@/components/countdown-timer"
+import { sessionManager } from "@/lib/supabase-session-manager"
 
 interface CountdownPageProps {
   params: {
@@ -17,8 +19,61 @@ interface CountdownPageProps {
 }
 
 export default function CountdownPage({ params, searchParams }: CountdownPageProps) {
-  const [countdown, setCountdown] = useState(5)
+  const [playerId, setPlayerId] = useState<string | null>(null)
+  const [isHost, setIsHost] = useState(false)
+  const [hostId, setHostId] = useState<string | null>(null)
   const { room, loading } = useRoom(params.roomCode)
+
+  // Load player data from session manager
+  useEffect(() => {
+    const loadPlayerData = async () => {
+      try {
+        const sessionId = sessionManager.getSessionIdFromStorage()
+        if (sessionId) {
+          const sessionData = await sessionManager.getSessionData(sessionId)
+          if (sessionData && sessionData.user_type === 'player') {
+            setPlayerId(sessionData.user_data.id)
+          } else if (sessionData && sessionData.user_type === 'host') {
+            setPlayerId(sessionData.user_data.id)
+            setHostId(sessionData.user_data.hostId)
+            setIsHost(true)
+            console.log("[Countdown] Host session detected:", sessionData.user_data)
+          }
+        }
+        
+        // Fallback to localStorage if session not found
+        if (!playerId && typeof window !== 'undefined') {
+          const player = localStorage.getItem("currentPlayer")
+          if (player) {
+            const playerInfo = JSON.parse(player)
+            setPlayerId(playerInfo.id)
+          }
+        }
+      } catch (error) {
+        console.error("[Countdown] Error loading player data:", error)
+      }
+    }
+
+    loadPlayerData()
+  }, [])
+
+  // Determine if user is host based on room data or session
+  useEffect(() => {
+    if (room && playerId) {
+      // Check if this is a host by comparing with room.hostId
+      if (room.hostId && hostId && room.hostId === hostId) {
+        setIsHost(true)
+        console.log("[Countdown] Host detected via room.hostId:", { roomHostId: room.hostId, sessionHostId: hostId })
+        return
+      }
+      
+      // Fallback: check if player is in room.players and is host
+      const currentPlayer = room.players.find((p) => p.id === playerId)
+      const hostStatus = currentPlayer?.isHost || false
+      setIsHost(hostStatus)
+      console.log("[Countdown] Host detection via players:", { playerId, currentPlayer, hostStatus })
+    }
+  }, [room, playerId, hostId])
 
   useEffect(() => {
     if (!loading && (!room || !room.gameStarted)) {
@@ -27,26 +82,28 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
     }
   }, [room, loading])
 
-  useEffect(() => {
-    if (!room || loading) return
-
-    if (countdown === 0) {
+  const handleCountdownComplete = () => {
+    console.log("[Countdown] Countdown complete, redirecting...", { isHost, playerId, hostId })
+    
+    // Clean up any event listeners that might trigger beforeunload
+    window.removeEventListener('beforeunload', () => {})
+    
+    if (isHost) {
+      // Host goes to monitor page - immediate redirect
+      console.log("[Countdown] Redirecting host to monitor page")
+      window.location.replace(`/monitor?roomCode=${params.roomCode}`)
+    } else {
+      // Player goes to quiz page
+      console.log("[Countdown] Redirecting player to quiz page")
       const params_url = new URLSearchParams({
         quizId: searchParams.quizId || "math-basic",
-        questionCount: room.settings.questionCount.toString(),
-        timeLimit: room.settings.totalTimeLimit.toString(),
+        questionCount: room?.settings.questionCount.toString() || "10",
+        timeLimit: room?.settings.totalTimeLimit.toString() || "5",
       })
 
-      window.location.href = `/game/${params.roomCode}/quiz?${params_url.toString()}`
-      return
+      window.location.replace(`/game/${params.roomCode}/quiz?${params_url.toString()}`)
     }
-
-    const timer = setTimeout(() => {
-      setCountdown(countdown - 1)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [countdown, params.roomCode, searchParams, room, loading])
+  }
 
   if (loading) {
     return (
@@ -72,6 +129,12 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
     )
   }
 
+  // Show countdown timer if room is in countdown status
+  if (room.status === "countdown") {
+    return <CountdownTimer room={room} playerId={playerId || undefined} isHost={isHost} onCountdownComplete={handleCountdownComplete} />
+  }
+
+  // Fallback countdown for backward compatibility
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center">
       <Card className="max-w-md mx-auto text-center border-2 border-primary/20">
@@ -82,7 +145,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
             <Sparkles className="h-8 w-8 text-accent animate-pulse" />
           </div>
 
-          <div className="text-8xl font-bold text-primary mb-6 animate-bounce">{countdown}</div>
+          <div className="text-8xl font-bold text-primary mb-6 animate-bounce">10</div>
 
           <p className="text-lg text-muted-foreground mb-4">The quiz is about to begin!</p>
 

@@ -23,6 +23,7 @@ function LobbyPageContent() {
   const [hostId, setHostId] = useState<string | null>(null)
   const [quizId, setQuizId] = useState<string | null>(null)
   const [gameStarted, setGameStarted] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
@@ -72,6 +73,10 @@ function LobbyPageContent() {
   // Handle browser navigation (back button, refresh, close tab)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Don't show dialog if we're redirecting programmatically
+      if (isRedirecting) {
+        return
+      }
       e.preventDefault()
       e.returnValue = "Are you sure you want to leave? This will end the lobby for all players."
       return "Are you sure you want to leave? This will end the lobby for all players."
@@ -90,7 +95,7 @@ function LobbyPageContent() {
       window.removeEventListener("beforeunload", handleBeforeUnload)
       window.removeEventListener("popstate", handlePopState)
     }
-  }, [])
+  }, [isRedirecting])
 
   // Handle navigation confirmation
   const handleNavigationAttempt = (url: string) => {
@@ -201,15 +206,34 @@ function LobbyPageContent() {
   const handleCountdownComplete = async () => {
     if (!roomCode || !hostId) return
     
+    setIsRedirecting(true) // Prevent flash of lobby content
+    
+    // Clean up all event listeners and state before redirect
     try {
+      // Remove all event listeners that might trigger beforeunload
+      const beforeUnloadHandler = () => {}
+      window.removeEventListener('beforeunload', beforeUnloadHandler)
+      
+      // Clear any pending timeouts or intervals
+      // Note: This is a simplified cleanup - in production you'd track specific timeout IDs
+      console.log("[Lobby] Cleaning up before redirect")
+      
       // Start the actual game after countdown
       const success = await roomManager.startGame(roomCode, hostId)
       if (success) {
-        // Navigate to monitor
-        router.push(`/monitor?roomCode=${roomCode}`)
+        console.log("[Lobby] Game started successfully, redirecting to monitor")
+        
+        // Use replace instead of href to prevent back button issues
+        window.location.replace(`/monitor?roomCode=${roomCode}`)
+      } else {
+        console.error("[Lobby] Failed to start game after countdown")
+        // Fallback redirect even if game start failed
+        window.location.replace(`/monitor?roomCode=${roomCode}`)
       }
     } catch (error) {
       console.error("[Lobby] Error starting game after countdown:", error)
+      // Fallback redirect even if there's an error
+      window.location.replace(`/monitor?roomCode=${roomCode}`)
     }
   }
 
@@ -583,12 +607,40 @@ function LobbyPageContent() {
 
   // Show countdown timer if room is in countdown status
   if (currentRoom && currentRoom.status === "countdown") {
+    console.log("[Lobby] Showing countdown timer, room status:", currentRoom.status)
     return (
       <CountdownTimer 
         room={currentRoom} 
+        playerId={hostId || undefined}
+        isHost={true}
         onCountdownComplete={handleCountdownComplete}
       />
     )
+  }
+
+  // Show loading screen if redirecting to prevent flash
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-6">
+              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                <div className="h-8 w-8 text-black animate-spin">⏳</div>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">REDIRECTING...</h3>
+              <p className="text-white/80 pixel-font-sm">GOING TO MONITOR PAGE</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Log room status for debugging
+  if (currentRoom) {
+    console.log("[Lobby] Room status:", currentRoom.status, "Game started:", currentRoom.gameStarted)
   }
 
   if (loading && !currentRoom) {
