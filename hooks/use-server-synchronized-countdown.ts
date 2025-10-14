@@ -58,7 +58,7 @@ export function useServerSynchronizedCountdown(
       
       // Add timeout for poor network conditions
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout for poor network
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // Reduced timeout to 5 seconds
       
       const response = await fetch(`/api/rooms/${roomCode}/countdown-state`, {
         method: 'GET',
@@ -78,9 +78,10 @@ export function useServerSynchronizedCountdown(
 
       const data: ServerCountdownResponse = await response.json()
       
-      // Calculate server offset based on response time
+      // Calculate server offset more accurately
       const responseTime = Date.now()
-      const estimatedServerTime = data.serverTime + (responseTime - Date.now()) / 2
+      const requestLatency = responseTime - parseInt(clientTimestamp)
+      const estimatedServerTime = data.serverTime + (requestLatency / 2)
       setServerOffset(estimatedServerTime - responseTime)
       
       // Log sync info for debugging
@@ -89,8 +90,9 @@ export function useServerSynchronizedCountdown(
         serverTime: data.serverTime,
         clientTime: responseTime,
         offset: estimatedServerTime - responseTime,
-        requestLatency: data.requestLatency,
-        latencyCompensation: data.countdownState?.latencyCompensation
+        requestLatency: requestLatency,
+        latencyCompensation: data.countdownState?.latencyCompensation,
+        remaining: data.countdownState?.remaining
       })
       
       setIsConnected(true)
@@ -107,7 +109,7 @@ export function useServerSynchronizedCountdown(
       console.error('[ServerCountdown] Error fetching countdown state:', error, 'retry:', retryCount)
       
       // Retry mechanism for poor network conditions
-      if (retryCount < 3) {
+      if (retryCount < 2) { // Reduced retry count
         console.log('[ServerCountdown] Retrying in', (retryCount + 1) * 1000, 'ms')
         await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000))
         return fetchCountdownState(retryCount + 1)
@@ -150,14 +152,19 @@ export function useServerSynchronizedCountdown(
     
     if (countdownState.isActive) {
       // Use server-calculated remaining time directly for better accuracy
-      setCountdown(countdownState.remaining)
+      const newCountdown = countdownState.remaining
+      
+      // Only update if the countdown value has actually changed to avoid unnecessary re-renders
+      if (newCountdown !== countdown) {
+        setCountdown(newCountdown)
+        console.log('[ServerCountdown] Countdown updated:', newCountdown, 'isInDelayPeriod:', countdownState.isInDelayPeriod)
+      }
+      
       setIsActive(true)
       setIsInDelayPeriod(countdownState.isInDelayPeriod || false)
       
-      console.log('[ServerCountdown] Countdown active:', countdownState.remaining, 'isInDelayPeriod:', countdownState.isInDelayPeriod, 'timeSinceStart:', countdownState.timeSinceStart)
-      
       // Check if countdown is complete
-      if (countdownState.remaining <= 0) {
+      if (newCountdown <= 0) {
         console.log('[ServerCountdown] Countdown completed, triggering callback')
         setIsActive(false)
         onCountdownComplete?.()
@@ -173,7 +180,7 @@ export function useServerSynchronizedCountdown(
         onCountdownComplete?.()
       }
     }
-  }, [fetchCountdownState, getSynchronizedTime, onCountdownComplete, countdown])
+  }, [fetchCountdownState, onCountdownComplete, countdown])
 
   // Fallback countdown for poor network conditions
   const updateFallbackCountdown = useCallback(() => {
@@ -183,7 +190,10 @@ export function useServerSynchronizedCountdown(
       
       console.log('[ServerCountdown] Using fallback countdown:', fallbackCountdown, 'original:', lastKnownCountdown)
       
-      setCountdown(fallbackCountdown)
+      // Only update if countdown has changed
+      if (fallbackCountdown !== countdown) {
+        setCountdown(fallbackCountdown)
+      }
       setIsActive(fallbackCountdown > 0)
       
       if (fallbackCountdown <= 0) {
@@ -191,7 +201,7 @@ export function useServerSynchronizedCountdown(
         onCountdownComplete?.()
       }
     }
-  }, [isConnected, lastKnownCountdown, fallbackStartTime, onCountdownComplete])
+  }, [isConnected, lastKnownCountdown, fallbackStartTime, onCountdownComplete, countdown])
 
   // Reconnection logic for poor connections
   const attemptReconnection = useCallback(() => {
@@ -207,10 +217,10 @@ export function useServerSynchronizedCountdown(
         console.log('[ServerCountdown] Reconnected successfully')
         await updateCountdown()
       } else {
-        // Try again in 2 seconds
+        // Try again in 3 seconds (increased from 2 seconds)
         attemptReconnection()
       }
-    }, 2000)
+    }, 3000)
   }, [fetchCountdownState, updateCountdown])
 
   useEffect(() => {
@@ -219,26 +229,24 @@ export function useServerSynchronizedCountdown(
     // Initial sync
     updateCountdown()
 
-    // Set up periodic server sync with adaptive frequency
+    // Set up periodic server sync with more consistent frequency
     const syncInterval = setInterval(() => {
       const now = Date.now()
       
-      // Adaptive sync frequency based on countdown state
-      let syncIntervalMs = 500 // Default 500ms
-      if (countdown <= 3) {
-        syncIntervalMs = 200 // More frequent when countdown is low
-      } else if (countdown <= 5) {
-        syncIntervalMs = 300 // Medium frequency
+      // More consistent sync frequency for better synchronization
+      let syncIntervalMs = 1000 // Default 1 second for stability
+      if (countdown <= 5) {
+        syncIntervalMs = 500 // More frequent when countdown is low
       }
       
-      // Sync more frequently for better countdown synchronization
+      // Sync based on time elapsed since last sync
       if (now - lastServerSyncRef.current > syncIntervalMs || !isConnected) {
         updateCountdown()
       }
-    }, 200) // Check every 200ms but sync based on countdown state
+    }, 500) // Check every 500ms but sync based on countdown state
 
-    // Set up heartbeat (every 5 seconds)
-    heartbeatIntervalRef.current = setInterval(sendHeartbeat, 5000)
+    // Set up heartbeat (every 10 seconds for less network overhead)
+    heartbeatIntervalRef.current = setInterval(sendHeartbeat, 10000)
 
     // Set up reconnection attempts for disconnected state
     if (!isConnected) {
