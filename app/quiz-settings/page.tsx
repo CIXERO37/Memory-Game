@@ -17,7 +17,8 @@ function QuizSettingsPageContent() {
   const router = useRouter()
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null)
   const [hostId] = useState(() => Math.random().toString(36).substr(2, 9))
-  const [timeLimit, setTimeLimit] = useState([10]) // Default 10 menit
+  const [timeLimit, setTimeLimit] = useState([5 
+  ]) // Default 10 menit
   const [questionCount, setQuestionCount] = useState([10]) // Default 10 questions
   const [maxQuestions, setMaxQuestions] = useState(50) // Default max questions
   const [quiz, setQuiz] = useState<any>(null)

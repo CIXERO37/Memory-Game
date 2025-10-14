@@ -114,33 +114,31 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
       if (!playerId) return
       
       try {
-        const progressData = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
-        if (progressData && progressData.memory_game_progress) {
-          const progressCount = progressData.memory_game_progress.correct_matches || 0
-          console.log(`[Memory Challenge] Initializing with saved progress from Supabase: ${progressCount}`)
-          setCorrectMatches(progressCount)
-          
-          // If already completed, redirect immediately
-          if (progressCount >= 6) {
-            console.log("[Memory Challenge] Game already completed on initialization, redirecting...")
-            handleGameEnd()
+        // Always start memory game from 0 - don't load previous progress
+        // This ensures each memory game session is fresh
+        console.log("[Memory Challenge] Starting fresh memory game session")
+        setCorrectMatches(0)
+        
+        // Clear any previous memory game progress
+        localStorage.removeItem(`memory-progress-${params.roomCode}`)
+        
+        // Also clear from Supabase to ensure fresh start
+        if (playerId) {
+          try {
+            await supabaseRoomManager.updateGameProgress(params.roomCode, playerId, {
+              memoryProgress: {
+                correct_matches: 0,
+                last_updated: new Date().toISOString()
+              }
+            })
+          } catch (error) {
+            console.error("[Memory Challenge] Error clearing Supabase progress:", error)
           }
         }
       } catch (error) {
-        console.error("[Memory Challenge] Error loading progress from Supabase:", error)
-        
-        // Fallback to localStorage
-        const savedProgress = localStorage.getItem(`memory-progress-${params.roomCode}`)
-        if (savedProgress) {
-          const progressCount = parseInt(savedProgress)
-          console.log(`[Memory Challenge] Fallback: Initializing with localStorage progress: ${progressCount}`)
-          setCorrectMatches(progressCount)
-          
-          if (progressCount >= 6) {
-            console.log("[Memory Challenge] Game already completed on initialization, redirecting...")
-            handleGameEnd()
-          }
-        }
+        console.error("[Memory Challenge] Error initializing fresh memory game:", error)
+        // Fallback: just start from 0
+        setCorrectMatches(0)
       }
     }
 

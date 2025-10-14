@@ -525,9 +525,10 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     console.log("[Quiz] 🔍 DEBUG - correctAnswers:", correctAnswers, "newCorrectAnswers:", newCorrectAnswers, "isCorrect:", isCorrect)
 
     // STEP 5: Check if player has answered 3 correct questions (memory game trigger)
-    if (isCorrect && newCorrectAnswers === 3) {
+    // Changed: Now triggers every time player reaches a multiple of 3 correct answers (3, 6, 9, etc.)
+    if (isCorrect && newCorrectAnswers > 0 && newCorrectAnswers % 3 === 0) {
       console.log("[Quiz] 🎯 MEMORY GAME TRIGGER CONDITION MET!")
-      console.log("[Quiz] 🎯 Player has answered 3 correct questions, redirecting to memory game...")
+      console.log("[Quiz] 🎯 Player has answered", newCorrectAnswers, "correct questions (multiple of 3), redirecting to memory game...")
       
       // Update quiz score and questions answered immediately before memory game
       if (playerId) {
