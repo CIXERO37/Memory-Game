@@ -33,28 +33,27 @@ export async function GET(
     if (roomData.status === 'countdown' && roomData.countdown_start_time && roomData.countdown_duration) {
       const countdownStart = new Date(roomData.countdown_start_time).getTime()
       
-      // Add 2 second delay before countdown actually starts
-      const actualCountdownStart = countdownStart + 2000 // 2 seconds delay
-      const countdownEnd = actualCountdownStart + (roomData.countdown_duration * 1000)
-      
-      // Calculate latency compensation
+      // Calculate latency compensation more accurately
       let latencyCompensation = 0
       if (clientTimestamp) {
         const clientTime = parseInt(clientTimestamp)
         const roundTripTime = now - clientTime
-        latencyCompensation = roundTripTime / 2 // Half round trip time
+        // Use more conservative latency compensation
+        latencyCompensation = Math.min(roundTripTime / 2, 200) // Cap at 200ms
       }
       
-      // Server-authoritative countdown calculation with latency compensation
+      // Server-authoritative countdown calculation
       const compensatedNow = now + latencyCompensation
-      const timeSinceStart = compensatedNow - actualCountdownStart
       const totalDuration = roomData.countdown_duration * 1000
+      
+      // Calculate remaining time based on server time
+      const timeSinceStart = compensatedNow - countdownStart
       
       let remainingSeconds: number
       let isInDelayPeriod: boolean
       
-      if (compensatedNow < actualCountdownStart) {
-        // Still in delay period
+      if (timeSinceStart < 0) {
+        // Countdown hasn't started yet
         remainingSeconds = roomData.countdown_duration
         isInDelayPeriod = true
       } else if (timeSinceStart >= totalDuration) {
@@ -64,16 +63,16 @@ export async function GET(
       } else {
         // Active countdown - calculate exact remaining time
         const remainingMs = totalDuration - timeSinceStart
-        remainingSeconds = Math.ceil(remainingMs / 1000)
+        remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000))
         isInDelayPeriod = false
       }
       
       countdownState = {
-        remaining: Math.max(0, remainingSeconds),
+        remaining: remainingSeconds,
         isActive: remainingSeconds > 0,
         serverTime: now,
-        countdownStartTime: actualCountdownStart,
-        countdownEndTime: countdownEnd,
+        countdownStartTime: countdownStart,
+        countdownEndTime: countdownStart + totalDuration,
         isInDelayPeriod: isInDelayPeriod,
         // Add precise timing info for client synchronization
         timeSinceStart: timeSinceStart,

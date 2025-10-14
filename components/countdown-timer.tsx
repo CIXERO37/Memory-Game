@@ -25,6 +25,18 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
     handleCountdownComplete
   )
 
+  // Debug logging for countdown state
+  useEffect(() => {
+    console.log('[CountdownTimer] State update:', {
+      countdown,
+      isActive,
+      isConnected,
+      isInDelayPeriod,
+      roomCode: room.code,
+      playerId
+    })
+  }, [countdown, isActive, isConnected, isInDelayPeriod, room.code, playerId])
+
   // Show loading state if countdown data is not ready yet
   if (!room.countdownStartTime || !room.countdownDuration) {
     return (
@@ -93,6 +105,18 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
             <h3 className="text-2xl font-bold text-white mb-4 pixel-font countdown-message">
               {isInDelayPeriod ? "PREPARING..." : "GET READY!"}
             </h3>
+            
+            {/* Connection Status Indicator */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              {isConnected ? (
+                <Wifi className="h-4 w-4 text-green-400" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-red-400" />
+              )}
+              <span className={`text-sm ${isConnected ? 'text-green-400' : 'text-red-400'} pixel-font-sm`}>
+                {isConnected ? 'SYNCED' : 'OFFLINE'}
+              </span>
+            </div>
             
             {/* Countdown Number with Smooth Animation */}
             <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
