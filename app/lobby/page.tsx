@@ -40,6 +40,7 @@ function LobbyPageContent() {
   const { room, loading } = useRoom(roomCode || "")
   
   // Use localRoom if available, otherwise use room from hook
+  // Prioritize localRoom for countdown state to prevent override
   const currentRoom = localRoom || room
 
   // Get quiz settings from room data or fallback to defaults
@@ -277,6 +278,17 @@ function LobbyPageContent() {
             console.log("[Lobby] Updated players:", updatedRoom?.players?.map((p: any) => ({ id: p.id, username: p.username })))
             
             // Always update the room state first to prevent race conditions
+            // But preserve countdown state if it's already active locally and server doesn't have countdown
+            if (localRoom?.status === "countdown" && updatedRoom.status !== "countdown") {
+              console.log("[Lobby] Preserving local countdown state, not overriding with server state")
+              return
+            }
+            
+            // If server has countdown data, use it (it's more authoritative)
+            if (updatedRoom.status === "countdown" && updatedRoom.countdownStartTime && updatedRoom.countdownDuration) {
+              console.log("[Lobby] Using server countdown data:", updatedRoom.countdownStartTime, updatedRoom.countdownDuration)
+            }
+            
             setLocalRoom(updatedRoom)
             
             // Show toast notification for player changes
@@ -576,14 +588,15 @@ function LobbyPageContent() {
         console.log("[Lobby] Countdown started successfully")
         
         // Immediately update local room state to show countdown
+        const countdownStartTime = new Date().toISOString()
         const updatedRoom = {
           ...currentRoom,
           status: "countdown" as const,
-          countdownStartTime: new Date().toISOString(),
+          countdownStartTime: countdownStartTime,
           countdownDuration: 10
         }
         setLocalRoom(updatedRoom)
-        console.log("[Lobby] Updated local room state for countdown")
+        console.log("[Lobby] Updated local room state for countdown:", updatedRoom)
         
         // Broadcast countdown start to all players immediately
         if (typeof window !== 'undefined') {
@@ -591,23 +604,38 @@ function LobbyPageContent() {
           broadcastChannel.postMessage({ 
             type: 'countdown-started', 
             room: updatedRoom,
-            countdownStartTime: updatedRoom.countdownStartTime,
-            countdownDuration: updatedRoom.countdownDuration
+            countdownStartTime: countdownStartTime,
+            countdownDuration: 10
           })
           broadcastChannel.close()
           console.log("[Lobby] Broadcasted countdown start to players with data:", updatedRoom)
         }
+        
+        // Force a small delay to ensure state is updated before rendering
+        setTimeout(() => {
+          console.log("[Lobby] Countdown state should now be active")
+        }, 100)
       } else {
         console.error("[Lobby] Failed to start countdown")
+        toast({
+          title: "Failed to Start Game",
+          description: "Could not start the countdown. Please try again.",
+          duration: 3000,
+        })
       }
     } catch (error) {
       console.error("[Lobby] Error starting countdown:", error)
+      toast({
+        title: "Error",
+        description: "An error occurred while starting the game.",
+        duration: 3000,
+      })
     }
   }
 
   // Show countdown timer if room is in countdown status
   if (currentRoom && currentRoom.status === "countdown") {
-    console.log("[Lobby] Showing countdown timer, room status:", currentRoom.status)
+    console.log("[Lobby] Showing countdown timer, room status:", currentRoom.status, "countdownStartTime:", currentRoom.countdownStartTime, "countdownDuration:", currentRoom.countdownDuration)
     return (
       <CountdownTimer 
         room={currentRoom} 
@@ -640,7 +668,10 @@ function LobbyPageContent() {
 
   // Log room status for debugging
   if (currentRoom) {
-    console.log("[Lobby] Room status:", currentRoom.status, "Game started:", currentRoom.gameStarted)
+    console.log("[Lobby] Room status:", currentRoom.status, "Game started:", currentRoom.gameStarted, "Countdown data:", {
+      countdownStartTime: currentRoom.countdownStartTime,
+      countdownDuration: currentRoom.countdownDuration
+    })
   }
 
   if (loading && !currentRoom) {
@@ -928,7 +959,16 @@ function LobbyPageContent() {
                       <div className="relative pixel-button-container">
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                         <button 
-                          onClick={startGame}
+                          onClick={() => {
+                            console.log("[Lobby] START QUIZ button clicked, button state:", {
+                              roomCode: !!roomCode,
+                              hostId: !!hostId,
+                              currentRoom: !!currentRoom,
+                              playerCount: currentRoom?.players?.length || 0,
+                              disabled: !roomCode || !hostId || !currentRoom || currentRoom.players.length === 0
+                            })
+                            startGame()
+                          }}
                           disabled={!roomCode || !hostId || !currentRoom || currentRoom.players.length === 0}
                           className="relative w-full sm:w-auto bg-gradient-to-br from-purple-500 to-purple-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-purple-400 hover:to-purple-500 transform hover:scale-105 transition-all duration-200 font-bold px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none min-h-[44px]"
                         >

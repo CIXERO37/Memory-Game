@@ -364,6 +364,8 @@ class SupabaseRoomManager {
 
   async startCountdown(roomCode: string, hostId: string, duration: number = 10): Promise<boolean> {
     try {
+      console.log('[SupabaseRoomManager] Starting countdown for room:', roomCode, 'host:', hostId, 'duration:', duration)
+      
       // Get room data
       const { data: roomData, error: roomError } = await supabase
         .from('rooms')
@@ -372,20 +374,28 @@ class SupabaseRoomManager {
         .single()
 
       if (roomError || !roomData) {
-        console.error('[SupabaseRoomManager] Room not found for countdown:', roomCode)
+        console.error('[SupabaseRoomManager] Room not found for countdown:', roomCode, 'error:', roomError)
         return false
       }
 
+      console.log('[SupabaseRoomManager] Found room data:', roomData)
+
       const countdownStartTime = new Date().toISOString()
+      console.log('[SupabaseRoomManager] Countdown start time:', countdownStartTime)
 
       // Update room status to countdown
+      const updateData = { 
+        status: 'countdown',
+        countdown_start_time: countdownStartTime,
+        countdown_duration: duration,
+        updated_at: countdownStartTime // Add updated_at field to satisfy Supabase audit
+      }
+      
+      console.log('[SupabaseRoomManager] Updating room with data:', updateData)
+      
       const { error: updateError } = await supabase
         .from('rooms')
-        .update({ 
-          status: 'countdown',
-          countdown_start_time: countdownStartTime,
-          countdown_duration: duration
-        })
+        .update(updateData)
         .eq('room_code', roomCode)
 
       if (updateError) {
@@ -393,7 +403,7 @@ class SupabaseRoomManager {
         return false
       }
 
-      // Countdown started
+      console.log('[SupabaseRoomManager] Countdown started successfully')
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error starting countdown:', error)
@@ -480,7 +490,7 @@ class SupabaseRoomManager {
         quiz_score: quizScore !== undefined ? quizScore : currentPlayer.quiz_score || 0,
         memory_score: memoryScore !== undefined ? memoryScore : currentPlayer.memory_game_score || 0,
         questions_answered: questionsAnswered !== undefined ? questionsAnswered : currentPlayer.questions_answered || 0,
-        last_updated: new Date().toISOString()
+        updated_at: new Date().toISOString()
       }
 
       // Update both old fields (for backward compatibility) and new JSONB field
@@ -740,13 +750,13 @@ class SupabaseRoomManager {
         correct_answers: progress.correctAnswers !== undefined ? progress.correctAnswers : currentGameProgress.correct_answers || 0,
         quiz_score: progress.quizScore !== undefined ? progress.quizScore : currentGameProgress.quiz_score || 0,
         questions_answered: progress.questionsAnswered !== undefined ? progress.questionsAnswered : currentGameProgress.questions_answered || 0,
-        last_updated: new Date().toISOString()
+        updated_at: new Date().toISOString()
       }
 
       const newMemoryProgress = {
         ...currentMemoryProgress,
         ...progress.memoryProgress,
-        last_updated: new Date().toISOString()
+        updated_at: new Date().toISOString()
       }
 
       const updateData: any = {
@@ -814,7 +824,7 @@ class SupabaseRoomManager {
         .from('rooms')
         .update({ 
           game_state: gameState,
-          last_updated: new Date().toISOString()
+          updated_at: new Date().toISOString()
         })
         .eq('room_code', roomCode)
 

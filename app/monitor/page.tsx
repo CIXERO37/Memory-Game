@@ -355,20 +355,26 @@ function MonitorPageContent() {
     )
   }
 
-  // Function to truncate player names responsively
-  const truncatePlayerName = (name: string) => {
-    // More aggressive truncation for mobile
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      if (name.length <= 6) {
-        return name
-      }
-      return name.substring(0, 6) + "..."
+  // Function to split player names into two words for better display
+  const splitPlayerName = (name: string) => {
+    const words = name.split(' ')
+    
+    // If only one word or very short, return as is
+    if (words.length === 1 || name.length <= 8) {
+      return { firstWord: name, secondWord: '' }
     }
-    // Standard truncation for larger screens
-    if (name.length <= 8) {
-      return name
+    
+    // If two words, return them as is
+    if (words.length === 2) {
+      return { firstWord: words[0], secondWord: words[1] }
     }
-    return name.substring(0, 8) + "..."
+    
+    // If more than two words, take first two words
+    if (words.length > 2) {
+      return { firstWord: words[0], secondWord: words[1] }
+    }
+    
+    return { firstWord: name, secondWord: '' }
   }
 
   const players = room.players.filter((p) => !p.isHost)
@@ -575,19 +581,24 @@ function MonitorPageContent() {
                           />
                         </div>
                         <div>
-                          <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white">{truncatePlayerName(player.username)}</h3>
+                          {(() => {
+                            const { firstWord, secondWord } = splitPlayerName(player.username)
+                            return (
+                              <div className="text-center">
+                                <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
+                                  {firstWord}
+                                </h3>
+                                {secondWord && (
+                                  <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
+                                    {secondWord}
+                                  </h3>
+                                )}
+                              </div>
+                            )
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs sm:text-sm font-bold ${
-                          questionsAnswered >= quizSettings.questionCount 
-                            ? 'text-green-300' 
-                            : questionsAnswered > 0 
-                              ? 'text-blue-300' 
-                              : 'text-gray-400'
-                        }`}>
-                          {questionsAnswered}/{quizSettings.questionCount}
-                        </span>
                         <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
                           <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} POINTS</span>
                         </div>
@@ -600,6 +611,15 @@ function MonitorPageContent() {
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1 sm:gap-2">
                           </div>
+                          <span className={`text-xs sm:text-sm font-bold ${
+                            questionsAnswered >= quizSettings.questionCount 
+                              ? 'text-green-300' 
+                              : questionsAnswered > 0 
+                                ? 'text-blue-300' 
+                                : 'text-gray-400'
+                          }`}>
+                            {questionsAnswered}/{quizSettings.questionCount}
+                          </span>
                         </div>
                         <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3 sm:h-4 relative overflow-hidden">
                           <div 

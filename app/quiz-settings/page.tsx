@@ -7,6 +7,7 @@ import { ArrowLeft, Settings } from "lucide-react"
 import Link from "next/link"
 import { roomManager } from "@/lib/room-manager"
 import { getQuizById } from "@/lib/quiz-data"
+import { quizApi } from "@/lib/supabase"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
@@ -23,19 +24,60 @@ function QuizSettingsPageContent() {
   const [maxQuestions, setMaxQuestions] = useState(50) // Default max questions
   const [quiz, setQuiz] = useState<any>(null)
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
+  const [isLoadingQuiz, setIsLoadingQuiz] = useState(true)
 
   useEffect(() => {
     const quizId = searchParams.get("quizId")
     if (quizId) {
       setSelectedQuiz(quizId)
-      // Get quiz data to determine max questions
-      const quizData = getQuizById(quizId)
-      if (quizData) {
-        setQuiz(quizData)
-        setMaxQuestions(quizData.questions.length)
-        // Set default question count to min of 10 or total questions
-        setQuestionCount([Math.min(10, quizData.questions.length)])
+      
+      // Try to get quiz data from Supabase first (for UUIDs)
+      const fetchQuizData = async () => {
+        setIsLoadingQuiz(true)
+        try {
+          console.log("[QuizSettings] Fetching quiz from Supabase with ID:", quizId)
+          const quizData = await quizApi.getQuizById(quizId)
+          console.log("[QuizSettings] Supabase Quiz Data:", quizData)
+          
+          if (quizData) {
+            setQuiz(quizData)
+            setMaxQuestions(quizData.questions?.length || 50)
+            setQuestionCount([Math.min(10, quizData.questions?.length || 50)])
+            setIsLoadingQuiz(false)
+            return
+          }
+        } catch (error) {
+          console.log("[QuizSettings] Supabase fetch failed, trying local data:", error)
+        }
+        
+        // Fallback to local data (for short IDs like "math-basic")
+        const localQuizData = getQuizById(quizId)
+        console.log("[QuizSettings] Local Quiz Data:", localQuizData)
+        
+        if (localQuizData) {
+          setQuiz(localQuizData)
+          setMaxQuestions(localQuizData.questions.length)
+          setQuestionCount([Math.min(10, localQuizData.questions.length)])
+        } else {
+          // If neither found, create a fallback quiz object
+          console.warn("[QuizSettings] Quiz not found in both Supabase and local data for ID:", quizId)
+          const fallbackQuiz = {
+            id: quizId,
+            title: "Custom Quiz",
+            description: "A custom quiz created by the host",
+            icon: "HelpCircle",
+            color: "bg-primary/10 text-primary",
+            difficulty: "Medium" as const,
+            questions: []
+          }
+          setQuiz(fallbackQuiz)
+          setMaxQuestions(50) // Default max questions
+          setQuestionCount([10]) // Default question count
+        }
+        setIsLoadingQuiz(false)
       }
+      
+      fetchQuizData()
     } else {
       // Redirect to select quiz if no quizId
       router.push("/select-quiz")
@@ -218,12 +260,30 @@ function QuizSettingsPageContent() {
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white border-2 sm:border-4 border-black rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 pixel-settings-icon">
                     <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
                   </div>
-                  <div className="inline-block bg-white border-2 border-black rounded px-3 sm:px-4 py-1 sm:py-2 pixel-header-title">
-                    <h2 className="text-lg sm:text-xl font-bold text-black pixel-font">QUIZ SETTINGS</h2>
-                  </div>
-                  <div className="bg-black/20 border border-white/30 rounded px-3 py-2">
-                    <p className="text-xs sm:text-sm text-white font-medium pixel-font-sm">CONFIGURE YOUR QUIZ PREFERENCES</p>
-                  </div>
+                  
+                  {/* Quiz Information Display */}
+                  {isLoadingQuiz ? (
+                    <div className="bg-white border-2 border-black rounded-lg p-3 sm:p-4 pixel-quiz-info">
+                      <div className="text-center space-y-2">
+                        <div className="animate-pulse">
+                          <div className="h-6 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded"></div>
+                        </div>
+                        <p className="text-sm text-gray-500 pixel-font-sm">Loading quiz data...</p>
+                      </div>
+                    </div>
+                  ) : quiz ? (
+                    <div className="bg-white border-2 border-black rounded-lg p-3 sm:p-4 pixel-quiz-info">
+                      <div className="text-center space-y-2">
+                        <h2 className="text-lg sm:text-xl font-bold text-black pixel-font">
+                          {quiz.title}
+                        </h2>
+                        <p className="text-sm sm:text-base text-gray-700 pixel-font-sm leading-relaxed">
+                          {quiz.description}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Pixel Time Limit Section */}

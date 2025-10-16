@@ -4,18 +4,121 @@ import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check } from "lucide-react"
+import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check, Book, BookOpen, Beaker, Calculator, Clock, Globe, Languages, Laptop, Dumbbell, Film, Briefcase, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useQuizzes, transformQuizData } from "@/hooks/use-quiz"
+import { useQuizzes } from "@/hooks/use-quiz"
+
+// Categories and background images mapping
+const categories = [
+  {
+    value: "all",
+    label: "All Categories",
+    icon: <Book className="h-4 w-4 text-blue-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80",
+  },
+  {
+    value: "general",
+    label: "General",
+    icon: <BookOpen className="h-4 w-4" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1707926310424-f7b837508c40?q=80&w=1632&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "science",
+    label: "Science",
+    icon: <Beaker className="h-4 w-4 text-green-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "math",
+    label: "Mathematics",
+    icon: <Calculator className="h-4 w-4 text-red-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "history",
+    label: "History",
+    icon: <Clock className="h-4 w-4 text-yellow-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80",
+  },
+  {
+    value: "geography",
+    label: "Geography",
+    icon: <Globe className="h-4 w-4 text-teal-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1592252032050-34897f779223?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "language",
+    label: "Language",
+    icon: <Languages className="h-4 w-4 text-purple-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1620969427101-7a2bb6d83273?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "technology",
+    label: "Technology",
+    icon: <Laptop className="h-4 w-4 text-blue-500" />,
+    bgImage:
+      "https://plus.unsplash.com/premium_photo-1661963874418-df1110ee39c1?q=80&w=1086&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "sports",
+    label: "Sports",
+    icon: <Dumbbell className="h-4 w-4 text-orange-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "entertainment",
+    label: "Entertainment",
+    icon: <Film className="h-4 w-4 text-pink-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1470020618177-f49a96241ae7?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    value: "business",
+    label: "Business",
+    icon: <Briefcase className="h-4 w-4 text-indigo-500" />,
+    bgImage:
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80",
+  },
+];
+
+// Helper function to get background image for category
+const getCategoryBgImage = (category: string) => {
+  const categoryLower = category?.toLowerCase() || 'general';
+  const categoryData = categories.find(cat => 
+    cat.value === categoryLower || 
+    cat.label.toLowerCase() === categoryLower
+  );
+  return categoryData?.bgImage || categories[1].bgImage; // Default to General if not found
+};
+
+// Helper function to get category icon
+const getCategoryIcon = (category: string) => {
+  const categoryLower = category?.toLowerCase() || 'general';
+  const categoryData = categories.find(cat => 
+    cat.value === categoryLower || 
+    cat.label.toLowerCase() === categoryLower
+  );
+  return categoryData?.icon || categories[1].icon; // Default to General if not found
+};
 
 
 export default function SelectQuizPage() {
   const router = useRouter()
   const [searchInput, setSearchInput] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
-  const [difficultyFilter, setDifficultyFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("all")
   const [isSelectAllExpanded, setIsSelectAllExpanded] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 6 // 2 rows x 3 columns
   
   // Fetch quizzes from Supabase
   const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
@@ -28,18 +131,82 @@ export default function SelectQuizPage() {
 
   // Transform Supabase data to match existing interface
   const quizzes = useMemo(() => {
-    return supabaseQuizzes.map(transformQuizData)
+    return supabaseQuizzes
   }, [supabaseQuizzes])
 
   const filteredQuizzes = useMemo(() => {
     return quizzes.filter((quiz) => {
       const matchesSearch = searchTerm === "" || 
                            quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           quiz.description.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesDifficulty = difficultyFilter === "all" || quiz.difficulty === difficultyFilter
-      return matchesSearch && matchesDifficulty
+                           (quiz.description && quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      const matchesCategory = categoryFilter === "all" || quiz.category === categoryFilter
+      return matchesSearch && matchesCategory
     })
-  }, [quizzes, searchTerm, difficultyFilter])
+  }, [quizzes, searchTerm, categoryFilter])
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentQuizzes = filteredQuizzes.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, categoryFilter])
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1))
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+  }
+
+  const handlePageClick = (pageNumber: number) => {
+    setCurrentPage(pageNumber)
+  }
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Show first page
+      pages.push(1)
+      
+      if (currentPage > 3) {
+        pages.push('...')
+      }
+      
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1)
+      const end = Math.min(totalPages - 1, currentPage + 1)
+      
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i)
+        }
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('...')
+      }
+      
+      // Show last page
+      if (totalPages > 1) {
+        pages.push(totalPages)
+      }
+    }
+    
+    return pages
+  }
 
   const handleQuizSelect = (quizId: string) => {
     // Navigate to settings page with quizId
@@ -108,10 +275,10 @@ export default function SelectQuizPage() {
                 </div>
               </div>
               
-              {/* Pixel Difficulty Filter */}
+              {/* Pixel Category Filter */}
               <div className="sm:w-56">
                 <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-xs sm:text-sm">FILTER</label>
+                  <label className="text-black font-bold text-xs sm:text-sm">CATEGORIES</label>
                 </div>
                 <div className="relative">
                   <div className="relative">
@@ -120,13 +287,21 @@ export default function SelectQuizPage() {
                       className="w-full h-10 bg-white border-2 border-black rounded-none shadow-lg text-sm sm:text-base text-black hover:bg-gray-100 focus:border-blue-600 flex items-center justify-between px-3 min-h-[44px]"
                     >
                       <div className="flex items-center">
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 border border-black rounded mr-2 flex items-center justify-center">
-                          <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 mr-2 flex items-center justify-center">
+                          {getCategoryIcon(categoryFilter === "all" ? "all" : categoryFilter)}
                         </div>
                         <span className="font-bold text-xs sm:text-sm">
-                          {difficultyFilter === "all" ? "ALL DIFFICULTIES" : 
-                           difficultyFilter === "Easy" ? "EASY" :
-                           difficultyFilter === "Medium" ? "MEDIUM" : "HARD"}
+                          {categoryFilter === "all" ? "ALL CATEGORIES" : 
+                           categoryFilter === "General" ? "GENERAL" :
+                           categoryFilter === "Science" ? "SCIENCE" :
+                           categoryFilter === "Mathematics" ? "MATHEMATICS" :
+                           categoryFilter === "History" ? "HISTORY" :
+                           categoryFilter === "Geography" ? "GEOGRAPHY" :
+                           categoryFilter === "Language" ? "LANGUAGE" :
+                           categoryFilter === "Technology" ? "TECHNOLOGY" :
+                           categoryFilter === "Sports" ? "SPORTS" :
+                           categoryFilter === "Entertainment" ? "ENTERTAINMENT" :
+                           categoryFilter === "Business" ? "BUSINESS" : categoryFilter.toUpperCase()}
                         </span>
                       </div>
                       {isSelectAllExpanded ? (
@@ -138,60 +313,213 @@ export default function SelectQuizPage() {
                     
                     {/* Custom Dropdown Menu */}
                     {isSelectAllExpanded && (
-                      <div className="absolute top-full left-0 right-0 z-50 bg-white border-2 border-black shadow-lg mt-1">
+                      <div className="absolute top-full left-0 right-0 z-50 bg-white border-2 border-black shadow-lg mt-1 max-h-[220px] overflow-y-auto">
                         <button
                           onClick={() => {
-                            setDifficultyFilter("all")
+                            setCategoryFilter("all")
                             setIsSelectAllExpanded(false)
                           }}
                           className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-gray-200 flex items-center justify-between min-h-[44px] ${
-                            difficultyFilter === "all" ? "bg-gray-200" : "text-black"
+                            categoryFilter === "all" ? "bg-gray-200" : "text-black"
                           }`}
                         >
-                          <span>ALL DIFFICULTIES</span>
-                          {difficultyFilter === "all" && (
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-blue-500">
+                              {getCategoryIcon("all")}
+                            </div>
+                            <span>ALL CATEGORIES</span>
+                          </div>
+                          {categoryFilter === "all" && (
                             <Check className="h-4 w-4 text-green-600" />
                           )}
                         </button>
                         <button
                           onClick={() => {
-                            setDifficultyFilter("Easy")
+                            setCategoryFilter("General")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-blue-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "General" ? "bg-blue-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-black">
+                              {getCategoryIcon("General")}
+                            </div>
+                            <span>GENERAL</span>
+                          </div>
+                          {categoryFilter === "General" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("Science")
                             setIsSelectAllExpanded(false)
                           }}
                           className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-green-200 flex items-center justify-between min-h-[44px] ${
-                            difficultyFilter === "Easy" ? "bg-green-200" : "text-black"
+                            categoryFilter === "Science" ? "bg-green-200" : "text-black"
                           }`}
                         >
-                          <span>EASY</span>
-                          {difficultyFilter === "Easy" && (
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-green-500">
+                              {getCategoryIcon("Science")}
+                            </div>
+                            <span>SCIENCE</span>
+                          </div>
+                          {categoryFilter === "Science" && (
                             <Check className="h-4 w-4 text-green-600" />
                           )}
                         </button>
                         <button
                           onClick={() => {
-                            setDifficultyFilter("Medium")
-                            setIsSelectAllExpanded(false)
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-yellow-200 flex items-center justify-between min-h-[44px] ${
-                            difficultyFilter === "Medium" ? "bg-yellow-200" : "text-black"
-                          }`}
-                        >
-                          <span>MEDIUM</span>
-                          {difficultyFilter === "Medium" && (
-                            <Check className="h-4 w-4 text-green-600" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDifficultyFilter("Hard")
+                            setCategoryFilter("Mathematics")
                             setIsSelectAllExpanded(false)
                           }}
                           className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-red-200 flex items-center justify-between min-h-[44px] ${
-                            difficultyFilter === "Hard" ? "bg-red-200" : "text-black"
+                            categoryFilter === "Mathematics" ? "bg-red-200" : "text-black"
                           }`}
                         >
-                          <span>HARD</span>
-                          {difficultyFilter === "Hard" && (
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-red-500">
+                              {getCategoryIcon("Mathematics")}
+                            </div>
+                            <span>MATHEMATICS</span>
+                          </div>
+                          {categoryFilter === "Mathematics" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("History")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-yellow-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "History" ? "bg-yellow-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-yellow-500">
+                              {getCategoryIcon("History")}
+                            </div>
+                            <span>HISTORY</span>
+                          </div>
+                          {categoryFilter === "History" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("Geography")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-teal-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "Geography" ? "bg-teal-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-teal-500">
+                              {getCategoryIcon("Geography")}
+                            </div>
+                            <span>GEOGRAPHY</span>
+                          </div>
+                          {categoryFilter === "Geography" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("Language")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-purple-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "Language" ? "bg-purple-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-purple-500">
+                              {getCategoryIcon("Language")}
+                            </div>
+                            <span>LANGUAGE</span>
+                          </div>
+                          {categoryFilter === "Language" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("Technology")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-blue-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "Technology" ? "bg-blue-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-blue-500">
+                              {getCategoryIcon("Technology")}
+                            </div>
+                            <span>TECHNOLOGY</span>
+                          </div>
+                          {categoryFilter === "Technology" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("Sports")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-orange-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "Sports" ? "bg-orange-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-orange-500">
+                              {getCategoryIcon("Sports")}
+                            </div>
+                            <span>SPORTS</span>
+                          </div>
+                          {categoryFilter === "Sports" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("Entertainment")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-pink-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "Entertainment" ? "bg-pink-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-pink-500">
+                              {getCategoryIcon("Entertainment")}
+                            </div>
+                            <span>ENTERTAINMENT</span>
+                          </div>
+                          {categoryFilter === "Entertainment" && (
+                            <Check className="h-4 w-4 text-green-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCategoryFilter("Business")
+                            setIsSelectAllExpanded(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-purple-200 flex items-center justify-between min-h-[44px] ${
+                            categoryFilter === "Business" ? "bg-purple-200" : "text-black"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 mr-2 text-indigo-500">
+                              {getCategoryIcon("Business")}
+                            </div>
+                            <span>BUSINESS</span>
+                          </div>
+                          {categoryFilter === "Business" && (
                             <Check className="h-4 w-4 text-green-600" />
                           )}
                         </button>
@@ -203,7 +531,7 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
             {loading ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
@@ -260,35 +588,52 @@ export default function SelectQuizPage() {
                       <Search className="h-8 w-8 text-black" />
                     </div>
                     <h3 className="text-lg font-bold text-white mb-2">NO QUIZZES FOUND</h3>
-                    <p className="text-white/80 text-sm">TRY ADJUSTING YOUR SEARCH TERMS OR DIFFICULTY FILTER</p>
+                    <p className="text-white/80 text-sm">TRY ADJUSTING YOUR SEARCH TERMS OR CATEGORY FILTER</p>
                   </div>
                 </div>
               </div>
             ) : (
-              filteredQuizzes.map((quiz) => {
-                const difficultyColor = quiz.difficulty === 'Easy' ? 'bg-green-500' : 
-                                       quiz.difficulty === 'Medium' ? 'bg-yellow-500' : 'bg-red-500'
+              currentQuizzes.map((quiz) => {
+                const categoryBgImage = getCategoryBgImage(quiz.category || 'General');
+                const categoryColor = quiz.category === 'General' ? 'bg-blue-500' : 
+                                    quiz.category === 'Science' ? 'bg-green-500' :
+                                    quiz.category === 'Mathematics' ? 'bg-red-500' :
+                                    quiz.category === 'History' ? 'bg-yellow-500' :
+                                    quiz.category === 'Geography' ? 'bg-teal-500' :
+                                    quiz.category === 'Language' ? 'bg-purple-500' :
+                                    quiz.category === 'Technology' ? 'bg-blue-500' :
+                                    quiz.category === 'Sports' ? 'bg-orange-500' :
+                                    quiz.category === 'Entertainment' ? 'bg-pink-500' :
+                                    quiz.category === 'Business' ? 'bg-purple-500' : 'bg-gray-500'
                 return (
                   <div
                     key={quiz.id}
                     className="relative cursor-pointer transition-all duration-300 hover:-translate-y-1 pixel-quiz-card-container"
                     onClick={() => handleQuizSelect(quiz.id)}
                   >
-                    <div className="relative pixel-quiz-card">
+                    <div 
+                      className="relative pixel-quiz-card bg-cover bg-center bg-no-repeat"
+                      style={{
+                        backgroundImage: `url(${categoryBgImage})`,
+                      }}
+                    >
+                      {/* Light overlay for better text readability */}
+                      <div className="absolute inset-0 bg-black/20 z-0"></div>
+                      
                       {/* Mobile Layout - Stacked */}
-                      <div className="sm:hidden flex flex-col h-full p-2 overflow-hidden">
-                        {/* Header with title and difficulty */}
+                      <div className="sm:hidden flex flex-col h-full p-2 overflow-hidden relative z-10">
+                        {/* Header with title and category */}
                         <div className="flex items-start justify-between mb-2 gap-1">
                           <div className="bg-white border-2 border-black rounded px-1.5 py-0.5 shadow-lg flex-1 min-w-0 overflow-hidden">
                             <h3 className="text-xs font-bold text-black leading-tight overflow-hidden mobile-title-ellipsis">
                               {quiz.title.toUpperCase()}
                             </h3>
                           </div>
-                          <div className={`${difficultyColor} border-2 border-black rounded px-1 py-0.5 shadow-xl flex-shrink-0`}>
+                          <div className={`${categoryColor} border-2 border-black rounded px-1 py-0.5 shadow-xl flex-shrink-0`}>
                             <div className="flex items-center gap-0.5">
                               <div className="w-1 h-1 bg-white rounded-full"></div>
                               <span className="text-white font-bold text-xs">
-                                {quiz.difficulty.toUpperCase()}
+                                {quiz.category?.toUpperCase() || 'GENERAL'}
                               </span>
                             </div>
                           </div>
@@ -298,7 +643,7 @@ export default function SelectQuizPage() {
                         <div className="bg-black/20 border border-white/30 rounded px-1.5 py-0.5 mb-2 flex-1 min-h-0 overflow-hidden">
                           <div className="mobile-description-scroll">
                             <p className="text-xs text-white font-medium leading-tight">
-                              {quiz.description.toUpperCase()}
+                              {quiz.description?.toUpperCase() || ''}
                             </p>
                           </div>
                         </div>
@@ -312,13 +657,13 @@ export default function SelectQuizPage() {
                       </div>
 
                       {/* Desktop Layout - Original */}
-                      <div className="hidden sm:flex absolute inset-0 flex-col justify-center items-center text-center px-4 z-10">
-                        {/* Pixel Difficulty badge */}
-                        <div className={`absolute -top-2 -right-2 ${difficultyColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform rotate-3`}>
+                      <div className="hidden sm:flex absolute inset-0 flex-col justify-center items-center text-center px-4 z-20">
+                        {/* Pixel Category badge */}
+                        <div className={`absolute -top-2 -right-2 ${categoryColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform rotate-3`}>
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                             <span className="text-white font-bold text-xs tracking-wide">
-                              {quiz.difficulty.toUpperCase()}
+                              {quiz.category?.toUpperCase() || 'GENERAL'}
                             </span>
                           </div>
                         </div>
@@ -330,7 +675,7 @@ export default function SelectQuizPage() {
                         </div>
                         <div className="bg-black/20 border border-white/30 rounded px-2 py-1 mb-3">
                           <p className="text-xs text-white font-medium leading-relaxed">
-                            {quiz.description.toUpperCase()}
+                            {quiz.description?.toUpperCase() || ''}
                           </p>
                         </div>
                         <div className="bg-blue-500 border-2 border-black rounded px-2 py-1">
@@ -345,6 +690,66 @@ export default function SelectQuizPage() {
               })
             )}
           </div>
+
+          {/* Retro Gaming Style Pagination with Modern Structure */}
+          {!loading && !error && filteredQuizzes.length > itemsPerPage && (
+            <div className="mt-8 flex justify-center">
+              <div className="relative pixel-button-container">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-blue-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <div className="relative bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg border-4 border-black shadow-2xl p-3">
+                  <div className="flex items-center gap-2">
+                    {/* Previous Button */}
+                    <button
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className={`flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 border-2 border-black ${
+                        currentPage === 1
+                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                          : 'bg-green-500 text-white hover:bg-green-400 hover:scale-105'
+                      }`}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1">
+                      {generatePageNumbers().map((page, index) => (
+                        <div key={index}>
+                          {page === '...' ? (
+                            <span className="px-2 py-1 text-white text-sm font-bold">...</span>
+                          ) : (
+                            <button
+                              onClick={() => handlePageClick(page as number)}
+                              className={`flex items-center justify-center w-8 h-8 rounded-md text-sm font-bold transition-all duration-200 border-2 border-black ${
+                                currentPage === page
+                                  ? 'bg-purple-400 text-black shadow-lg scale-110'
+                                  : 'bg-white text-black hover:bg-gray-200 hover:scale-105'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 border-2 border-black ${
+                        currentPage === totalPages
+                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                          : 'bg-green-500 text-white hover:bg-green-400 hover:scale-105'
+                      }`}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

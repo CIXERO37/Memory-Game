@@ -38,6 +38,12 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
   }, [countdown, isActive, isConnected, isInDelayPeriod, room.code, playerId])
 
   // Show loading state if countdown data is not ready yet
+  console.log("[CountdownTimer] Room data:", { 
+    status: room.status, 
+    countdownStartTime: room.countdownStartTime, 
+    countdownDuration: room.countdownDuration 
+  })
+  
   if (!room.countdownStartTime || !room.countdownDuration) {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
@@ -106,17 +112,7 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
               {isInDelayPeriod ? "PREPARING..." : "GET READY!"}
             </h3>
             
-            {/* Connection Status Indicator */}
-            <div className="flex items-center justify-center gap-2 mb-4">
-              {isConnected ? (
-                <Wifi className="h-4 w-4 text-green-400" />
-              ) : (
-                <WifiOff className="h-4 w-4 text-red-400" />
-              )}
-              <span className={`text-sm ${isConnected ? 'text-green-400' : 'text-red-400'} pixel-font-sm`}>
-                {isConnected ? 'SYNCED' : 'OFFLINE'}
-              </span>
-            </div>
+            
             
             {/* Countdown Number with Smooth Animation */}
             <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${

@@ -276,7 +276,7 @@ function ResultPageContent() {
             </div>
             
             {/* Player Name */}
-            <h2 className="text-2xl font-bold text-white/95 mb-4 drop-shadow-lg">{playerRanking.player.username}</h2>
+            <h2 className="text-2xl font-bold text-white/95 mb-4 drop-shadow-lg line-clamp-2 leading-tight">{playerRanking.player.username}</h2>
             
             {/* Rank Display */}
             <div className="mb-6">
