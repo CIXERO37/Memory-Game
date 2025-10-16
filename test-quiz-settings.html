@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Quiz Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-link {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border: 2px solid #333;
+            text-decoration: none;
+            color: #333;
+            border-radius: 5px;
+        }
+        .test-link:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Quiz Settings Page</h1>
+    <p>Click the links below to test different quiz IDs:</p>
+    
+    <a href="http://localhost:3000/quiz-settings?quizId=math-basic" class="test-link">
+        Test with Math Basic Quiz (should show "Basic Mathematics")
+    </a>
+    
+    <a href="http://localhost:3000/quiz-settings?quizId=science-nature" class="test-link">
+        Test with Science Nature Quiz (should show "Science & Nature")
+    </a>
+    
+    <a href="http://localhost:3000/quiz-settings?quizId=geography-world" class="test-link">
+        Test with Geography World Quiz (should show "World Geography")
+    </a>
+    
+    <a href="http://localhost:3000/quiz-settings?quizId=4daf5018-520f-469f-bb75-83e6b3623a28" class="test-link">
+        Test with UUID (should show "Custom Quiz" fallback)
+    </a>
+    
+    <a href="http://localhost:3000/quiz-settings?quizId=nonexistent" class="test-link">
+        Test with Non-existent ID (should show "Custom Quiz" fallback)
+    </a>
+    
+    <h2>Expected Results:</h2>
+    <ul>
+        <li>All pages should show a quiz information box below the settings icon</li>
+        <li>The box should have a neon blue glow effect that pulses</li>
+        <li>Loading state should show skeleton animation while fetching data</li>
+        <li>Valid quiz IDs should show the actual quiz title and description from database</li>
+        <li>UUID quiz IDs should fetch data from Supabase database and show real title/description</li>
+        <li>Invalid quiz IDs should show "Custom Quiz" with a yellow warning badge</li>
+        <li>Console should show detailed logging of the fetch process</li>
+    </ul>
+    
+    <h2>How it works now:</h2>
+    <ol>
+        <li><strong>UUID Detection:</strong> If quizId looks like a UUID (long string), it tries Supabase first</li>
+        <li><strong>Supabase Fetch:</strong> Attempts to get quiz data from database using quizApi.getQuizById()</li>
+        <li><strong>Local Fallback:</strong> If Supabase fails, tries local data (for short IDs like "math-basic")</li>
+        <li><strong>Custom Fallback:</strong> If both fail, shows "Custom Quiz" with warning badge</li>
+        <li><strong>Real Data Display:</strong> Shows actual title and description from database</li>
+    </ol>
+</body>
+</html>

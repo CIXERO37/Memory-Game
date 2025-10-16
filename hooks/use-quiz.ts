@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { quizApi, Quiz, QuizCategory } from '@/lib/supabase'
+import { quizzes as localQuizzes } from '@/lib/quiz-data'
 
 // Hook for fetching all quizzes
 export function useQuizzes() {
@@ -16,11 +17,18 @@ export function useQuizzes() {
       const data = await quizApi.getQuizzes()
       console.log('Quizzes fetched successfully:', data)
       
-      setQuizzes(data)
+      // If no quizzes from Supabase, use local quizzes as fallback
+      if (data && data.length > 0) {
+        setQuizzes(data)
+      } else {
+        console.log('No quizzes from Supabase, using local quizzes as fallback')
+        setQuizzes(localQuizzes)
+      }
     } catch (err) {
       console.error('Error fetching quizzes:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch quizzes'
-      setError(errorMessage)
+      console.log('Using local quizzes as fallback due to error')
+      setQuizzes(localQuizzes)
+      setError(null) // Don't show error if we have local fallback
     } finally {
       setLoading(false)
     }
@@ -95,7 +103,7 @@ export function useSearchQuizzes(query: string) {
 
 // Hook for fetching categories
 export function useCategories() {
-  const [categories, setCategories] = useState<QuizCategory[]>([])
+  const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -122,12 +130,37 @@ export function useCategories() {
 // Transform Supabase quiz data to match existing interface
 export function transformQuizData(quiz: any): any {
   try {
+    // Map quiz titles to appropriate categories if category is not set
+    let category = quiz.category || 'General'
+    
+    if (!quiz.category) {
+      const title = quiz.title?.toLowerCase() || ''
+      if (title.includes('math') || title.includes('mathematics')) {
+        category = 'Mathematics'
+      } else if (title.includes('science') || title.includes('physics') || title.includes('nature')) {
+        category = 'Science'
+      } else if (title.includes('geography') || title.includes('world')) {
+        category = 'Geography'
+      } else if (title.includes('english') || title.includes('vocabulary') || title.includes('language')) {
+        category = 'Language'
+      } else if (title.includes('history') || title.includes('historical')) {
+        category = 'History'
+      } else if (title.includes('art') || title.includes('culture') || title.includes('music')) {
+        category = 'Entertainment'
+      } else if (title.includes('programming') || title.includes('technology') || title.includes('computer')) {
+        category = 'Technology'
+      } else if (title.includes('sport') || title.includes('fitness') || title.includes('exercise')) {
+        category = 'Sports'
+      } else if (title.includes('business') || title.includes('finance') || title.includes('economics')) {
+        category = 'Business'
+      }
+    }
+
     return {
       id: quiz.id,
       title: quiz.title,
       description: quiz.description || '',
-      difficulty: quiz.difficulty,
-      category: 'General', // Default category since it's not in database
+      category: category,
       questions: Array.isArray(quiz.questions) ? quiz.questions.map((q: any) => ({
         id: q.id,
         question: q.question,
@@ -143,41 +176,14 @@ export function transformQuizData(quiz: any): any {
       id: quiz.id || 'unknown',
       title: quiz.title || 'Unknown Quiz',
       description: quiz.description || '',
-      difficulty: quiz.difficulty || 'Easy',
       category: 'General',
       questions: []
     }
   }
 }
 
-// Hook for quizzes by difficulty
-export function useQuizzesByDifficulty(difficulty: 'Easy' | 'Medium' | 'Hard') {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function fetchQuizzes() {
-      try {
-        setLoading(true)
-        const data = await quizApi.getQuizzesByDifficulty(difficulty)
-        setQuizzes(data)
-        setError(null)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch quizzes')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchQuizzes()
-  }, [difficulty])
-
-  return { quizzes, loading, error }
-}
-
 // Hook for quizzes by category
-export function useQuizzesByCategory(categoryName: string) {
+export function useQuizzesByCategory(category: string) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -186,7 +192,7 @@ export function useQuizzesByCategory(categoryName: string) {
     async function fetchQuizzes() {
       try {
         setLoading(true)
-        const data = await quizApi.getQuizzesByCategory(categoryName)
+        const data = await quizApi.getQuizzesByCategory(category)
         setQuizzes(data)
         setError(null)
       } catch (err) {
@@ -196,8 +202,13 @@ export function useQuizzesByCategory(categoryName: string) {
       }
     }
 
-    fetchQuizzes()
-  }, [categoryName])
+    if (category) {
+      fetchQuizzes()
+    } else {
+      setQuizzes([])
+      setLoading(false)
+    }
+  }, [category])
 
   return { quizzes, loading, error }
 }

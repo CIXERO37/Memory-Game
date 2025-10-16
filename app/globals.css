@@ -1025,7 +1025,6 @@
 }
 
 .pixel-quiz-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: 4px solid #000;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -2201,4 +2200,104 @@
     inset 1px 1px 0px rgba(255, 255, 255, 0.2),
     inset -1px -1px 0px rgba(0, 0, 0, 0.6);
   transform: translate(3px, 3px);
+}
+
+/* Quiz Info Box Neon Effect */
+.pixel-quiz-info {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+  border: 2px solid #000;
+  border-radius: 8px;
+  box-shadow: 
+    0 0 20px rgba(14, 165, 233, 0.3),
+    0 0 40px rgba(14, 165, 233, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: quiz-info-glow 3s ease-in-out infinite alternate;
+  overflow: hidden;
+}
+
+.pixel-quiz-info::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(14, 165, 233, 0.1) 50%, 
+    transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.pixel-quiz-info:hover::before {
+  transform: translateX(100%);
+}
+
+@keyframes quiz-info-glow {
+  0% {
+    box-shadow: 
+      0 0 20px rgba(14, 165, 233, 0.3),
+      0 0 40px rgba(14, 165, 233, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-color: #000;
+  }
+  100% {
+    box-shadow: 
+      0 0 30px rgba(14, 165, 233, 0.6),
+      0 0 60px rgba(14, 165, 233, 0.4),
+      0 0 80px rgba(14, 165, 233, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border-color: rgba(14, 165, 233, 0.8);
+  }
+}
+
+.pixel-quiz-info h2 {
+  color: #1e293b;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.pixel-quiz-info p {
+  color: #475569;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  line-height: 1.6;
+}
+
+/* Mobile responsive for quiz info */
+@media (max-width: 768px) {
+  .pixel-quiz-info {
+    padding: 0.75rem !important;
+    margin: 0.5rem 0 !important;
+  }
+  
+  .pixel-quiz-info h2 {
+    font-size: 1rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  .pixel-quiz-info p {
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .pixel-quiz-info {
+    padding: 0.5rem !important;
+    margin: 0.25rem 0 !important;
+  }
+  
+  .pixel-quiz-info h2 {
+    font-size: 0.875rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  .pixel-quiz-info p {
+    font-size: 0.75rem !important;
+    line-height: 1.3 !important;
+  }
 }

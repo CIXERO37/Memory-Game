@@ -58,10 +58,9 @@ export interface Quiz {
   id: string
   title: string
   description?: string
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  category?: QuizCategory // Make category optional since it's not in database
+  category: 'General' | 'Science' | 'Mathematics' | 'History' | 'Geography' | 'Language' | 'Technology' | 'Sports' | 'Entertainment' | 'Business'
   questions: QuestionData[]
-  metadata?: QuizMetadata // Make metadata optional since it's not in database
+  metadata?: QuizMetadata
   created_at: string
   updated_at: string
 }
@@ -209,17 +208,20 @@ export const quizApi = {
   },
 
   // Get unique categories from all quizzes
-  async getCategories(): Promise<QuizCategory[]> {
-    const quizzes = await this.getQuizzes()
-    const categories = new Map<string, QuizCategory>()
-    
-    quizzes.forEach(quiz => {
-      if (quiz.category) {
-        categories.set(quiz.category.name, quiz.category)
-      }
-    })
-    
-    return Array.from(categories.values())
+  async getCategories(): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('quizzes')
+      .select('category')
+      .not('category', 'is', null)
+
+    if (error) {
+      console.error('Error fetching categories:', error)
+      throw error
+    }
+
+    // Get unique categories
+    const uniqueCategories = [...new Set(data?.map(q => q.category) || [])]
+    return uniqueCategories
   },
 
   // Search quizzes
@@ -238,26 +240,19 @@ export const quizApi = {
     return data || []
   },
 
-  // Get quizzes by difficulty
-  async getQuizzesByDifficulty(difficulty: 'Easy' | 'Medium' | 'Hard'): Promise<Quiz[]> {
+  // Get quizzes by category
+  async getQuizzesByCategory(category: string): Promise<Quiz[]> {
     const { data, error } = await supabase
       .from('quizzes')
       .select('*')
-      .eq('difficulty', difficulty)
+      .eq('category', category)
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching quizzes by difficulty:', error)
+      console.error('Error fetching quizzes by category:', error)
       throw error
     }
 
     return data || []
-  },
-
-  // Get quizzes by category (not implemented - no category field in database)
-  async getQuizzesByCategory(categoryName: string): Promise<Quiz[]> {
-    // Since we don't have categories in the database, return empty array
-    console.warn('getQuizzesByCategory: Categories not implemented in current database structure')
-    return []
   }
 }

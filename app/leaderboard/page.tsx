@@ -31,6 +31,19 @@ interface Room {
   countdownDuration?: number
 }
 
+// Utility function to format player names
+function formatPlayerName(username: string): string {
+  const words = username.trim().split(/\s+/)
+  
+  if (words.length >= 2) {
+    // Two or more words: break line between first two words
+    return words.slice(0, 2).join('\n')
+  } else {
+    // Single word: return as is
+    return username
+  }
+}
+
 function LeaderboardPageContent() {
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
@@ -331,7 +344,7 @@ function LeaderboardPageContent() {
                       </div>
                       
                       {/* Name */}
-                      <h3 className="text-2xl font-bold text-slate-200 mb-6 text-center">{sortedPlayers[1].username}</h3>
+                      <h3 className="text-2xl font-bold text-slate-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[1].username)}</h3>
                       
                       {/* Score */}
                       <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-2xl px-8 py-6 shadow-2xl">
@@ -376,7 +389,7 @@ function LeaderboardPageContent() {
                       </div>
                       
                       {/* Champion Name */}
-                      <h2 className="text-3xl font-bold text-yellow-200 mb-8 text-center">{champion.username}</h2>
+                      <h2 className="text-3xl font-bold text-yellow-200 mb-8 text-center whitespace-pre-line">{formatPlayerName(champion.username)}</h2>
                       
                       {/* Champion Score */}
                       <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl px-8 py-6 shadow-2xl">
@@ -435,7 +448,7 @@ function LeaderboardPageContent() {
                       </div>
                       
                       {/* Name */}
-                      <h3 className="text-2xl font-bold text-amber-200 mb-6 text-center">{sortedPlayers[2].username}</h3>
+                      <h3 className="text-2xl font-bold text-amber-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[2].username)}</h3>
                       
                       {/* Score */}
                       <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl px-8 py-6 shadow-2xl">
@@ -509,7 +522,7 @@ function LeaderboardPageContent() {
                            
                            {/* Player Name - Middle */}
                            <div className="flex-1 min-w-0">
-                             <h4 className="font-bold text-lg text-white group-hover:text-indigo-200 transition-colors duration-300 truncate">{player.username}</h4>
+                             <h4 className="font-bold text-lg text-white group-hover:text-indigo-200 transition-colors duration-300 whitespace-pre-line">{formatPlayerName(player.username)}</h4>
                            </div>
                            
                            {/* Points - Right */}

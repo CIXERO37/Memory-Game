@@ -44,7 +44,8 @@ function JoinPageContent() {
             if (sessionData && sessionData.user_type === 'player') {
               setPlayerId(sessionData.user_data.id)
               setSessionId(existingSessionId)
-              setUsername(sessionData.user_data.username || "")
+              // Always start with empty username - don't load previous username
+              setUsername("")
               setSelectedAvatar(sessionData.user_data.avatar || "")
               return
             }

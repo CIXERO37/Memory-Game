@@ -12,7 +12,7 @@ export interface Quiz {
   description: string
   icon: string
   color: string
-  difficulty: "Easy" | "Medium" | "Hard"
+  category: "General" | "Science" | "Mathematics" | "History" | "Geography" | "Language" | "Technology" | "Sports" | "Entertainment" | "Business"
   questions: Question[]
 }
 
@@ -23,7 +23,7 @@ export const quizzes: Quiz[] = [
     description: "Addition, subtraction, multiplication, and division",
     icon: "Calculator",
     color: "bg-chart-1/10 text-chart-1",
-    difficulty: "Easy",
+    category: "Mathematics",
     questions: [
       { id: 1, question: "What is 5 + 3?", options: ["6", "7", "8", "9"], correct: 2 },
       { id: 2, question: "What is 12 - 7?", options: ["4", "5", "6", "7"], correct: 1 },
@@ -83,7 +83,7 @@ export const quizzes: Quiz[] = [
     description: "Animals, plants, and natural phenomena",
     icon: "Beaker",
     color: "bg-chart-2/10 text-chart-2",
-    difficulty: "Medium",
+    category: "Science",
     questions: [
       {
         id: 1,
@@ -323,7 +323,7 @@ export const quizzes: Quiz[] = [
     description: "Countries, capitals, and landmarks",
     icon: "Globe",
     color: "bg-chart-3/10 text-chart-3",
-    difficulty: "Medium",
+    category: "Geography",
     questions: [
       {
         id: 1,
@@ -634,7 +634,7 @@ export const quizzes: Quiz[] = [
     description: "Words, meanings, and grammar",
     icon: "BookOpen",
     color: "bg-chart-4/10 text-chart-4",
-    difficulty: "Easy",
+    category: "Language",
     questions: [
       {
         id: 1,
@@ -828,7 +828,7 @@ export const quizzes: Quiz[] = [
     description: "Important events and historical figures",
     icon: "Trophy",
     color: "bg-chart-5/10 text-chart-5",
-    difficulty: "Hard",
+    category: "History",
     questions: [
       {
         id: 1,
@@ -1127,7 +1127,7 @@ export const quizzes: Quiz[] = [
     description: "Famous artists, paintings, and cultural facts",
     icon: "Palette",
     color: "bg-primary/10 text-primary",
-    difficulty: "Medium",
+    category: "Entertainment",
     questions: [
       {
         id: 1,
@@ -1419,7 +1419,7 @@ export const quizzes: Quiz[] = [
     description: "Instruments, composers, and music theory",
     icon: "Music",
     color: "bg-accent/10 text-accent",
-    difficulty: "Easy",
+    category: "Entertainment",
     questions: [
       { id: 1, question: "How many strings does a guitar typically have?", options: ["4", "5", "6", "7"], correct: 2 },
       {
@@ -1656,7 +1656,7 @@ export const quizzes: Quiz[] = [
     description: "Simple physics concepts and experiments",
     icon: "Zap",
     color: "bg-destructive/10 text-destructive",
-    difficulty: "Hard",
+    category: "Science",
     questions: [
       {
         id: 1,
