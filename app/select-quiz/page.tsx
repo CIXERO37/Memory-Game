@@ -581,14 +581,83 @@ export default function SelectQuizPage() {
               </div>
             ) : filteredQuizzes.length === 0 ? (
               <div className="col-span-full text-center py-12">
+                {/* Enhanced Empty State Card with Unique Animations */}
                 <div className="relative inline-block mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
-                    <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                      <Search className="h-8 w-8 text-black" />
+                  {/* Multiple layered shadows for depth */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl transform rotate-1 pixel-button-shadow"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-pink-500 rounded-2xl transform rotate-2 opacity-50 pixel-button-shadow"></div>
+                  
+                  {/* Main card with morphing background */}
+                  <div className="relative bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl border-4 border-white/20 shadow-2xl p-8 overflow-hidden morphing-card">
+                    {/* Animated background pattern */}
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="floating-pattern"></div>
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2">NO QUIZZES FOUND</h3>
-                    <p className="text-white/80 text-sm">TRY ADJUSTING YOUR SEARCH TERMS OR CATEGORY FILTER</p>
+                    
+                    {/* Holographic shimmer effect */}
+                    <div className="absolute inset-0 holographic-shimmer"></div>
+                    
+                    {/* Glitch effect overlay */}
+                    <div className="absolute inset-0 glitch-overlay"></div>
+                    
+                    {/* Interactive search icon with unique animations */}
+                    <div className="relative z-10">
+                      <div className="w-20 h-20 mx-auto mb-6 relative">
+                        {/* Pulsing rings around the icon */}
+                        <div className="absolute inset-0 rounded-full border-4 border-white/30 animate-pulse-ring"></div>
+                        <div className="absolute inset-0 rounded-full border-2 border-white/50 animate-pulse-ring-delayed"></div>
+                        
+                        {/* Main icon container with liquid morphing */}
+                        <div className="relative w-full h-full bg-white/90 border-3 border-white rounded-2xl flex items-center justify-center liquid-morph">
+                          {/* Floating particles inside icon */}
+                          <div className="absolute inset-0">
+                            <div className="absolute top-2 left-2 w-1 h-1 bg-blue-500 rounded-full animate-float-particle"></div>
+                            <div className="absolute top-4 right-3 w-1 h-1 bg-purple-500 rounded-full animate-float-particle-delayed"></div>
+                            <div className="absolute bottom-3 left-3 w-1 h-1 bg-pink-500 rounded-full animate-float-particle-slow"></div>
+                            <div className="absolute bottom-2 right-2 w-1 h-1 bg-cyan-500 rounded-full animate-float-particle-slower"></div>
+                          </div>
+                          
+                          {/* Search icon with breathing animation */}
+                          <Search className="h-10 w-10 text-black animate-breathe relative z-10" />
+                        </div>
+                      </div>
+                      
+                      {/* Enhanced text with staggered animations */}
+                      <div className="space-y-4">
+                        <h3 className="text-2xl font-bold text-white mb-3 animate-text-reveal">
+                          <span className="inline-block animate-text-wave">N</span>
+                          <span className="inline-block animate-text-wave-delayed">O</span>
+                          <span className="inline-block animate-text-wave-delayed-2 mx-2">&nbsp;</span>
+                          <span className="inline-block animate-text-wave-delayed-3">Q</span>
+                          <span className="inline-block animate-text-wave-delayed-4">U</span>
+                          <span className="inline-block animate-text-wave-delayed-5">I</span>
+                          <span className="inline-block animate-text-wave-delayed-6">Z</span>
+                          <span className="inline-block animate-text-wave-delayed-7">Z</span>
+                          <span className="inline-block animate-text-wave-delayed-8">E</span>
+                          <span className="inline-block animate-text-wave-delayed-9">S</span>
+                          <span className="inline-block animate-text-wave-delayed-10 mx-2">&nbsp;</span>
+                          <span className="inline-block animate-text-wave-delayed-11">F</span>
+                          <span className="inline-block animate-text-wave-delayed-12">O</span>
+                          <span className="inline-block animate-text-wave-delayed-13">U</span>
+                          <span className="inline-block animate-text-wave-delayed-14">N</span>
+                          <span className="inline-block animate-text-wave-delayed-15">D</span>
+                        </h3>
+                        
+                        <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-4 animate-text-slide-up">
+                          <p className="text-white/90 text-base font-medium leading-relaxed">
+                            TRY ADJUSTING YOUR SEARCH TERMS OR CATEGORY FILTER
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Interactive floating elements */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute top-4 left-4 w-2 h-2 bg-yellow-400 rounded-full animate-orbit-slow"></div>
+                        <div className="absolute top-8 right-6 w-1.5 h-1.5 bg-green-400 rounded-full animate-orbit-medium"></div>
+                        <div className="absolute bottom-6 left-8 w-2.5 h-2.5 bg-red-400 rounded-full animate-orbit-fast"></div>
+                        <div className="absolute bottom-4 right-4 w-1 h-1 bg-blue-400 rounded-full animate-orbit-slower"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

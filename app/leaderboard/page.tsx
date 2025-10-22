@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Trophy, Users, Home, Star, Crown, Medal, Award, Zap, Sparkles } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
+import { sessionManager } from "@/lib/supabase-session-manager"
+import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
 
 interface Player {
   id: string
@@ -47,6 +49,7 @@ function formatPlayerName(username: string): string {
 function LeaderboardPageContent() {
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
+  const [playersWithCorrectAvatars, setPlayersWithCorrectAvatars] = useState<Player[]>([])
   const searchParams = useSearchParams()
   const router = useRouter()
   const roomCode = searchParams.get("roomCode")
@@ -62,6 +65,28 @@ function LeaderboardPageContent() {
         const roomData = await roomManager.getRoom(roomCode)
         if (roomData) {
           setRoom(roomData)
+          
+          // Fetch session data for each player to get correct avatars
+          const playersWithAvatars = await Promise.all(
+            roomData.players.filter(p => !p.isHost).map(async (player) => {
+              try {
+                // Try to get session data for this player
+                const sessionData = await sessionManager.getSessionByRoom(roomCode, 'player')
+                if (sessionData && sessionData.user_data && sessionData.user_data.id === player.id) {
+                  return {
+                    ...player,
+                    avatar: sessionData.user_data.avatar || player.avatar
+                  }
+                }
+                return player
+              } catch (error) {
+                console.warn(`Error fetching session data for player ${player.id}:`, error)
+                return player
+              }
+            })
+          )
+          
+          setPlayersWithCorrectAvatars(playersWithAvatars)
         } else {
           router.push("/")
         }
@@ -162,9 +187,9 @@ function LeaderboardPageContent() {
     )
   }
 
-  // Sort players by total score
-  const sortedPlayers = [...room.players]
-    .filter(player => !player.isHost)
+  // Sort players by total score using corrected avatars, fallback to room players if needed
+  const playersToUse = playersWithCorrectAvatars.length > 0 ? playersWithCorrectAvatars : (room?.players.filter(p => !p.isHost) || [])
+  const sortedPlayers = [...playersToUse]
     .sort((a, b) => {
       const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
       const bTotal = (b.quizScore || 0) + (b.memoryScore || 0)
@@ -333,14 +358,24 @@ function LeaderboardPageContent() {
                       {/* Avatar */}
                       <div className="w-24 h-24 rounded-full border-4 border-slate-400 overflow-hidden mx-auto mb-6 shadow-2xl">
                         <div className="absolute inset-0 bg-slate-400/40 rounded-full blur-sm"></div>
-                        <img
-                          src={sortedPlayers[1].avatar}
-                          alt={`${sortedPlayers[1].username}'s avatar`}
-                          className="w-full h-full object-cover relative z-10"
-                          onError={(e) => {
-                            e.currentTarget.src = "/ava1.png"
-                          }}
-                        />
+                        {/^https?:\/\//.test(sortedPlayers[1].avatar) ? (
+                          <RobustGoogleAvatar
+                            avatarUrl={sortedPlayers[1].avatar}
+                            alt={`${sortedPlayers[1].username}'s avatar`}
+                            width={96}
+                            height={96}
+                            className="w-full h-full relative z-10"
+                          />
+                        ) : (
+                          <img
+                            src={sortedPlayers[1].avatar}
+                            alt={`${sortedPlayers[1].username}'s avatar`}
+                            className="w-full h-full object-cover relative z-10"
+                            onError={(e) => {
+                              e.currentTarget.src = "/ava1.png"
+                            }}
+                          />
+                        )}
                       </div>
                       
                       {/* Name */}
@@ -378,14 +413,24 @@ function LeaderboardPageContent() {
                       {/* Champion Avatar */}
                       <div className="w-32 h-32 rounded-full border-6 border-yellow-400 overflow-hidden mx-auto mb-8 shadow-2xl">
                         <div className="absolute inset-0 bg-yellow-400/50 rounded-full blur-lg animate-pulse"></div>
-                        <img
-                          src={champion.avatar}
-                          alt={`${champion.username}'s avatar`}
-                          className="w-full h-full object-cover relative z-10"
-                          onError={(e) => {
-                            e.currentTarget.src = "/ava1.png"
-                          }}
-                        />
+                        {/^https?:\/\//.test(champion.avatar) ? (
+                          <RobustGoogleAvatar
+                            avatarUrl={champion.avatar}
+                            alt={`${champion.username}'s avatar`}
+                            width={128}
+                            height={128}
+                            className="w-full h-full relative z-10"
+                          />
+                        ) : (
+                          <img
+                            src={champion.avatar}
+                            alt={`${champion.username}'s avatar`}
+                            className="w-full h-full object-cover relative z-10"
+                            onError={(e) => {
+                              e.currentTarget.src = "/ava1.png"
+                            }}
+                          />
+                        )}
                       </div>
                       
                       {/* Champion Name */}
@@ -437,14 +482,24 @@ function LeaderboardPageContent() {
                       {/* Avatar */}
                       <div className="w-24 h-24 rounded-full border-4 border-amber-500 overflow-hidden mx-auto mb-6 shadow-2xl">
                         <div className="absolute inset-0 bg-amber-500/40 rounded-full blur-sm"></div>
-                        <img
-                          src={sortedPlayers[2].avatar}
-                          alt={`${sortedPlayers[2].username}'s avatar`}
-                          className="w-full h-full object-cover relative z-10"
-                          onError={(e) => {
-                            e.currentTarget.src = "/ava1.png"
-                          }}
-                        />
+                        {/^https?:\/\//.test(sortedPlayers[2].avatar) ? (
+                          <RobustGoogleAvatar
+                            avatarUrl={sortedPlayers[2].avatar}
+                            alt={`${sortedPlayers[2].username}'s avatar`}
+                            width={96}
+                            height={96}
+                            className="w-full h-full relative z-10"
+                          />
+                        ) : (
+                          <img
+                            src={sortedPlayers[2].avatar}
+                            alt={`${sortedPlayers[2].username}'s avatar`}
+                            className="w-full h-full object-cover relative z-10"
+                            onError={(e) => {
+                              e.currentTarget.src = "/ava1.png"
+                            }}
+                          />
+                        )}
                       </div>
                       
                       {/* Name */}
@@ -510,14 +565,24 @@ function LeaderboardPageContent() {
                            {/* Avatar */}
                            <div className="w-12 h-12 rounded-full border-2 border-slate-400 overflow-hidden shadow-md group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                              <div className="absolute inset-0 bg-indigo-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                             <img
-                               src={player.avatar}
-                               alt={`${player.username}'s avatar`}
-                               className="w-full h-full object-cover relative z-10"
-                               onError={(e) => {
-                                 e.currentTarget.src = "/ava1.png"
-                               }}
-                             />
+                             {/^https?:\/\//.test(player.avatar) ? (
+                               <RobustGoogleAvatar
+                                 avatarUrl={player.avatar}
+                                 alt={`${player.username}'s avatar`}
+                                 width={48}
+                                 height={48}
+                                 className="w-full h-full relative z-10"
+                               />
+                             ) : (
+                               <img
+                                 src={player.avatar}
+                                 alt={`${player.username}'s avatar`}
+                                 className="w-full h-full object-cover relative z-10"
+                                 onError={(e) => {
+                                   e.currentTarget.src = "/ava1.png"
+                                 }}
+                               />
+                             )}
                            </div>
                            
                            {/* Player Name - Middle */}

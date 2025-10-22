@@ -959,3 +959,6 @@ SELECT
 FROM quizzes 
 WHERE category IN ('General', 'Entertainment', 'Sports')
 ORDER BY created_at;
+
+
+

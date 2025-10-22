@@ -636,3 +636,6 @@ INSERT INTO quizzes (id, title, description, category, questions, created_at, up
   NOW(),
   NOW()
 );
+
+
+
