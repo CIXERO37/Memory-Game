@@ -647,3 +647,6 @@ SELECT
 FROM quizzes 
 WHERE category IN ('Matematika', 'IPA', 'Bahasa Indonesia')
 ORDER BY created_at;
+
+
+

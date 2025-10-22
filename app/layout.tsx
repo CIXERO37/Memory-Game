@@ -3,6 +3,8 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { GlobalAudioInitializer } from '../components/global-audio-initializer'
+import { AuthGuard } from '../components/auth-guard'
 
 export const metadata: Metadata = {
   title: 'quiz-MemoryCard',
@@ -27,7 +29,10 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        {children}
+        <GlobalAudioInitializer />
+        <AuthGuard>
+          {children}
+        </AuthGuard>
         <Analytics />
       </body>
     </html>

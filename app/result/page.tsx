@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { Trophy, Users, Home, Star, Medal } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
+import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
 
 interface Player {
   id: string
@@ -98,10 +99,15 @@ function ResultPageContent() {
             const playerIndex = sortedPlayers.findIndex(p => p.id === player.id)
             if (playerIndex !== -1) {
               const playerObj = sortedPlayers[playerIndex]
+              // Use the avatar from session data (player) instead of room data
+              const playerWithCorrectAvatar = {
+                ...playerObj,
+                avatar: player.avatar || playerObj.avatar
+              }
               setPlayerRanking({
                 rank: playerIndex + 1,
                 totalScore: (playerObj.quizScore || 0) + (playerObj.memoryScore || 0),
-                player: playerObj
+                player: playerWithCorrectAvatar
               })
             }
           }
@@ -265,14 +271,24 @@ function ResultPageContent() {
             <div className="w-24 h-24 rounded-full border-3 border-slate-300/50 overflow-hidden mx-auto mb-6 relative shadow-lg">
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/25 to-blue-400/25 rounded-full blur-lg"></div>
               <div className="absolute inset-0 ring-1 ring-white/20 rounded-full"></div>
-              <img
-                src={playerRanking.player.avatar}
-                alt={`${playerRanking.player.username}'s avatar`}
-                className="w-full h-full object-cover relative z-10"
-                onError={(e) => {
-                  e.currentTarget.src = "/ava1.png"
-                }}
-              />
+              {/^https?:\/\//.test(playerRanking.player.avatar) ? (
+                <RobustGoogleAvatar
+                  avatarUrl={playerRanking.player.avatar}
+                  alt={`${playerRanking.player.username}'s avatar`}
+                  width={96}
+                  height={96}
+                  className="w-full h-full relative z-10"
+                />
+              ) : (
+                <img
+                  src={playerRanking.player.avatar}
+                  alt={`${playerRanking.player.username}'s avatar`}
+                  className="w-full h-full object-cover relative z-10"
+                  onError={(e) => {
+                    e.currentTarget.src = "/ava1.png"
+                  }}
+                />
+              )}
             </div>
             
             {/* Player Name */}

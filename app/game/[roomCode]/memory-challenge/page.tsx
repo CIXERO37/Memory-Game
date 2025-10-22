@@ -8,6 +8,7 @@ import { roomManager } from "@/lib/room-manager"
 import { useRoom } from "@/hooks/use-room"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabaseRoomManager } from "@/lib/supabase-room-manager"
+import { useGlobalAudio } from "@/hooks/use-global-audio"
 
 interface MemoryChallengePageProps {
   params: {
@@ -27,6 +28,18 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [playerData, setPlayerData] = useState<any>(null)
   const { room } = useRoom(params.roomCode)
+  const { pauseAudio } = useGlobalAudio()
+
+  // Disable audio when on memory challenge page
+  useEffect(() => {
+    pauseAudio()
+    
+    // Resume audio when leaving the page
+    return () => {
+      // Note: We don't resume audio here as it should stay paused for memory challenge
+      // Audio will resume when user navigates to other pages
+    }
+  }, [pauseAudio])
 
   // Load player data from session manager
   useEffect(() => {

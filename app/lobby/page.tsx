@@ -15,6 +15,8 @@ import { sessionManager } from "@/lib/supabase-session-manager"
 import { useToast } from "@/hooks/use-toast"
 import { useRoom } from "@/hooks/use-room"
 import { CountdownTimer } from "@/components/countdown-timer"
+import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
+import { useGlobalAudio } from "@/hooks/use-global-audio"
 
 function LobbyPageContent() {
   const searchParams = useSearchParams()
@@ -38,6 +40,7 @@ function LobbyPageContent() {
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(0)
   const { toast } = useToast()
   const { room, loading } = useRoom(roomCode || "")
+  const { resumeAudio } = useGlobalAudio()
   
   // Use localRoom if available, otherwise use room from hook
   // Prioritize localRoom for countdown state to prevent override
@@ -70,6 +73,11 @@ function LobbyPageContent() {
       setCurrentPage(currentPage - 1)
     }
   }
+
+  // Resume audio when on lobby page
+  useEffect(() => {
+    resumeAudio()
+  }, [resumeAudio])
 
   // Handle browser navigation (back button, refresh, close tab)
   useEffect(() => {
@@ -1026,11 +1034,13 @@ function LobbyPageContent() {
                             </button>
                           )}
                           <div className="flex flex-col items-center gap-1 sm:gap-2">
-                            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gray-100 border border-black rounded flex items-center justify-center overflow-hidden">
-                              <img 
-                                src={player.avatar} 
+                            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center overflow-hidden">
+                              <RobustGoogleAvatar
+                                avatarUrl={player.avatar}
                                 alt={`${player.username} avatar`}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full"
+                                width={48}
+                                height={48}
                               />
                             </div>
                             <div className="text-center">

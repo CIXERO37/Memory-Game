@@ -14,6 +14,7 @@ import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabaseRoomManager } from "@/lib/supabase-room-manager"
 import { failedUpdatesManager } from "@/lib/failed-updates-manager"
+import { useGlobalAudio } from "@/hooks/use-global-audio"
 
 interface QuizPageProps {
   params: {
@@ -76,6 +77,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
   const { room, loading } = useRoom(params.roomCode)
+  const { pauseAudio } = useGlobalAudio()
   
   // Load player data from session manager
   useEffect(() => {
@@ -151,6 +153,17 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   
   const timerState = useSynchronizedTimer(room, undefined, handleTimeUp)
   const questionsInitialized = useRef(false)
+  
+  // Disable audio when on quiz page
+  useEffect(() => {
+    pauseAudio()
+    
+    // Resume audio when leaving the page
+    return () => {
+      // Note: We don't resume audio here as it should stay paused for quiz
+      // Audio will resume when user navigates to other pages
+    }
+  }, [pauseAudio])
   
   // Show warning when time is running low
   useEffect(() => {

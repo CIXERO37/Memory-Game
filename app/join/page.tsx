@@ -10,15 +10,21 @@ import { ArrowLeft, Play } from "lucide-react"
 import Link from "next/link"
 import { AvatarSelector } from "@/components/avatar-selector"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
+import { useGlobalAudio } from "@/hooks/use-global-audio"
 
 function JoinPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { userProfile, isAuthenticated, loading } = useAuth()
+  const { resumeAudio } = useGlobalAudio()
   const [username, setUsername] = useState("")
   const [roomCode, setRoomCode] = useState("")
   const [selectedAvatar, setSelectedAvatar] = useState("") // Will be set to random avatar
+  const [userChangedAvatar, setUserChangedAvatar] = useState(false)
+  const [userChangedUsername, setUserChangedUsername] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
   const [roomError, setRoomError] = useState("")
   const [playerId, setPlayerId] = useState<string>("")
@@ -27,10 +33,24 @@ function JoinPageContent() {
   const [usernameError, setUsernameError] = useState("")
   const [roomCodeError, setRoomCodeError] = useState("")
 
+  // Resume audio when on join page
+  useEffect(() => {
+    resumeAudio()
+  }, [resumeAudio])
+
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")
     if (roomFromUrl) {
       setRoomCode(roomFromUrl.toUpperCase())
+    }
+
+    // Load saved username from localStorage as fallback
+    if (typeof window !== 'undefined') {
+      const savedUsername = localStorage.getItem('lastUsername')
+      if (savedUsername && !username) {
+        console.log('Loading saved username from localStorage:', savedUsername)
+        setUsername(savedUsername)
+      }
     }
 
     // Initialize session and get existing player data
@@ -44,9 +64,13 @@ function JoinPageContent() {
             if (sessionData && sessionData.user_type === 'player') {
               setPlayerId(sessionData.user_data.id)
               setSessionId(existingSessionId)
-              // Always start with empty username - don't load previous username
-              setUsername("")
-              setSelectedAvatar(sessionData.user_data.avatar || "")
+              // We no longer force empty username; prefer auth username if present
+              if (!isAuthenticated && !username) {
+                setUsername("")
+              }
+              if (!selectedAvatar) {
+                setSelectedAvatar(sessionData.user_data.avatar || "")
+              }
               return
             }
           } catch (error) {
@@ -68,9 +92,85 @@ function JoinPageContent() {
     initializeSession()
   }, [searchParams, router])
 
+  // Prefill from authenticated user once available
+  useEffect(() => {
+    console.log('=== JOIN PAGE DEBUG ===')
+    console.log('Loading:', loading)
+    console.log('Is Authenticated:', isAuthenticated)
+    console.log('User Profile:', userProfile)
+    console.log('Avatar URL:', userProfile?.avatar_url)
+    console.log('User Changed Avatar:', userChangedAvatar)
+    console.log('User Changed Username:', userChangedUsername)
+    console.log('Current Username:', username)
+    console.log('========================')
+    
+    if (!loading && isAuthenticated && userProfile) {
+      // Only set username from auth if user hasn't manually changed it
+      const authUsername = userProfile.username || userProfile.name || ""
+      if (authUsername && !userChangedUsername && (!username || username === "")) {
+        console.log('Setting username from auth:', authUsername)
+        setUsername(authUsername)
+      }
+      
+      // If logged in and user hasn't manually changed avatar, prefer auth avatar
+      if (userProfile.avatar_url && !userChangedAvatar) {
+        console.log('Setting selected avatar to:', userProfile.avatar_url)
+        setSelectedAvatar(userProfile.avatar_url)
+      }
+    }
+  }, [loading, isAuthenticated, userProfile, userChangedAvatar, userChangedUsername])
+
+  // Additional effect to handle username persistence when auth state changes
+  useEffect(() => {
+    // If user becomes authenticated and username is empty and not manually changed, set it
+    if (!loading && isAuthenticated && userProfile && !username.trim() && !userChangedUsername) {
+      const authUsername = userProfile.username || userProfile.name || ""
+      if (authUsername) {
+        console.log('Restoring username from auth:', authUsername)
+        setUsername(authUsername)
+      }
+    }
+  }, [isAuthenticated, userProfile, username, loading, userChangedUsername])
+
+  // Emergency fallback: restore username if it becomes empty unexpectedly
+  useEffect(() => {
+    if (!loading && !username.trim() && !userChangedUsername) {
+      // Try to restore from auth first
+      if (isAuthenticated && userProfile) {
+        const authUsername = userProfile.username || userProfile.name || ""
+        if (authUsername) {
+          console.log('Emergency restore from auth:', authUsername)
+          setUsername(authUsername)
+          return
+        }
+      }
+      
+      // Fallback to localStorage
+      if (typeof window !== 'undefined') {
+        const savedUsername = localStorage.getItem('lastUsername')
+        if (savedUsername) {
+          console.log('Emergency restore from localStorage:', savedUsername)
+          setUsername(savedUsername)
+        }
+      }
+    }
+  }, [username, loading, isAuthenticated, userProfile, userChangedUsername])
+
+  // Save username to localStorage whenever it changes
+  useEffect(() => {
+    if (username && username.trim() && typeof window !== 'undefined') {
+      localStorage.setItem('lastUsername', username.trim())
+    }
+  }, [username])
+
   // Handle first avatar change from selector
   // Avatar selector akan set avatar random sekali saat pertama kali mount
   const handleFirstAvatarChange = (avatar: string) => {
+    // If authenticated with avatar and user hasn't changed manually, keep auth avatar as default
+    if (isAuthenticated && userProfile?.avatar_url && !userChangedAvatar) {
+      setSelectedAvatar(userProfile.avatar_url)
+      return
+    }
     if (!selectedAvatar) {
       setSelectedAvatar(avatar)
     }
@@ -293,6 +393,7 @@ function JoinPageContent() {
                             value={username}
                             onChange={(e) => {
                               setUsername(e.target.value)
+                              setUserChangedUsername(true)
                               if (usernameError) setUsernameError("")
                             }}
                             className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 h-12 sm:h-auto"
@@ -314,7 +415,7 @@ function JoinPageContent() {
                           <Input
                             id="roomCode"
                             type="text"
-                            placeholder="Enter 6-digit code"
+                            placeholder="Enter 6-digit"
                             value={roomCode}
                             onChange={(e) => {
                               const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -372,8 +473,9 @@ function JoinPageContent() {
                       <div className="bg-white border-2 border-black rounded p-2 sm:p-3">
                         <AvatarSelector 
                           selectedAvatar={selectedAvatar} 
-                          onAvatarSelect={setSelectedAvatar}
+                          onAvatarSelect={(a) => { setSelectedAvatar(a); setUserChangedAvatar(true) }}
                           onFirstAvatarChange={handleFirstAvatarChange}
+                          externalAvatar={isAuthenticated && userProfile?.avatar_url ? userProfile.avatar_url : undefined}
                         />
                       </div>
                     </div>

@@ -722,3 +722,6 @@ SELECT
 FROM quizzes 
 WHERE category IN ('Mathematics', 'Science', 'Language', 'General', 'Entertainment', 'Sports', 'Technology')
 ORDER BY created_at;
+
+
+

@@ -3,6 +3,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { RobustGoogleAvatar } from "./robust-google-avatar"
 
 const allAvatars = [
   "/ava1.png", "/ava2.png", "/ava3.png", "/ava4.png", 
@@ -15,24 +16,64 @@ interface AvatarSelectorProps {
   selectedAvatar: string
   onAvatarSelect: (avatar: string) => void
   onFirstAvatarChange?: (avatar: string) => void
+  externalAvatar?: string // optional external avatar URL (e.g., Google photo)
 }
 
-export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarChange }: AvatarSelectorProps) {
+export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarChange, externalAvatar }: AvatarSelectorProps) {
   // Simpan urutan avatar dalam state agar tidak berubah saat re-render
   const [avatars, setAvatars] = React.useState<string[]>([])
+  const [isInitialized, setIsInitialized] = React.useState(false)
   
-  // Initialize avatars hanya sekali saat mount
+  // Debug logging
   React.useEffect(() => {
-    const randomFirst = allAvatars[Math.floor(Math.random() * allAvatars.length)]
-    const otherAvatars = allAvatars.filter(avatar => avatar !== randomFirst)
-    const initialAvatars = [randomFirst, ...otherAvatars]
-    setAvatars(initialAvatars)
+    console.log('=== AVATAR SELECTOR DEBUG ===')
+    console.log('External Avatar:', externalAvatar)
+    console.log('Selected Avatar:', selectedAvatar)
+    console.log('Is External Avatar Valid:', externalAvatar && externalAvatar.length > 0)
+    console.log('Is Initialized:', isInitialized)
+    console.log('============================')
+  }, [externalAvatar, selectedAvatar, isInitialized])
+  
+  // Initialize avatars hanya sekali saat mount - tidak berubah lagi
+  React.useEffect(() => {
+    if (isInitialized) return // Prevent re-initialization
     
-    // Notify parent about the random avatar when component mounts
-    if (onFirstAvatarChange) {
-      onFirstAvatarChange(randomFirst)
+    // Buat urutan avatar yang tetap konsisten
+    let initialAvatars: string[] = []
+    
+    if (externalAvatar && externalAvatar.length > 0) {
+      // Jika ada external avatar, letakkan di depan
+      initialAvatars = [externalAvatar, ...allAvatars]
+    } else {
+      // Jika tidak ada external avatar, gunakan urutan default
+      initialAvatars = [...allAvatars]
     }
-  }, []) // Empty dependency array = hanya run sekali saat mount
+    
+    setAvatars(initialAvatars)
+    setIsInitialized(true)
+    
+    // Notify parent about the initial avatar
+    if (onFirstAvatarChange) {
+      const initialAvatar = initialAvatars[0]
+      onFirstAvatarChange(initialAvatar)
+    }
+  }, []) // Empty dependency array - hanya jalankan sekali saat mount
+
+  // Handle external avatar yang datang setelah mount tanpa mengubah urutan
+  React.useEffect(() => {
+    if (!isInitialized || !externalAvatar || externalAvatar.length === 0) return
+    
+    // Jika external avatar belum ada di list, tambahkan di depan tanpa mengubah urutan yang ada
+    setAvatars(prev => {
+      if (prev.includes(externalAvatar)) return prev
+      return [externalAvatar, ...prev]
+    })
+    
+    // Jika belum ada avatar yang dipilih, pilih external avatar
+    if (!selectedAvatar || selectedAvatar.length === 0) {
+      onAvatarSelect(externalAvatar)
+    }
+  }, [externalAvatar, selectedAvatar, onAvatarSelect, isInitialized])
   
   return (
     <div className="relative avatar-selector">
@@ -54,14 +95,25 @@ export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarCh
                 `}
                 onClick={() => onAvatarSelect(avatar)}
               >
-                <Image
-                  src={avatar}
-                  alt="Avatar"
-                  width={64}
-                  height={64}
-                  className="w-full h-full object-cover"
-                  draggable={false}
-                />
+                {/* Support external URLs by using RobustGoogleAvatar for better loading */}
+                {/^https?:\/\//.test(avatar) ? (
+                  <RobustGoogleAvatar
+                    avatarUrl={avatar}
+                    alt="Avatar"
+                    width={64}
+                    height={64}
+                    className="w-full h-full"
+                  />
+                ) : (
+                  <Image
+                    src={avatar}
+                    alt="Avatar"
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
+                )}
                 {isSelected && (
                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400/20 to-blue-400/20 pointer-events-none" />
                 )}

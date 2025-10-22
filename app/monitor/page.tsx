@@ -12,6 +12,8 @@ import { roomManager } from "@/lib/room-manager"
 import { getTimerDisplayText } from "@/lib/timer-utils"
 import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 import { sessionManager } from "@/lib/supabase-session-manager"
+import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
+import { useGlobalAudio } from "@/hooks/use-global-audio"
 
 function MonitorPageContent() {
   const searchParams = useSearchParams()
@@ -23,6 +25,7 @@ function MonitorPageContent() {
   const [showTimeWarning, setShowTimeWarning] = useState(false)
   const [timeUpHandled, setTimeUpHandled] = useState(false)
   const { room, loading } = useRoom(roomCode || "")
+  const { pauseAudio } = useGlobalAudio()
 
   // Get quiz settings from room data
   const quizSettings = room ? {
@@ -66,6 +69,17 @@ function MonitorPageContent() {
   }
   
   const timerState = useSynchronizedTimer(room, quizSettings.timeLimit, handleTimeUp)
+  
+  // Disable audio when on monitor page
+  useEffect(() => {
+    pauseAudio()
+    
+    // Resume audio when leaving the page
+    return () => {
+      // Note: We don't resume audio here as it should stay paused for monitor
+      // Audio will resume when user navigates to other pages
+    }
+  }, [pauseAudio])
   
   // Show warning when time is running low
   useEffect(() => {
@@ -569,15 +583,13 @@ function MonitorPageContent() {
                           {rankingChange === "up" && <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
                           {rankingChange === "down" && <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />}
                         </div>
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded border-2 border-white overflow-hidden">
-                          <img
-                            src={player.avatar}
-                            alt={`${player.username}'s avatar`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Fallback to default avatar if image fails to load
-                              e.currentTarget.src = "/ava1.png"
-                            }}
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex items-center justify-center overflow-hidden">
+                          <RobustGoogleAvatar
+                            avatarUrl={player.avatar}
+                            alt={`${player.username} avatar`}
+                            className="w-full h-full"
+                            width={48}
+                            height={48}
                           />
                         </div>
                         <div>

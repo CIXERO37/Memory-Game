@@ -11,6 +11,7 @@ import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { CountdownTimer } from "@/components/countdown-timer"
+import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
 
 export default function WaitingRoomPage() {
   const params = useParams()
@@ -670,11 +671,13 @@ export default function WaitingRoomPage() {
 
                     <div className="bg-blue-100 border-2 border-blue-500 rounded p-3 pixel-player-card">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 border border-black rounded flex items-center justify-center overflow-hidden">
-                          <img 
-                            src={playerInfo.avatar} 
+                        <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                          <RobustGoogleAvatar
+                            avatarUrl={playerInfo.avatar}
                             alt={`${playerInfo.username} avatar`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full"
+                            width={40}
+                            height={40}
                           />
                         </div>
                         <div className="flex-1">
@@ -709,11 +712,13 @@ export default function WaitingRoomPage() {
                         return (
                           <div key={player.id} className="bg-white border-2 border-black rounded p-3 pixel-player-card">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-gray-100 border border-black rounded flex items-center justify-center overflow-hidden">
-                                <img 
-                                  src={player.avatar} 
+                              <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
+                                <RobustGoogleAvatar
+                                  avatarUrl={player.avatar}
                                   alt={`${player.username} avatar`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full"
+                                  width={32}
+                                  height={32}
                                 />
                               </div>
                               <div className="flex-1">

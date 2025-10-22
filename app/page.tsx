@@ -1,16 +1,88 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Users, Play, Brain, Lightbulb, HelpCircle, Server } from "lucide-react"
+import { Users, Play, Brain, Lightbulb, HelpCircle, Server, Menu, LogIn } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
+import { GlobalAudioPlayer } from "@/components/global-audio-player"
+import { useAuth } from "@/hooks/use-auth"
+import { UserProfileComponent } from "@/components/user-profile"
+import { LogoutConfirmationDialog } from "@/components/logout-confirmation-dialog"
 
 export default function HomePage() {
   const dragCardRef = useRef<HTMLDivElement | null>(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation } = useAuth()
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.menu-container')) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isMenuOpen])
+
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+
+      {/* Top Right Menu */}
+      <div className="absolute top-4 right-4 z-50 menu-container">
+        <div className="relative flex items-center gap-2">
+          {/* User Profile (when logged in) */}
+          {isAuthenticated && userProfile && (
+            <UserProfileComponent 
+              userProfile={userProfile}
+            />
+          )}
+          
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-12 h-12 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg flex items-center justify-center hover:bg-white/30 transition-all duration-300 shadow-lg"
+          >
+            <Menu className="w-6 h-6 text-white" />
+          </button>
+        </div>
+        
+        {/* Audio Player - positioned below */}
+        <div className="absolute top-14 right-0">
+          <GlobalAudioPlayer />
+        </div>
+        
+        {/* Dropdown Menu */}
+        {isMenuOpen && (
+          <div className="absolute top-14 right-0 bg-white/95 backdrop-blur-sm border-2 border-white/30 rounded-lg shadow-2xl min-w-48 overflow-hidden">
+            <div className="py-2">
+              {isAuthenticated ? (
+                <button
+                  onClick={showLogoutDialog}
+                  className="w-full px-4 py-3 text-left hover:bg-white/20 transition-colors duration-200 flex items-center gap-3"
+                >
+                  <LogIn className="w-5 h-5 text-gray-700" />
+                  <span className="text-gray-700 font-medium">Logout</span>
+                </button>
+              ) : (
+                <Link href="/login" className="w-full px-4 py-3 text-left hover:bg-white/20 transition-colors duration-200 flex items-center gap-3">
+                  <LogIn className="w-5 h-5 text-gray-700" />
+                  <span className="text-gray-700 font-medium">Login</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Pixel Grid Background */}
       <div className="absolute inset-0 opacity-20">
@@ -147,6 +219,14 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmationDialog
+        isOpen={showLogoutConfirmation}
+        onConfirm={logout}
+        onCancel={cancelLogout}
+        userName={userProfile?.name || userProfile?.username}
+      />
 
     </div>
   )
