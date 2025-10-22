@@ -96,10 +96,22 @@ export default function LoginPage() {
     setIsGoogleLoading(true)
     
     try {
-      // Get the correct redirect URL for production
-      const redirectUrl = process.env.NODE_ENV === 'production' 
-        ? `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback`
-        : `${window.location.origin}/auth/callback`
+      // Force production URL detection - more robust approach
+      const currentOrigin = window.location.origin
+      const isLocalhost = currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')
+      
+      // Use environment variable if available, otherwise use current origin
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || currentOrigin
+      
+      // Always use the site URL for redirect (never localhost in production)
+      const redirectUrl = `${siteUrl}/auth/callback`
+      
+      console.log('=== Google OAuth Debug Info ===')
+      console.log('Current origin:', currentOrigin)
+      console.log('Is localhost:', isLocalhost)
+      console.log('Site URL from env:', process.env.NEXT_PUBLIC_SITE_URL)
+      console.log('Final redirect URL:', redirectUrl)
+      console.log('================================')
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
