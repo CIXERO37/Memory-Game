@@ -55,20 +55,35 @@ class SupabaseSessionManager {
         user_data: userData,
         room_code: roomCode || null,
         device_info: deviceInfo,
+        created_at: new Date().toISOString(),
         last_active: new Date().toISOString(),
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
         is_active: true
       }
 
+      console.log('[SupabaseSessionManager] Creating/updating session:', {
+        sessionId: finalSessionId,
+        userType,
+        userData,
+        roomCode,
+        sessionData
+      })
+
       // Try to update existing room session first
       if (roomCode) {
-        const { data: existingRoom } = await supabase
+        const { data: existingRoom, error: roomError } = await supabase
           .from('rooms')
           .select('id')
           .eq('room_code', roomCode)
           .single()
 
+        if (roomError) {
+          console.error('[SupabaseSessionManager] Error finding room:', roomError)
+          throw roomError
+        }
+
         if (existingRoom) {
+          console.log('[SupabaseSessionManager] Room found, updating with session data')
           // Update room with session data
           const { error } = await supabase
             .from('rooms')
@@ -84,6 +99,11 @@ class SupabaseSessionManager {
             console.error('[SupabaseSessionManager] Error updating room session:', error)
             throw error
           }
+          
+          console.log('[SupabaseSessionManager] Room session updated successfully')
+        } else {
+          console.error('[SupabaseSessionManager] Room not found for code:', roomCode)
+          throw new Error(`Room not found for code: ${roomCode}`)
         }
       }
       
@@ -106,6 +126,8 @@ class SupabaseSessionManager {
         return null
       }
 
+      console.log('[SupabaseSessionManager] Getting session data for ID:', sessionId)
+
       const { data, error } = await supabase
         .from('rooms')
         .select('session_id, is_session_active, session_last_active, session_data')
@@ -118,9 +140,11 @@ class SupabaseSessionManager {
         return null
       }
 
+      console.log('[SupabaseSessionManager] Raw session data from database:', data)
+
       // Parse session_data if available
       if (data && data.session_data) {
-        return {
+        const sessionData = {
           id: data.session_id,
           session_id: data.session_id,
           user_type: data.session_data.user_type,
@@ -132,8 +156,12 @@ class SupabaseSessionManager {
           expires_at: data.session_data.expires_at || '',
           is_active: data.is_session_active
         }
+        
+        console.log('[SupabaseSessionManager] Parsed session data:', sessionData)
+        return sessionData
       }
 
+      console.log('[SupabaseSessionManager] No session_data found in database record')
       return null
     } catch (error) {
       console.error('[SupabaseSessionManager] Error in getSessionData:', error)

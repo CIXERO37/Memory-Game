@@ -142,3 +142,4 @@ Login dengan Google harusnya sekarang berhasil masuk ke homepage.
 - `scripts/27_fix_existing_users_profile.sql` - Full migration script
 - `app/auth/callback/page.tsx` - Updated callback handler
 - Table name: `profiles` (bukan `users_profile`)
+

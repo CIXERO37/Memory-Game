@@ -6,6 +6,7 @@ import { Trophy, Users, Home, Star, Crown, Medal, Award, Zap, Sparkles } from "l
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
+import { useTranslation } from "react-i18next"
 
 interface Player {
   id: string
@@ -47,6 +48,7 @@ function formatPlayerName(username: string): string {
 }
 
 function LeaderboardPageContent() {
+  const { t } = useTranslation()
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const [playersWithCorrectAvatars, setPlayersWithCorrectAvatars] = useState<Player[]>([])
@@ -278,7 +280,7 @@ function LeaderboardPageContent() {
                       textShadow: '2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000',
                       fontFamily: 'Arial Black, sans-serif'
                     }}>
-                  MEMORY QUIZ
+                  {t('lobby.memoryQuiz')}
                 </h1>
                 
                 {/* GameForSmart Logo */}
@@ -320,10 +322,10 @@ function LeaderboardPageContent() {
               {/* Title */}
               <div className="relative">
                 <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 drop-shadow-2xl">
-                  CHAMPIONS
+                  {t('lobby.champions')}
                 </h1>
                 <div className="absolute inset-0 text-5xl md:text-6xl font-bold text-yellow-400/20 blur-sm">
-                  CHAMPIONS
+                  {t('lobby.champions')}
                 </div>
               </div>
             </div>
@@ -384,7 +386,7 @@ function LeaderboardPageContent() {
                       {/* Score */}
                       <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{(sortedPlayers[1].quizScore || 0) + (sortedPlayers[1].memoryScore || 0)}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
+                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
                   </div>
@@ -439,7 +441,7 @@ function LeaderboardPageContent() {
                       {/* Champion Score */}
                       <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
+                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                       
                       {/* Champion Sparkles */}
@@ -508,7 +510,7 @@ function LeaderboardPageContent() {
                       {/* Score */}
                       <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{(sortedPlayers[2].quizScore || 0) + (sortedPlayers[2].memoryScore || 0)}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
+                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
                   </div>
@@ -594,7 +596,7 @@ function LeaderboardPageContent() {
                            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-3 py-2 shadow-sm group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                              <div className="text-center">
                                <div className="text-lg font-bold text-white">{totalScore}</div>
-                               <div className="text-xs text-black font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>POINTS</div>
+                               <div className="text-xs text-black font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                              </div>
                            </div>
                          </div>
@@ -638,7 +640,7 @@ function LeaderboardPageContent() {
               </div>
               
               {/* Text */}
-              <span className="relative z-10 font-bold tracking-wide">BACK</span>
+              <span className="relative z-10 font-bold tracking-wide">{t('lobby.back')}</span>
               
               {/* Decorative Elements */}
               <div className="absolute top-3 right-3 w-3 h-3 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -652,6 +654,8 @@ function LeaderboardPageContent() {
 }
 
 export default function LeaderboardPage() {
+  const { t } = useTranslation()
+  
   return (
     <Suspense fallback={
       <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>

@@ -102,3 +102,4 @@ CREATE TRIGGER update_users_profile_updated_at
 -- Verification query (run this after creating to verify)
 -- SELECT * FROM users_profile;
 
+

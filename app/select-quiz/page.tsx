@@ -8,6 +8,7 @@ import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown,
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQuizzes } from "@/hooks/use-quiz"
+import { useTranslation } from "react-i18next"
 
 // Categories and background images mapping
 const categories = [
@@ -113,6 +114,7 @@ const getCategoryIcon = (category: string) => {
 
 export default function SelectQuizPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [searchInput, setSearchInput] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
@@ -122,6 +124,29 @@ export default function SelectQuizPage() {
   
   // Fetch quizzes from Supabase
   const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
+
+  // Helper function to translate category
+  const translateCategory = (category: string | undefined) => {
+    if (!category) return t('selectQuiz.categories.general')
+    
+    const categoryLower = category.toLowerCase()
+    const categoryMap: { [key: string]: string } = {
+      'general': 'general',
+      'science': 'science',
+      'mathematics': 'mathematics',
+      'math': 'mathematics',
+      'history': 'history',
+      'geography': 'geography',
+      'language': 'language',
+      'technology': 'technology',
+      'sports': 'sports',
+      'entertainment': 'entertainment',
+      'business': 'business'
+    }
+    
+    const mappedCategory = categoryMap[categoryLower] || 'general'
+    return t(`selectQuiz.categories.${mappedCategory}`)
+  }
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -246,7 +271,7 @@ export default function SelectQuizPage() {
               <FileSearch className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
             <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 py-1 sm:py-2 pixel-header-title">
-              <h1 className="text-lg sm:text-xl font-bold text-black">SELECT QUIZ</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-black">{t('selectQuiz.title')}</h1>
             </div>
           </div>
         </div>
@@ -259,14 +284,14 @@ export default function SelectQuizPage() {
               {/* Pixel Search Input */}
               <div className="relative flex-1">
                 <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-xs sm:text-sm">SEARCH</label>
+                  <label className="text-black font-bold text-xs sm:text-sm">{t('selectQuiz.searchLabel')}</label>
                 </div>
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
                     <Search className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                   </div>
                   <Input
-                    placeholder="Search by title or description..."
+                    placeholder={t('selectQuiz.searchPlaceholder')}
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleSearch}
@@ -278,7 +303,7 @@ export default function SelectQuizPage() {
               {/* Pixel Category Filter */}
               <div className="sm:w-56">
                 <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-xs sm:text-sm">CATEGORIES</label>
+                  <label className="text-black font-bold text-xs sm:text-sm">{t('selectQuiz.categoriesLabel')}</label>
                 </div>
                 <div className="relative">
                   <div className="relative">
@@ -291,17 +316,17 @@ export default function SelectQuizPage() {
                           {getCategoryIcon(categoryFilter === "all" ? "all" : categoryFilter)}
                         </div>
                         <span className="font-bold text-xs sm:text-sm">
-                          {categoryFilter === "all" ? "ALL CATEGORIES" : 
-                           categoryFilter === "General" ? "GENERAL" :
-                           categoryFilter === "Science" ? "SCIENCE" :
-                           categoryFilter === "Mathematics" ? "MATHEMATICS" :
-                           categoryFilter === "History" ? "HISTORY" :
-                           categoryFilter === "Geography" ? "GEOGRAPHY" :
-                           categoryFilter === "Language" ? "LANGUAGE" :
-                           categoryFilter === "Technology" ? "TECHNOLOGY" :
-                           categoryFilter === "Sports" ? "SPORTS" :
-                           categoryFilter === "Entertainment" ? "ENTERTAINMENT" :
-                           categoryFilter === "Business" ? "BUSINESS" : categoryFilter.toUpperCase()}
+                          {categoryFilter === "all" ? t('selectQuiz.allCategories') : 
+                           categoryFilter === "General" ? t('selectQuiz.categories.general') :
+                           categoryFilter === "Science" ? t('selectQuiz.categories.science') :
+                           categoryFilter === "Mathematics" ? t('selectQuiz.categories.mathematics') :
+                           categoryFilter === "History" ? t('selectQuiz.categories.history') :
+                           categoryFilter === "Geography" ? t('selectQuiz.categories.geography') :
+                           categoryFilter === "Language" ? t('selectQuiz.categories.language') :
+                           categoryFilter === "Technology" ? t('selectQuiz.categories.technology') :
+                           categoryFilter === "Sports" ? t('selectQuiz.categories.sports') :
+                           categoryFilter === "Entertainment" ? t('selectQuiz.categories.entertainment') :
+                           categoryFilter === "Business" ? t('selectQuiz.categories.business') : categoryFilter.toUpperCase()}
                         </span>
                       </div>
                       {isSelectAllExpanded ? (
@@ -327,7 +352,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-blue-500">
                               {getCategoryIcon("all")}
                             </div>
-                            <span>ALL CATEGORIES</span>
+                            <span>{t('selectQuiz.allCategories')}</span>
                           </div>
                           {categoryFilter === "all" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -346,7 +371,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-black">
                               {getCategoryIcon("General")}
                             </div>
-                            <span>GENERAL</span>
+                            <span>{t('selectQuiz.categories.general')}</span>
                           </div>
                           {categoryFilter === "General" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -365,7 +390,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-green-500">
                               {getCategoryIcon("Science")}
                             </div>
-                            <span>SCIENCE</span>
+                            <span>{t('selectQuiz.categories.science')}</span>
                           </div>
                           {categoryFilter === "Science" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -384,7 +409,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-red-500">
                               {getCategoryIcon("Mathematics")}
                             </div>
-                            <span>MATHEMATICS</span>
+                            <span>{t('selectQuiz.categories.mathematics')}</span>
                           </div>
                           {categoryFilter === "Mathematics" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -403,7 +428,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-yellow-500">
                               {getCategoryIcon("History")}
                             </div>
-                            <span>HISTORY</span>
+                            <span>{t('selectQuiz.categories.history')}</span>
                           </div>
                           {categoryFilter === "History" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -422,7 +447,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-teal-500">
                               {getCategoryIcon("Geography")}
                             </div>
-                            <span>GEOGRAPHY</span>
+                            <span>{t('selectQuiz.categories.geography')}</span>
                           </div>
                           {categoryFilter === "Geography" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -441,7 +466,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-purple-500">
                               {getCategoryIcon("Language")}
                             </div>
-                            <span>LANGUAGE</span>
+                            <span>{t('selectQuiz.categories.language')}</span>
                           </div>
                           {categoryFilter === "Language" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -460,7 +485,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-blue-500">
                               {getCategoryIcon("Technology")}
                             </div>
-                            <span>TECHNOLOGY</span>
+                            <span>{t('selectQuiz.categories.technology')}</span>
                           </div>
                           {categoryFilter === "Technology" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -479,7 +504,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-orange-500">
                               {getCategoryIcon("Sports")}
                             </div>
-                            <span>SPORTS</span>
+                            <span>{t('selectQuiz.categories.sports')}</span>
                           </div>
                           {categoryFilter === "Sports" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -498,7 +523,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-pink-500">
                               {getCategoryIcon("Entertainment")}
                             </div>
-                            <span>ENTERTAINMENT</span>
+                            <span>{t('selectQuiz.categories.entertainment')}</span>
                           </div>
                           {categoryFilter === "Entertainment" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -517,7 +542,7 @@ export default function SelectQuizPage() {
                             <div className="w-4 h-4 mr-2 text-indigo-500">
                               {getCategoryIcon("Business")}
                             </div>
-                            <span>BUSINESS</span>
+                            <span>{t('selectQuiz.categories.business')}</span>
                           </div>
                           {categoryFilter === "Business" && (
                             <Check className="h-4 w-4 text-green-600" />
@@ -540,8 +565,8 @@ export default function SelectQuizPage() {
                     <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                       <Loader2 className="h-8 w-8 text-black animate-spin" />
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2">LOADING QUIZZES...</h3>
-                    <p className="text-white/80 text-sm">FETCHING QUIZ DATA FROM DATABASE</p>
+                    <h3 className="text-lg font-bold text-white mb-2">{t('selectQuiz.loading')}</h3>
+                    <p className="text-white/80 text-sm">{t('selectQuiz.loadingDescription')}</p>
                   </div>
                 </div>
               </div>
@@ -553,27 +578,27 @@ export default function SelectQuizPage() {
                     <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                       <span className="text-2xl">⚠️</span>
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2">ERROR LOADING QUIZZES</h3>
+                    <h3 className="text-lg font-bold text-white mb-2">{t('selectQuiz.errorTitle')}</h3>
                     <p className="text-white/80 mb-4 text-sm">{error}</p>
                     <div className="text-white/60 text-xs mb-4 space-y-2">
-                      <p><strong>SOLUTION STEPS:</strong></p>
-                      <p>1. Create .env.local file in project root</p>
-                      <p>2. Add your Supabase credentials (see env.example.txt)</p>
-                      <p>3. Restart your development server</p>
-                      <p>4. For production: Add environment variables to deployment platform</p>
+                      <p><strong>{t('selectQuiz.errorSolution')}</strong></p>
+                      <p>{t('selectQuiz.errorStep1')}</p>
+                      <p>{t('selectQuiz.errorStep2')}</p>
+                      <p>{t('selectQuiz.errorStep3')}</p>
+                      <p>{t('selectQuiz.errorStep4')}</p>
                     </div>
                     <div className="flex gap-2">
                       <button 
                         onClick={() => window.location.reload()} 
                         className="bg-white text-red-600 px-4 py-2 rounded font-bold hover:bg-gray-100 transition-colors"
                       >
-                        RETRY
+                        {t('selectQuiz.retry')}
                       </button>
                       <button 
                         onClick={() => window.open('https://supabase.com/dashboard', '_blank')} 
                         className="bg-blue-500 text-white px-4 py-2 rounded font-bold hover:bg-blue-600 transition-colors"
                       >
-                        SUPABASE DASHBOARD
+                        {t('selectQuiz.supabaseDashboard')}
                       </button>
                     </div>
                   </div>
@@ -625,27 +650,16 @@ export default function SelectQuizPage() {
                       {/* Enhanced text with staggered animations */}
                       <div className="space-y-4">
                         <h3 className="text-2xl font-bold text-white mb-3 animate-text-reveal">
-                          <span className="inline-block animate-text-wave">N</span>
-                          <span className="inline-block animate-text-wave-delayed">O</span>
-                          <span className="inline-block animate-text-wave-delayed-2 mx-2">&nbsp;</span>
-                          <span className="inline-block animate-text-wave-delayed-3">Q</span>
-                          <span className="inline-block animate-text-wave-delayed-4">U</span>
-                          <span className="inline-block animate-text-wave-delayed-5">I</span>
-                          <span className="inline-block animate-text-wave-delayed-6">Z</span>
-                          <span className="inline-block animate-text-wave-delayed-7">Z</span>
-                          <span className="inline-block animate-text-wave-delayed-8">E</span>
-                          <span className="inline-block animate-text-wave-delayed-9">S</span>
-                          <span className="inline-block animate-text-wave-delayed-10 mx-2">&nbsp;</span>
-                          <span className="inline-block animate-text-wave-delayed-11">F</span>
-                          <span className="inline-block animate-text-wave-delayed-12">O</span>
-                          <span className="inline-block animate-text-wave-delayed-13">U</span>
-                          <span className="inline-block animate-text-wave-delayed-14">N</span>
-                          <span className="inline-block animate-text-wave-delayed-15">D</span>
+                          {t('selectQuiz.noQuizzesFound').split('').map((char, index) => (
+                            <span key={index} className={`inline-block animate-text-wave-delayed-${index}`}>
+                              {char === ' ' ? '\u00A0' : char}
+                            </span>
+                          ))}
                         </h3>
                         
                         <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-4 animate-text-slide-up">
                           <p className="text-white/90 text-base font-medium leading-relaxed">
-                            TRY ADJUSTING YOUR SEARCH TERMS OR CATEGORY FILTER
+                            {t('selectQuiz.noQuizzesDescription')}
                           </p>
                         </div>
                       </div>
@@ -702,7 +716,7 @@ export default function SelectQuizPage() {
                             <div className="flex items-center gap-0.5">
                               <div className="w-1 h-1 bg-white rounded-full"></div>
                               <span className="text-white font-bold text-xs">
-                                {quiz.category?.toUpperCase() || 'GENERAL'}
+                                {translateCategory(quiz.category)}
                               </span>
                             </div>
                           </div>
@@ -720,7 +734,7 @@ export default function SelectQuizPage() {
                         {/* Question count */}
                         <div className="bg-blue-500 border-2 border-black rounded px-1.5 py-0.5 overflow-hidden">
                           <div className="text-xs text-white font-bold break-words overflow-hidden">
-                            {quiz.questions.length} QUESTIONS
+                            {quiz.questions.length} {t('selectQuiz.questions')}
                           </div>
                         </div>
                       </div>
@@ -732,7 +746,7 @@ export default function SelectQuizPage() {
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                             <span className="text-white font-bold text-xs tracking-wide">
-                              {quiz.category?.toUpperCase() || 'GENERAL'}
+                              {translateCategory(quiz.category)}
                             </span>
                           </div>
                         </div>
@@ -749,7 +763,7 @@ export default function SelectQuizPage() {
                         </div>
                         <div className="bg-blue-500 border-2 border-black rounded px-2 py-1">
                           <div className="text-xs text-white font-bold">
-                            {quiz.questions.length} QUESTIONS
+                            {quiz.questions.length} {t('selectQuiz.questions')}
                           </div>
                         </div>
                       </div>

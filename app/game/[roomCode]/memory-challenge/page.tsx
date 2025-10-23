@@ -9,6 +9,7 @@ import { useRoom } from "@/hooks/use-room"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabaseRoomManager } from "@/lib/supabase-room-manager"
 import { useGlobalAudio } from "@/hooks/use-global-audio"
+import { useTranslation } from "react-i18next"
 
 interface MemoryChallengePageProps {
   params: {
@@ -17,6 +18,7 @@ interface MemoryChallengePageProps {
 }
 
 export default function MemoryChallengePage({ params }: MemoryChallengePageProps) {
+  const { t } = useTranslation()
   const [correctMatches, setCorrectMatches] = useState(0)
   const [gameCompleted, setGameCompleted] = useState(false)
   // Removed timer - memory game is now an obstacle without time pressure
@@ -345,7 +347,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
               <Target className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">ACCESS DENIED</h2>
-            <p className="text-sm text-red-200">Redirecting to quiz...</p>
+            <p className="text-sm text-red-200">{t('lobby.redirectingToQuiz')}</p>
           </div>
         </div>
       </div>
@@ -424,10 +426,10 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
               {/* Simple and Clean MEMORY GAME Title */}
               <div className="bg-white border-2 border-black rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-lg inline-block">
                 <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-black tracking-wide whitespace-nowrap">
-                  MEMORY GAME
+                  {t('lobby.memoryGame')}
                 </h1>
               </div>
-              <p className="text-xs sm:text-sm text-blue-200 mt-1">Find all matching pairs to continue!</p>
+              <p className="text-xs sm:text-sm text-blue-200 mt-1">{t('lobby.findAllMatchingPairs')}</p>
             </div>
           </div>
           

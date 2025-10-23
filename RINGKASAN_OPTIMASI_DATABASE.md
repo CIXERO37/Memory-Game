@@ -322,3 +322,4 @@ AND column_name IN ('session_id', 'is_session_active', 'session_last_active', 's
 **Date**: 23 Oktober 2025  
 **Version**: 2.0  
 **Breaking Changes**: Requires migration scripts
+

@@ -134,3 +134,4 @@ Jika setelah update ada error:
 **Updated**: 23 Oktober 2025  
 **Version**: 2.0  
 **Table Name**: `profiles` ✅
+
