@@ -28,6 +28,16 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router])
 
+  // Handle error parameters from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const error = urlParams.get('error')
+    
+    if (error === 'auth_failed') {
+      setErrors({ general: "Authentication failed. Please try again." })
+    }
+  }, [])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({

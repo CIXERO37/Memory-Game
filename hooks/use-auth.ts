@@ -22,10 +22,17 @@ export function useAuth() {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
+        console.log('Getting initial session...')
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error getting initial session:', error)
+        } else if (session?.user) {
+          console.log('Initial session found:', session.user.email)
           setUser(session.user)
           setUserProfile(createUserProfile(session.user))
+        } else {
+          console.log('No initial session found')
         }
       } catch (error) {
         console.error('Error getting initial session:', error)
@@ -39,6 +46,8 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email)
+        
         if (session?.user) {
           setUser(session.user)
           setUserProfile(createUserProfile(session.user))

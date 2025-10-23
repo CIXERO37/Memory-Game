@@ -48,7 +48,7 @@ export function UserProfileComponent({ userProfile }: UserProfileProps) {
   }
   
   return (
-    <div className="flex items-center gap-3 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg px-3 py-2 shadow-lg">
+    <div className="flex items-center gap-3 bg-purple-800/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg px-3 py-2 shadow-xl">
       {/* Avatar */}
       <div className="relative">
         {userProfile.avatar_url ? (
@@ -60,7 +60,7 @@ export function UserProfileComponent({ userProfile }: UserProfileProps) {
             height={32}
           />
         ) : (
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full border-2 border-white/50 flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full border-2 border-purple-200 flex items-center justify-center">
             <span className="text-white font-bold text-sm">
               {userProfile.username.charAt(0).toUpperCase()}
             </span>

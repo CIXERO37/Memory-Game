@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Users, Play, Brain, Lightbulb, HelpCircle, Server, Menu, LogIn } from "lucide-react"
+import { Users, Play, Brain, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
@@ -50,9 +50,13 @@ export default function HomePage() {
           {/* Hamburger Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-12 h-12 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg flex items-center justify-center hover:bg-white/30 transition-all duration-300 shadow-lg"
+            className="w-12 h-12 bg-purple-800/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg flex items-center justify-center hover:bg-purple-700/90 transition-all duration-300 shadow-xl"
           >
-            <Menu className="w-6 h-6 text-white" />
+            {isMenuOpen ? (
+              <X className="w-6 h-6 text-white" />
+            ) : (
+              <Menu className="w-6 h-6 text-white" />
+            )}
           </button>
         </div>
         
@@ -63,20 +67,29 @@ export default function HomePage() {
         
         {/* Dropdown Menu */}
         {isMenuOpen && (
-          <div className="absolute top-14 right-0 bg-white/95 backdrop-blur-sm border-2 border-white/30 rounded-lg shadow-2xl min-w-48 overflow-hidden">
+          <div className="absolute top-14 right-0 bg-purple-800/95 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-2xl min-w-48 overflow-hidden">
             <div className="py-2">
+              {/* Language Selection */}
+              <button className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3">
+                <Languages className="w-5 h-5 text-white" />
+                <span className="text-white font-medium">Language</span>
+              </button>
+              
+              {/* Divider */}
+              <div className="border-t border-purple-300/50 my-1"></div>
+              
               {isAuthenticated ? (
                 <button
                   onClick={showLogoutDialog}
-                  className="w-full px-4 py-3 text-left hover:bg-white/20 transition-colors duration-200 flex items-center gap-3"
+                  className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3"
                 >
-                  <LogIn className="w-5 h-5 text-gray-700" />
-                  <span className="text-gray-700 font-medium">Logout</span>
+                  <LogIn className="w-5 h-5 text-white" />
+                  <span className="text-white font-medium">Logout</span>
                 </button>
               ) : (
-                <Link href="/login" className="w-full px-4 py-3 text-left hover:bg-white/20 transition-colors duration-200 flex items-center gap-3">
-                  <LogIn className="w-5 h-5 text-gray-700" />
-                  <span className="text-gray-700 font-medium">Login</span>
+                <Link href="/login" className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3">
+                  <LogIn className="w-5 h-5 text-white" />
+                  <span className="text-white font-medium">Login</span>
                 </Link>
               )}
             </div>

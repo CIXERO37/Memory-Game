@@ -21,7 +21,7 @@ export function AudioPlayer({ className = "" }: AudioPlayerProps) {
       {/* Audio Toggle Button */}
       <button
         onClick={toggleAudio}
-        className={`w-12 h-12 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg flex items-center justify-center hover:bg-white/30 transition-all duration-300 shadow-lg ${className}`}
+        className={`w-12 h-12 bg-purple-800/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg flex items-center justify-center hover:bg-purple-700/90 transition-all duration-300 shadow-xl ${className}`}
       >
         {isAudioMuted ? (
           <VolumeX className="w-6 h-6 text-white" />
