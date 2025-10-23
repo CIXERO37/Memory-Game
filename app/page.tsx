@@ -9,11 +9,14 @@ import { GlobalAudioPlayer } from "@/components/global-audio-player"
 import { useAuth } from "@/hooks/use-auth"
 import { UserProfileComponent } from "@/components/user-profile"
 import { LogoutConfirmationDialog } from "@/components/logout-confirmation-dialog"
+import { useTranslation } from "react-i18next"
+import { LanguageSelector } from "@/components/language-selector"
 
 export default function HomePage() {
   const dragCardRef = useRef<HTMLDivElement | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation } = useAuth()
+  const { t } = useTranslation()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -70,10 +73,7 @@ export default function HomePage() {
           <div className="absolute top-14 right-0 bg-purple-800/95 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-2xl min-w-48 overflow-hidden">
             <div className="py-2">
               {/* Language Selection */}
-              <button className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3">
-                <Languages className="w-5 h-5 text-white" />
-                <span className="text-white font-medium">Language</span>
-              </button>
+              <LanguageSelector onClose={() => setIsMenuOpen(false)} />
               
               {/* Divider */}
               <div className="border-t border-purple-300/50 my-1"></div>
@@ -84,12 +84,12 @@ export default function HomePage() {
                   className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3"
                 >
                   <LogIn className="w-5 h-5 text-white" />
-                  <span className="text-white font-medium">Logout</span>
+                  <span className="text-white font-medium">{t('menu.logout')}</span>
                 </button>
               ) : (
                 <Link href="/login" className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3">
                   <LogIn className="w-5 h-5 text-white" />
-                  <span className="text-white font-medium">Login</span>
+                  <span className="text-white font-medium">{t('menu.login')}</span>
                 </Link>
               )}
             </div>
@@ -186,7 +186,7 @@ export default function HomePage() {
           <div className="mb-4 sm:mb-6">
             <div className="inline-block bg-white border-2 sm:border-4 border-black rounded-lg px-4 sm:px-8 py-2 sm:py-4 shadow-2xl pixel-title-container">
               <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black pixel-title">
-                MEMORY QUIZ
+                {t('home.title')}
               </h1>
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto mb-6 sm:mb-12">
             <div className="bg-black/20 border-2 border-white/30 rounded-lg px-4 sm:px-6 py-3 sm:py-4 pixel-description">
               <p className="text-sm sm:text-base lg:text-lg text-white font-medium pixel-font-sm">
-                CHALLENGE YOUR MIND WITH MEMORY GAMES AND EDUCATIONAL QUIZZES
+                {t('home.description')}
               </p>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function HomePage() {
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black rounded border-2 border-white flex items-center justify-center">
                     <Server className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold">HOST</span>
+                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold">{t('home.host')}</span>
                 </div>
               </button>
             </div>
@@ -225,7 +225,7 @@ export default function HomePage() {
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded border-2 border-black flex items-center justify-center">
                     <Play className="w-3 h-3 sm:w-5 sm:h-5 text-black" />
                   </div>
-                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold">JOIN</span>
+                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold">{t('home.join')}</span>
                 </div>
               </button>
             </div>

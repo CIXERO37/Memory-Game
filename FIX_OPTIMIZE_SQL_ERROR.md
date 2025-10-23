@@ -289,3 +289,4 @@ WHERE session_id IS NOT NULL;
 **Status**: ✅ Fixed and Ready  
 **Error**: Resolved  
 **Impact**: No breaking changes if tables don't exist
+

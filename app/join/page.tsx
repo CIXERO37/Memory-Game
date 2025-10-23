@@ -294,6 +294,13 @@ function JoinPageContent() {
       
       // Store player info in Supabase session
       try {
+        console.log("[Join] Creating session for player:", {
+          id: finalPlayerId,
+          username: username.trim(),
+          avatar: selectedAvatar,
+          roomCode
+        })
+        
         const { sessionId: newSessionId } = await sessionManager.getOrCreateSession(
           'player',
           {
@@ -306,6 +313,20 @@ function JoinPageContent() {
         )
         setSessionId(newSessionId)
         console.log("[Join] Session created/updated:", newSessionId)
+        
+        // Also store in localStorage as backup
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(
+            "currentPlayer",
+            JSON.stringify({
+              id: finalPlayerId,
+              username: username.trim(),
+              avatar: selectedAvatar,
+              roomCode,
+            }),
+          )
+          console.log("[Join] Player data also stored in localStorage")
+        }
       } catch (error) {
         console.warn("[Join] Error creating session:", error)
         // Fallback to localStorage if Supabase fails
@@ -319,12 +340,23 @@ function JoinPageContent() {
               roomCode,
             }),
           )
+          console.log("[Join] Fallback: Player data stored in localStorage only")
         }
         // Still set session ID for consistency
         setSessionId(`fallback_${finalPlayerId}_${Date.now()}`)
       }
 
       console.log("[Join] Successfully joined, redirecting to waiting room")
+      console.log("[Join] Final player data:", {
+        id: finalPlayerId,
+        username: username.trim(),
+        avatar: selectedAvatar,
+        roomCode
+      })
+      
+      // Add a small delay to ensure session is saved
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       // Redirect to waiting room route
       router.push(`/waiting-room/${roomCode}`)
     } else {

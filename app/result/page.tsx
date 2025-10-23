@@ -6,6 +6,7 @@ import { Trophy, Users, Home, Star, Medal } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
+import { useTranslation } from "react-i18next"
 
 interface Player {
   id: string
@@ -33,6 +34,7 @@ interface Room {
 }
 
 function ResultPageContent() {
+  const { t } = useTranslation()
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const [playerRanking, setPlayerRanking] = useState<{
@@ -143,7 +145,7 @@ function ResultPageContent() {
             <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
               <Trophy className="w-6 h-6 text-white" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">LOADING RESULTS...</h2>
+            <h2 className="text-xl font-bold text-white mb-2">{t('lobby.loadingResults')}</h2>
             <p className="text-sm text-blue-200">Calculating your score</p>
           </div>
         </div>
@@ -166,7 +168,7 @@ function ResultPageContent() {
 
   // Get rank display
   const getRankDisplay = (rank: number) => {
-    if (rank === 1) return { text: "CHAMPION", icon: "🥇", color: "from-yellow-400 to-amber-400", borderColor: "border-yellow-400/50" }
+    if (rank === 1) return { text: t('lobby.champion'), icon: "🥇", color: "from-yellow-400 to-amber-400", borderColor: "border-yellow-400/50" }
     if (rank === 2) return { text: "2ND PLACE", icon: "🥈", color: "from-gray-400 to-gray-500", borderColor: "border-gray-400/50" }
     if (rank === 3) return { text: "3RD PLACE", icon: "🥉", color: "from-amber-600 to-orange-600", borderColor: "border-amber-600/50" }
     return { text: `${rank}TH PLACE`, icon: "🏅", color: "from-blue-400 to-purple-400", borderColor: "border-blue-400/50" }
@@ -239,7 +241,7 @@ function ResultPageContent() {
             <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
               <Trophy className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white pixel-header-title">GAME RESULTS</h1>
+            <h1 className="text-3xl font-bold text-white pixel-header-title">{t('lobby.gameResults')}</h1>
           </div>
         </div>
 
@@ -307,7 +309,7 @@ function ResultPageContent() {
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/15 to-blue-400/15 rounded-lg blur-sm"></div>
               <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent rounded-lg"></div>
               <div className="text-4xl font-bold text-cyan-100 relative z-10 drop-shadow-lg">{playerRanking.totalScore}</div>
-              <div className="text-lg text-slate-200/80 relative z-10">POINTS</div>
+              <div className="text-lg text-slate-200/80 relative z-10">{t('lobby.points')}</div>
             </div>
             
           </div>
@@ -322,7 +324,7 @@ function ResultPageContent() {
             }}
           >
             <Home className="w-5 h-5" />
-            BACK
+            {t('lobby.back')}
           </button>
         </div>
       </div>

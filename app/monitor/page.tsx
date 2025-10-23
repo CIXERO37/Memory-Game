@@ -14,10 +14,12 @@ import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
 import { useGlobalAudio } from "@/hooks/use-global-audio"
+import { useTranslation } from "react-i18next"
 
 function MonitorPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { t } = useTranslation()
   const [roomCode, setRoomCode] = useState<string | null>(null)
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
@@ -346,7 +348,7 @@ function MonitorPageContent() {
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
-            <div className="text-white text-sm sm:text-base">LOADING HOST MONITOR...</div>
+            <div className="text-white text-sm sm:text-base">{t('monitor.loadingHostMonitor')}</div>
           </div>
         </div>
       </div>
@@ -361,8 +363,8 @@ function MonitorPageContent() {
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
-            <div className="text-white text-sm sm:text-base">LOADING ROOM...</div>
-            <div className="text-blue-200 text-xs sm:text-sm mt-2">Please wait while we connect to the game</div>
+            <div className="text-white text-sm sm:text-base">{t('monitor.loadingRoom')}</div>
+            <div className="text-blue-200 text-xs sm:text-sm mt-2">{t('monitor.connectingGame')}</div>
           </div>
         </div>
       </div>
@@ -471,7 +473,7 @@ function MonitorPageContent() {
                   {/* Enhanced MEMORY QUIZ Title */}
                   <div className="bg-gradient-to-r from-blue-500 to-purple-600 border-2 border-white rounded-lg px-4 sm:px-6 py-2 sm:py-3 shadow-2xl transform hover:scale-105 transition-all duration-300">
                     <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
-                      MEMORY QUIZ
+                      {t('monitor.title')}
                     </h1>
                   </div>
                   {/* GameForSmart Logo */}
@@ -482,7 +484,7 @@ function MonitorPageContent() {
                   />
                   <div className="flex flex-col sm:flex-row gap-2">
                     <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-2 sm:px-4 py-1 sm:py-2">
-                      <span className="text-blue-400 font-bold text-xs sm:text-sm">{players.length} PLAYERS</span>
+                      <span className="text-blue-400 font-bold text-xs sm:text-sm">{players.length} {t('monitor.players')}</span>
                     </div>
                     <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-2 sm:px-4 py-1 sm:py-2 flex items-center gap-2`}>
                       <Clock className={`w-3 h-3 sm:w-4 sm:h-4 ${showTimeWarning ? 'text-red-400' : 'text-green-400'}`} />
@@ -492,7 +494,7 @@ function MonitorPageContent() {
                     </div>
                   </div>
                 </div>
-                <p className="text-sm sm:text-base lg:text-lg text-blue-200">Room: {roomCode}</p>
+                <p className="text-sm sm:text-base lg:text-lg text-blue-200">{t('monitor.room')} {roomCode}</p>
               </div>
             </div>
           </div>
@@ -510,7 +512,7 @@ function MonitorPageContent() {
                   <div className="w-4 h-4 sm:w-5 sm:h-5 bg-black rounded border-2 border-white flex items-center justify-center">
                     <span className="text-white font-bold text-xs sm:text-sm">✕</span>
                   </div>
-                  <span className="text-sm sm:text-base lg:text-lg font-bold">END GAME</span>
+                  <span className="text-sm sm:text-base lg:text-lg font-bold">{t('monitor.endGame')}</span>
                 </div>
               </button>
             </button>
@@ -523,14 +525,14 @@ function MonitorPageContent() {
             <div className="flex items-center justify-center gap-2">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
               <span className="text-red-400 font-bold text-sm sm:text-base lg:text-lg">
-                {timerState.remainingTime <= 0 ? "WAKTU HABIS!" : "WAKTU HAMPIR HABIS!"}
+                {timerState.remainingTime <= 0 ? t('monitor.timeUp') : t('monitor.timeAlmostUp')}
               </span>
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
             </div>
             <p className="text-red-300 text-center text-xs sm:text-sm mt-1">
               {timerState.remainingTime <= 0 
-                ? "Game akan berakhir secara otomatis..." 
-                : "Game akan berakhir secara otomatis ketika waktu habis!"
+                ? t('monitor.gameWillEnd')
+                : t('monitor.gameWillEndWhenTimeUp')
               }
             </p>
           </div>
@@ -544,7 +546,7 @@ function MonitorPageContent() {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-400 rounded border-2 sm:border-4 border-white mx-auto mb-4 sm:mb-6 flex items-center justify-center">
                   <Users className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <p className="text-sm sm:text-base lg:text-lg text-white">NO PLAYERS HAVE JOINED THE GAME YET</p>
+                <p className="text-sm sm:text-base lg:text-lg text-white">{t('monitor.noPlayers')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
@@ -612,7 +614,7 @@ function MonitorPageContent() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
-                          <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} POINTS</span>
+                          <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} {t('monitor.points')}</span>
                         </div>
                       </div>
                     </div>

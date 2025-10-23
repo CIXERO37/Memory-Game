@@ -33,44 +33,84 @@ export default function WaitingRoomPage() {
   useEffect(() => {
     const restorePlayerInfo = async () => {
       try {
+        console.log("[WaitingRoom] Restoring player info for room:", roomCode)
+        
         // Try to get session from Supabase
         const sessionId = sessionManager.getSessionIdFromStorage()
+        console.log("[WaitingRoom] Session ID from storage:", sessionId)
+        
         if (sessionId) {
           const sessionData = await sessionManager.getSessionData(sessionId)
+          console.log("[WaitingRoom] Session data from Supabase:", sessionData)
+          
           if (sessionData && sessionData.user_type === 'player' && sessionData.room_code === roomCode) {
+            console.log("[WaitingRoom] Valid session found, setting player info")
             setPlayerInfo({
               username: sessionData.user_data.username,
               avatar: sessionData.user_data.avatar,
               playerId: sessionData.user_data.id,
             })
             return
+          } else {
+            console.log("[WaitingRoom] Session validation failed:", {
+              hasSessionData: !!sessionData,
+              userType: sessionData?.user_type,
+              sessionRoomCode: sessionData?.room_code,
+              expectedRoomCode: roomCode
+            })
           }
         }
         
-        // Fallback to localStorage if Supabase session not found (temporary)
+        // Fallback to localStorage if Supabase session not found
         if (typeof window !== 'undefined') {
           const storedPlayer = localStorage.getItem("currentPlayer")
+          console.log("[WaitingRoom] Stored player from localStorage:", storedPlayer)
+          
           if (storedPlayer) {
             try {
               const player = JSON.parse(storedPlayer)
+              console.log("[WaitingRoom] Parsed player data:", player)
+              
               if (player.roomCode === roomCode) {
+                console.log("[WaitingRoom] Valid localStorage player found, setting player info")
                 setPlayerInfo({
                   username: player.username,
                   avatar: player.avatar,
                   playerId: player.id,
                 })
                 return
+              } else {
+                console.log("[WaitingRoom] localStorage room code mismatch:", {
+                  storedRoomCode: player.roomCode,
+                  expectedRoomCode: roomCode
+                })
               }
             } catch (error) {
-              console.error("Error parsing stored player info:", error)
+              console.error("[WaitingRoom] Error parsing stored player info:", error)
             }
           }
         }
         
-        // If no valid player info found, redirect to join page
+        // If no valid player info found, try to get player from room data as last resort
+        console.log("[WaitingRoom] No valid player info found, trying to get player from room data")
+        
+        // Try to get player info from room data (as fallback)
+        if (room && room.players && room.players.length > 0) {
+          console.log("[WaitingRoom] Found players in room, using first player as fallback")
+          const firstPlayer = room.players[0]
+          setPlayerInfo({
+            username: firstPlayer.username,
+            avatar: firstPlayer.avatar,
+            playerId: firstPlayer.id,
+          })
+          return
+        }
+        
+        // If still no valid player info found, redirect to join page
+        console.log("[WaitingRoom] No valid player info found anywhere, redirecting to join page")
         router.push(`/join?room=${roomCode}`)
       } catch (error) {
-        console.error("Error restoring player info:", error)
+        console.error("[WaitingRoom] Error restoring player info:", error)
         router.push(`/join?room=${roomCode}`)
       }
     }

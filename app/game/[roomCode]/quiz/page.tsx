@@ -15,6 +15,7 @@ import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabaseRoomManager } from "@/lib/supabase-room-manager"
 import { failedUpdatesManager } from "@/lib/failed-updates-manager"
 import { useGlobalAudio } from "@/hooks/use-global-audio"
+import { useTranslation } from "react-i18next"
 
 interface QuizPageProps {
   params: {
@@ -50,6 +51,7 @@ function shuffleArrayWithIndices<T>(array: T[]): { shuffled: T[], originalIndice
 }
 
 export default function QuizPage({ params, searchParams }: QuizPageProps) {
+  const { t } = useTranslation()
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
@@ -749,7 +751,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center">
         <Card className="max-w-md mx-auto text-center">
           <CardContent className="py-8">
-            <div className="text-lg">{!gameStarted ? "Invalid game session. Redirecting..." : "Loading quiz..."}</div>
+            <div className="text-lg">{!gameStarted ? t('lobby.invalidGameSession') : t('lobby.loadingQuiz')}</div>
           </CardContent>
         </Card>
       </div>
@@ -778,7 +780,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">QUIZ COMPLETED!</h2>
-            <p className="text-sm text-blue-200">Redirecting to results...</p>
+            <p className="text-sm text-blue-200">{t('lobby.redirectingToResults')}</p>
           </div>
         </div>
       </div>
@@ -877,10 +879,10 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
                 {/* Enhanced MEMORY QUIZ Title */}
                 <div className="bg-gradient-to-r from-blue-500 to-purple-600 border-2 border-white rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-2xl transition-all duration-300 inline-block">
                   <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-white tracking-wider uppercase drop-shadow-lg whitespace-nowrap">
-                    MEMORY QUIZ
+                    {t('lobby.memoryQuiz')}
                   </h1>
                 </div>
-                <p className="text-xs sm:text-sm text-blue-200 mt-1">Room: {params.roomCode}</p>
+                <p className="text-xs sm:text-sm text-blue-200 mt-1">{t('lobby.room')} {params.roomCode}</p>
               </div>
           </div>
           
@@ -930,11 +932,11 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         {/* Timer, Score, and Correct Answers */}
         <div className="flex justify-center gap-4 mb-6">
           <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-            <span className="text-blue-400 font-bold text-sm">Question {questionsAnswered + 1} of {room?.settings.questionCount || questions.length}</span>
+            <span className="text-blue-400 font-bold text-sm">{t('lobby.question')} {questionsAnswered + 1} of {room?.settings.questionCount || questions.length}</span>
           </div>
 
           <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-            <span className="text-yellow-400 font-bold text-sm">Points: {score}</span>
+            <span className="text-yellow-400 font-bold text-sm">{t('lobby.points')}: {score}</span>
           </div>
 
           <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-4 py-2 flex items-center gap-2`}>

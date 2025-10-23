@@ -242,3 +242,4 @@ Perbaikan ini mengatasi error "Database error saving new user" dengan:
 
 Setelah script SQL dijalankan, Google OAuth akan berfungsi dengan sempurna dan user baru bisa login tanpa error!
 
+

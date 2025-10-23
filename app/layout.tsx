@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { GlobalAudioInitializer } from '../components/global-audio-initializer'
 import { AuthGuard } from '../components/auth-guard'
+import { I18nInitializer } from '../components/i18n-initializer'
 
 export const metadata: Metadata = {
   title: 'quiz-MemoryCard',
@@ -29,11 +30,13 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <GlobalAudioInitializer />
-        <AuthGuard>
-          {children}
-        </AuthGuard>
-        <Analytics />
+        <I18nInitializer>
+          <GlobalAudioInitializer />
+          <AuthGuard>
+            {children}
+          </AuthGuard>
+          <Analytics />
+        </I18nInitializer>
       </body>
     </html>
   )

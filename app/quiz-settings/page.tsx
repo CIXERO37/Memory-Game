@@ -12,10 +12,12 @@ import { sessionManager } from "@/lib/supabase-session-manager"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Clock, HelpCircle } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 function QuizSettingsPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { t } = useTranslation()
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null)
   const [hostId] = useState(() => Math.random().toString(36).substr(2, 9))
   const [timeLimit, setTimeLimit] = useState([5 
@@ -201,8 +203,8 @@ function QuizSettingsPageContent() {
               <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                 <Settings className="h-8 w-8 text-black animate-spin" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 pixel-font">LOADING...</h3>
-              <p className="text-white/80 pixel-font-sm">PREPARING QUIZ SETTINGS</p>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">{t('quizSettings.loading')}</h3>
+              <p className="text-white/80 pixel-font-sm">{t('quizSettings.preparingSettings')}</p>
             </div>
           </div>
         </div>
@@ -243,7 +245,7 @@ function QuizSettingsPageContent() {
               <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
             <div className="inline-block bg-white border-2 border-black rounded px-3 sm:px-4 py-1 sm:py-2 pixel-header-title">
-              <h1 className="text-lg sm:text-xl font-bold text-black pixel-font">SETTINGS</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-black pixel-font">{t('quizSettings.title')}</h1>
             </div>
           </div>
         </div>
@@ -269,7 +271,7 @@ function QuizSettingsPageContent() {
                           <div className="h-6 bg-gray-300 rounded mb-2"></div>
                           <div className="h-4 bg-gray-200 rounded"></div>
                         </div>
-                        <p className="text-sm text-gray-500 pixel-font-sm">Loading quiz data...</p>
+                        <p className="text-sm text-gray-500 pixel-font-sm">{t('quizSettings.loadingQuizData')}</p>
                       </div>
                     </div>
                   ) : quiz ? (
@@ -294,11 +296,11 @@ function QuizSettingsPageContent() {
                         <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                       </div>
                       <div className="inline-block bg-blue-500 border border-black rounded px-2 py-1">
-                        <Label className="text-white font-bold text-xs pixel-font-sm">TIME LIMIT</Label>
+                        <Label className="text-white font-bold text-xs pixel-font-sm">{t('quizSettings.timeLimit')}</Label>
                       </div>
                     </div>
                     <div className="bg-yellow-400 border-2 border-black rounded px-2 sm:px-3 py-1">
-                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{timeLimit[0]} MIN</span>
+                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{timeLimit[0]} {t('quizSettings.minutes')}</span>
                     </div>
                   </div>
                   <div className="relative">
@@ -311,8 +313,8 @@ function QuizSettingsPageContent() {
                       className="w-full pixel-slider"
                     />
                     <div className="flex justify-between text-xs text-black mt-2 pixel-font-sm">
-                      <span>5 MIN</span>
-                      <span>30 MIN</span>
+                      <span>5 {t('quizSettings.minutes')}</span>
+                      <span>30 {t('quizSettings.minutes')}</span>
                     </div>
                   </div>
                 </div>
@@ -325,11 +327,11 @@ function QuizSettingsPageContent() {
                         <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                       </div>
                       <div className="inline-block bg-green-500 border border-black rounded px-2 py-1">
-                        <Label className="text-white font-bold text-xs pixel-font-sm">QUESTIONS</Label>
+                        <Label className="text-white font-bold text-xs pixel-font-sm">{t('quizSettings.questions')}</Label>
                       </div>
                     </div>
                     <div className="bg-orange-400 border-2 border-black rounded px-2 sm:px-3 py-1">
-                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{questionCount[0]} Q'S</span>
+                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{questionCount[0]} {t('quizSettings.questionsShort')}</span>
                     </div>
                   </div>
                   <div className="relative">
@@ -358,7 +360,7 @@ function QuizSettingsPageContent() {
                       className="relative w-full bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold min-h-[44px]"
                     >
                       <ArrowLeft className="h-4 w-4 mr-2" />
-                      <span className="pixel-font-sm text-sm sm:text-base">BACK</span>
+                      <span className="pixel-font-sm text-sm sm:text-base">{t('quizSettings.back')}</span>
                     </Button>
                   </div>
                   <div className="flex-1 relative pixel-button-container">
@@ -368,7 +370,7 @@ function QuizSettingsPageContent() {
                       disabled={isCreatingRoom}
                       className="relative w-full bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-green-400 hover:to-emerald-400 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 min-h-[44px]"
                     >
-                      <span className="pixel-font-sm text-sm sm:text-base">{isCreatingRoom ? "CREATING..." : "CREATE ROOM"}</span>
+                      <span className="pixel-font-sm text-sm sm:text-base">{isCreatingRoom ? t('quizSettings.creating') : t('quizSettings.createRoom')}</span>
                     </Button>
                   </div>
                 </div>

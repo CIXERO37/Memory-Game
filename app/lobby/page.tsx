@@ -17,10 +17,12 @@ import { useRoom } from "@/hooks/use-room"
 import { CountdownTimer } from "@/components/countdown-timer"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
 import { useGlobalAudio } from "@/hooks/use-global-audio"
+import { useTranslation } from "react-i18next"
 
 function LobbyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { t } = useTranslation()
   const [roomCode, setRoomCode] = useState<string | null>(null)
   const [hostId, setHostId] = useState<string | null>(null)
   const [quizId, setQuizId] = useState<string | null>(null)
@@ -87,8 +89,8 @@ function LobbyPageContent() {
         return
       }
       e.preventDefault()
-      e.returnValue = "Are you sure you want to leave? This will end the lobby for all players."
-      return "Are you sure you want to leave? This will end the lobby for all players."
+      e.returnValue = t('lobby.leaveWarningDesc')
+      return t('lobby.leaveWarningDesc')
     }
 
     const handlePopState = (e: PopStateEvent) => {
@@ -137,8 +139,8 @@ function LobbyPageContent() {
   const confirmKickPlayer = async () => {
     if (!playerToKick || !roomCode || !hostId) {
       toast({
-        title: "Error",
-        description: "Missing required data to kick player.",
+        title: t('lobby.error'),
+        description: t('lobby.missingData'),
         duration: 3000,
       })
       return
@@ -157,8 +159,8 @@ function LobbyPageContent() {
       if (success) {
         console.log("[Lobby] Player kicked successfully")
         toast({
-          title: "Player Kicked!",
-          description: `👢 ${playerToKick.username} has been kicked from the game`,
+          title: t('lobby.playerKicked'),
+          description: `👢 ${playerToKick.username} ${t('lobby.playerKickedDesc')}`,
           duration: 3000,
         })
         
@@ -189,16 +191,16 @@ function LobbyPageContent() {
       } else {
         console.log("[Lobby] Failed to kick player")
         toast({
-          title: "Failed to Kick Player",
-          description: "Could not kick the player. Please try again.",
+          title: t('lobby.failedToKick'),
+          description: t('lobby.failedToKickDesc'),
           duration: 3000,
         })
       }
     } catch (error) {
       console.error("[Lobby] Error kicking player:", error)
       toast({
-        title: "Error",
-        description: "An error occurred while kicking the player.",
+        title: t('lobby.error'),
+        description: t('lobby.errorKickingPlayer'),
         duration: 3000,
       })
     }
@@ -309,7 +311,7 @@ function LobbyPageContent() {
                 const newPlayers = updatedRoom.players.slice(oldPlayerCount)
                 newPlayers.forEach(player => {
                   toast({
-                    title: "Player Joined!",
+                    title: t('lobby.playerJoined'),
                     description: `🎉 ${player.username} joined the game`,
                     duration: 3000,
                   })
@@ -318,8 +320,8 @@ function LobbyPageContent() {
                 // Special case: first player joined
                 if (oldPlayerCount === 0 && newPlayerCount > 0) {
                   toast({
-                    title: "Game Ready!",
-                    description: "🚀 First player joined - game is ready to start!",
+                    title: t('lobby.gameReady'),
+                    description: t('lobby.firstPlayerJoined'),
                     duration: 3000,
                   })
                 }
@@ -353,8 +355,8 @@ function LobbyPageContent() {
                 // Special case: all players left
                 if (newPlayerCount === 0 && oldPlayerCount > 0) {
                   toast({
-                    title: "All Players Left",
-                    description: "😢 All players have left the game",
+                    title: t('lobby.allPlayersLeft'),
+                    description: t('lobby.allPlayersHaveLeft'),
                     duration: 4000,
                   })
                 }
@@ -362,8 +364,8 @@ function LobbyPageContent() {
                 // Special case: last player left
                 if (oldPlayerCount === 1 && newPlayerCount === 0) {
                   toast({
-                    title: "Last Player Left",
-                    description: "😔 The last player has left the game",
+                    title: t('lobby.lastPlayerLeft'),
+                    description: t('lobby.lastPlayerLeft'),
                     duration: 3000,
                   })
                 }
@@ -559,7 +561,7 @@ function LobbyPageContent() {
     // Copy the full URL instead of just the room code
     navigator.clipboard.writeText(shareUrl || `${window.location.origin}/join?room=${roomCode}`)
     toast({
-      title: "Share link copied!",
+      title: t('lobby.shareLinkCopied'),
       description: "Send this link to your friends",
     })
     setCopiedCode(true)
@@ -570,7 +572,7 @@ function LobbyPageContent() {
     if (!shareUrl) return
     navigator.clipboard.writeText(shareUrl)
     toast({
-      title: "Share link copied!",
+      title: t('lobby.shareLinkCopied'),
       description: "Send this link to your friends",
     })
     setCopiedLink(true)
@@ -626,16 +628,16 @@ function LobbyPageContent() {
       } else {
         console.error("[Lobby] Failed to start countdown")
         toast({
-          title: "Failed to Start Game",
-          description: "Could not start the countdown. Please try again.",
+          title: t('lobby.failedToStartGame'),
+          description: t('lobby.couldNotStartCountdown'),
           duration: 3000,
         })
       }
     } catch (error) {
       console.error("[Lobby] Error starting countdown:", error)
       toast({
-        title: "Error",
-        description: "An error occurred while starting the game.",
+        title: t('lobby.error'),
+        description: t('lobby.errorStartingGame'),
         duration: 3000,
       })
     }
@@ -686,7 +688,7 @@ function LobbyPageContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center text-white">
-          <div className="text-xl">Loading room...</div>
+          <div className="text-xl">{t('lobby.loadingRoom')}</div>
         </div>
       </div>
     )
@@ -811,12 +813,12 @@ function LobbyPageContent() {
                 <Users className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
               </div>
               <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 md:px-4 py-1 sm:py-2 pixel-header-title flex-shrink-0">
-                <h1 className="text-xs sm:text-sm md:text-lg font-bold text-black">LOBBY</h1>
+                <h1 className="text-xs sm:text-sm md:text-lg font-bold text-black">{t('lobby.lobby')}</h1>
               </div>
               {/* Simple and Clean MEMORY QUIZ Title */}
               <div className="bg-white border-2 border-black rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-lg inline-block">
                 <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-black tracking-wide whitespace-nowrap">
-                  MEMORY QUIZ
+                  {t('lobby.memoryQuiz')}
                 </h1>
               </div>
             </div>
@@ -860,7 +862,7 @@ function LobbyPageContent() {
                       <span className="text-white text-xs">❓</span>
                     </div>
                     <span className="text-green-700 font-medium text-xs sm:text-sm">
-                      {currentRoom?.settings.questionCount || 10} Questions
+                      {currentRoom?.settings.questionCount || 10} {t('lobby.questions')}
                     </span>
                   </div>
                 </div>
@@ -958,7 +960,7 @@ function LobbyPageContent() {
                       playerLeft ? 'animate-pulse bg-red-100 border-red-400' : ''
                     }`}>
                       <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">
-                        {playerCountChanged ? '🎉 ' : playerLeft ? '👋 ' : ''}PLAYERS ({currentRoom?.players.length || 0})
+                        {playerCountChanged ? '🎉 ' : playerLeft ? '👋 ' : ''}{t('lobby.players')} ({currentRoom?.players.length || 0})
                       </span>
                     </div>
                   </div>
@@ -981,14 +983,14 @@ function LobbyPageContent() {
                           className="relative w-full sm:w-auto bg-gradient-to-br from-purple-500 to-purple-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-purple-400 hover:to-purple-500 transform hover:scale-105 transition-all duration-200 font-bold px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none min-h-[44px]"
                         >
                           <Play className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <span className="pixel-font-sm">START QUIZ</span>
+                          <span className="pixel-font-sm">{t('lobby.startGame')}</span>
                         </button>
                       </div>
                     </div>
                   )}
                   {gameStarted && (
                     <div className="bg-yellow-400 border-2 border-black rounded px-3 py-1">
-                      <span className="text-black font-bold text-xs pixel-font-sm">GAME STARTED</span>
+                      <span className="text-black font-bold text-xs pixel-font-sm">{t('lobby.gameStarted')}</span>
                     </div>
                   )}
                 </div>
@@ -998,10 +1000,10 @@ function LobbyPageContent() {
                   <div className="bg-black/20 border border-white/30 rounded px-3 py-2">
                     <span className="text-white text-xs sm:text-sm pixel-font-sm">
                       {currentRoom && currentRoom.players.length === 0
-                        ? "WAITING FOR PLAYERS TO JOIN..."
+                        ? t('lobby.waitingForPlayers')
                         : gameStarted
-                          ? "GAME IN PROGRESS"
-                          : "READY TO START"}
+                          ? t('lobby.gameInProgress')
+                          : t('lobby.readyToStart')}
                     </span>
                   </div>
                   
@@ -1013,8 +1015,8 @@ function LobbyPageContent() {
                       <Users className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
                     </div>
                     <div className="bg-white border-2 border-black rounded px-3 sm:px-4 py-2 inline-block">
-                      <p className="text-black font-bold text-xs sm:text-sm pixel-font-sm">NO PLAYERS YET</p>
-                      <p className="text-black text-xs pixel-font-sm">SHARE THE ROOM CODE TO GET STARTED!</p>
+                      <p className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{t('lobby.noPlayersYet')}</p>
+                      <p className="text-black text-xs pixel-font-sm">{t('lobby.shareRoomCode')}</p>
                     </div>
                   </div>
                 ) : (
@@ -1106,11 +1108,9 @@ function LobbyPageContent() {
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                   <AlertTriangle className="h-8 w-8 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2 pixel-font">LEAVE LOBBY?</h3>
+                <h3 className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.leaveWarning')}</h3>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
-                  ARE YOU SURE YOU WANT TO LEAVE?<br/>
-                  THIS WILL END THE GAME FOR ALL PLAYERS<br/>
-                  AND THEY WILL BE DISCONNECTED
+                  {t('lobby.leaveWarningDesc')}<br/>
                 </p>
               </div>
 
@@ -1122,7 +1122,7 @@ function LobbyPageContent() {
                     onClick={cancelLeave}
                     className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
-                    <span className="pixel-font-sm">CANCEL</span>
+                    <span className="pixel-font-sm">{t('lobby.cancel')}</span>
                   </Button>
                 </div>
 
@@ -1132,7 +1132,7 @@ function LobbyPageContent() {
                     onClick={confirmLeave}
                     className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
-                    <span className="pixel-font-sm">LEAVE LOBBY</span>
+                    <span className="pixel-font-sm">{t('lobby.leave')}</span>
                   </Button>
                 </div>
               </div>
@@ -1152,11 +1152,11 @@ function LobbyPageContent() {
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                   <X className="h-8 w-8 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2 pixel-font">KICK PLAYER?</h3>
+                <h3 className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.kickPlayer')}?</h3>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
-                  ARE YOU SURE YOU WANT TO KICK<br/>
+                  {t('lobby.confirmKick')}<br/>
                   <span className="font-bold text-yellow-300">{playerToKick?.username?.toUpperCase()}</span><br/>
-                  FROM THE GAME?
+                  ?
                 </p>
               </div>
 
@@ -1168,7 +1168,7 @@ function LobbyPageContent() {
                     onClick={cancelKickPlayer}
                     className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
-                    <span className="pixel-font-sm">CANCEL</span>
+                    <span className="pixel-font-sm">{t('lobby.cancel')}</span>
                   </Button>
                 </div>
 
@@ -1178,7 +1178,7 @@ function LobbyPageContent() {
                     onClick={confirmKickPlayer}
                     className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
-                    <span className="pixel-font-sm">KICK PLAYER</span>
+                    <span className="pixel-font-sm">{t('lobby.kickPlayer')}</span>
                   </Button>
                 </div>
               </div>

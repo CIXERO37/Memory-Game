@@ -6,6 +6,7 @@ import { Sparkles } from "lucide-react"
 import { useRoom } from "@/hooks/use-room"
 import { CountdownTimer } from "@/components/countdown-timer"
 import { sessionManager } from "@/lib/supabase-session-manager"
+import { useTranslation } from "react-i18next"
 
 interface CountdownPageProps {
   params: {
@@ -19,6 +20,7 @@ interface CountdownPageProps {
 }
 
 export default function CountdownPage({ params, searchParams }: CountdownPageProps) {
+  const { t } = useTranslation()
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [isHost, setIsHost] = useState(false)
   const [hostId, setHostId] = useState<string | null>(null)
@@ -110,7 +112,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
       <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center">
         <Card className="max-w-md mx-auto text-center">
           <CardContent className="py-8">
-            <div className="text-lg">Loading...</div>
+            <div className="text-lg">{t('lobby.loading')}</div>
           </CardContent>
         </Card>
       </div>
@@ -122,7 +124,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
       <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center">
         <Card className="max-w-md mx-auto text-center">
           <CardContent className="py-8">
-            <div className="text-lg">Invalid game session. Redirecting...</div>
+            <div className="text-lg">{t('lobby.invalidGameSession')}</div>
           </CardContent>
         </Card>
       </div>
@@ -141,16 +143,16 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
         <CardContent className="py-16">
           <div className="flex items-center justify-center gap-2 mb-6">
             <Sparkles className="h-8 w-8 text-primary animate-pulse" />
-            <h1 className="text-2xl font-bold">Get Ready!</h1>
+            <h1 className="text-2xl font-bold">{t('lobby.getReady')}</h1>
             <Sparkles className="h-8 w-8 text-accent animate-pulse" />
           </div>
 
           <div className="text-8xl font-bold text-primary mb-6 animate-bounce">10</div>
 
-          <p className="text-lg text-muted-foreground mb-4">The quiz is about to begin!</p>
+          <p className="text-lg text-muted-foreground mb-4">{t('lobby.quizAboutToBegin')}</p>
 
           <div className="text-sm text-muted-foreground">
-            Remember: Answer 3+ questions correctly to unlock the memory mini-game
+            {t('lobby.remember')}
           </div>
         </CardContent>
       </Card>
