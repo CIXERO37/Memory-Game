@@ -60,36 +60,35 @@ class SupabaseSessionManager {
         is_active: true
       }
 
-      // Try to update existing session first
-      const { data: existingSession } = await supabase
-        .from('game_sessions')
-        .select('id')
-        .eq('session_id', finalSessionId)
-        .eq('is_active', true)
-        .single()
+      // Try to update existing room session first
+      if (roomCode) {
+        const { data: existingRoom } = await supabase
+          .from('rooms')
+          .select('id')
+          .eq('room_code', roomCode)
+          .single()
 
-      if (existingSession) {
-        // Update existing session
-        const { error } = await supabase
-          .from('game_sessions')
-          .update(sessionData)
-          .eq('session_id', finalSessionId)
+        if (existingRoom) {
+          // Update room with session data
+          const { error } = await supabase
+            .from('rooms')
+            .update({
+              session_id: finalSessionId,
+              is_session_active: true,
+              session_last_active: new Date().toISOString(),
+              session_data: sessionData
+            })
+            .eq('room_code', roomCode)
 
-        if (error) {
-          console.error('[SupabaseSessionManager] Error updating session:', error)
-          throw error
-        }
-      } else {
-        // Create new session
-        const { error } = await supabase
-          .from('game_sessions')
-          .insert(sessionData)
-
-        if (error) {
-          console.error('[SupabaseSessionManager] Error creating session:', error)
-          throw error
+          if (error) {
+            console.error('[SupabaseSessionManager] Error updating room session:', error)
+            throw error
+          }
         }
       }
+      
+      // Note: Session data is now stored in rooms table
+      // For non-room sessions, we store in localStorage only
 
       console.log('[SupabaseSessionManager] Session created/updated:', finalSessionId)
       return finalSessionId
@@ -108,10 +107,10 @@ class SupabaseSessionManager {
       }
 
       const { data, error } = await supabase
-        .from('game_sessions')
-        .select('*')
+        .from('rooms')
+        .select('session_id, is_session_active, session_last_active, session_data')
         .eq('session_id', sessionId)
-        .eq('is_active', true)
+        .eq('is_session_active', true)
         .single()
 
       if (error) {
@@ -119,7 +118,23 @@ class SupabaseSessionManager {
         return null
       }
 
-      return data
+      // Parse session_data if available
+      if (data && data.session_data) {
+        return {
+          id: data.session_id,
+          session_id: data.session_id,
+          user_type: data.session_data.user_type,
+          user_data: data.session_data.user_data,
+          room_code: data.session_data.room_code,
+          device_info: data.session_data.device_info,
+          created_at: data.session_data.created_at || '',
+          last_active: data.session_last_active,
+          expires_at: data.session_data.expires_at || '',
+          is_active: data.is_session_active
+        }
+      }
+
+      return null
     } catch (error) {
       console.error('[SupabaseSessionManager] Error in getSessionData:', error)
       return null
@@ -129,8 +144,8 @@ class SupabaseSessionManager {
   async deleteSession(sessionId: string): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('game_sessions')
-        .update({ is_active: false })
+        .from('rooms')
+        .update({ is_session_active: false })
         .eq('session_id', sessionId)
 
       if (error) {
@@ -187,13 +202,10 @@ class SupabaseSessionManager {
   async getSessionByRoom(roomCode: string, userType: 'host' | 'player'): Promise<GameSession | null> {
     try {
       const { data, error } = await supabase
-        .from('game_sessions')
-        .select('*')
+        .from('rooms')
+        .select('session_id, is_session_active, session_last_active, session_data')
         .eq('room_code', roomCode)
-        .eq('user_type', userType)
-        .eq('is_active', true)
-        .order('last_active', { ascending: false })
-        .limit(1)
+        .eq('is_session_active', true)
         .single()
 
       if (error) {
@@ -201,7 +213,23 @@ class SupabaseSessionManager {
         return null
       }
 
-      return data
+      // Parse session_data and filter by user_type
+      if (data && data.session_data && data.session_data.user_type === userType) {
+        return {
+          id: data.session_id,
+          session_id: data.session_id,
+          user_type: data.session_data.user_type,
+          user_data: data.session_data.user_data,
+          room_code: roomCode,
+          device_info: data.session_data.device_info,
+          created_at: data.session_data.created_at || '',
+          last_active: data.session_last_active,
+          expires_at: data.session_data.expires_at || '',
+          is_active: data.is_session_active
+        }
+      }
+
+      return null
     } catch (error) {
       console.error('[SupabaseSessionManager] Error in getSessionByRoom:', error)
       return null
@@ -212,8 +240,8 @@ class SupabaseSessionManager {
   async updateSessionActivity(sessionId: string): Promise<void> {
     try {
       await supabase
-        .from('game_sessions')
-        .update({ last_active: new Date().toISOString() })
+        .from('rooms')
+        .update({ session_last_active: new Date().toISOString() })
         .eq('session_id', sessionId)
     } catch (error) {
       console.error('[SupabaseSessionManager] Error updating session activity:', error)
