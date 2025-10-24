@@ -21,12 +21,7 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [errors, setErrors] = useState<{[key: string]: string}>({})
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/')
-    }
-  }, [isAuthenticated, router])
+  // Redirect logic is now handled by AuthGuard
 
   // Handle error parameters from URL
   useEffect(() => {
@@ -113,13 +108,23 @@ export default function LoginPage() {
       // Use environment variable if available, otherwise use current origin
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || currentOrigin
       
-      // Always use the site URL for redirect (never localhost in production)
-      const redirectUrl = `${siteUrl}/auth/callback`
+      // Check for redirect parameters
+      const urlParams = new URLSearchParams(window.location.search)
+      const redirectPath = urlParams.get('redirect')
+      const roomCode = urlParams.get('room')
+      
+      // Build redirect URL with parameters if they exist
+      let redirectUrl = `${siteUrl}/auth/callback`
+      if (redirectPath && roomCode) {
+        redirectUrl += `?redirect=${redirectPath}&room=${roomCode}`
+      }
       
       console.log('=== Google OAuth Debug Info ===')
       console.log('Current origin:', currentOrigin)
       console.log('Is localhost:', isLocalhost)
       console.log('Site URL from env:', process.env.NEXT_PUBLIC_SITE_URL)
+      console.log('Redirect path:', redirectPath)
+      console.log('Room code:', roomCode)
       console.log('Final redirect URL:', redirectUrl)
       console.log('================================')
       
