@@ -57,9 +57,27 @@ export default function AuthCallback() {
           
           setStatus('Login successful! Redirecting...')
           
+          // Check if there's a redirect URL with room code in the URL params
+          const redirectPath = searchParams.get('redirect')
+          const roomCode = searchParams.get('room')
+          
+          // Store redirect in sessionStorage if available
+          if (redirectPath === '/join' && roomCode) {
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem('pendingRedirect', `/join?room=${roomCode}`)
+              console.log('Stored pending redirect:', `/join?room=${roomCode}`)
+            }
+          }
+          
           // Wait a bit to ensure session is fully established
           setTimeout(() => {
-            router.push('/')
+            if (redirectPath === '/join' && roomCode) {
+              console.log('Redirecting to join page with room code:', roomCode)
+              // Force redirect to join page with room code
+              window.location.href = `/join?room=${roomCode}`
+            } else {
+              router.push('/')
+            }
             router.refresh() // Force refresh to update auth state
           }, 500)
         } else {
@@ -76,8 +94,26 @@ export default function AuthCallback() {
                 console.log('✅ User signed in successfully via state change')
                 setStatus('Login successful! Redirecting...')
                 
+                // Check if there's a redirect URL with room code in the URL params
+                const redirectPath = searchParams.get('redirect')
+                const roomCode = searchParams.get('room')
+                
+                // Store redirect in sessionStorage if available
+                if (redirectPath === '/join' && roomCode) {
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('pendingRedirect', `/join?room=${roomCode}`)
+                    console.log('Stored pending redirect in state change:', `/join?room=${roomCode}`)
+                  }
+                }
+                
                 setTimeout(() => {
-                  router.push('/')
+                  if (redirectPath === '/join' && roomCode) {
+                    console.log('Redirecting to join page with room code:', roomCode)
+                    // Force redirect to join page with room code
+                    window.location.href = `/join?room=${roomCode}`
+                  } else {
+                    router.push('/')
+                  }
                   router.refresh()
                   subscription.unsubscribe()
                 }, 500)

@@ -2917,6 +2917,91 @@
   animation: orbit-slower 10s linear infinite;
 }
 
+/* Edit Button Styles */
+.edit-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: 2px solid #000;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.edit-button:hover {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.edit-button:active {
+  transform: translateY(0);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Save/Cancel Button Styles */
+.save-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 2px solid #000;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.save-button:hover {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.cancel-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 2px solid #000;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.cancel-button:hover {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Room Code Edit Mode Styles */
+.room-code-edit-container {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .morphing-card,
@@ -2952,7 +3037,8 @@
   .animate-orbit-slow,
   .animate-orbit-medium,
   .animate-orbit-fast,
-  .animate-orbit-slower {
+  .animate-orbit-slower,
+  .room-code-edit-container {
     animation: none;
   }
 }
