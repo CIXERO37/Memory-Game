@@ -463,9 +463,7 @@ function MonitorPageContent() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 sm:border-4 border-white shadow-2xl flex items-center justify-center pixel-brain">
-                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-              </div>
+              
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div>
@@ -494,7 +492,7 @@ function MonitorPageContent() {
                     </div>
                   </div>
                 </div>
-                <p className="text-sm sm:text-base lg:text-lg text-blue-200">{t('monitor.room')} {roomCode}</p>
+               
               </div>
             </div>
           </div>
