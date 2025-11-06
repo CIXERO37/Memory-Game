@@ -672,15 +672,7 @@ export default function WaitingRoomPage() {
           </div>
         )}
 
-        {/* Pixel Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-8 h-8 bg-green-500 border-2 border-black rounded flex items-center justify-center">
-            <Users className="h-5 w-5 text-white" />
-          </div>
-          <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 pixel-header-title">
-            <h1 className="text-xl font-bold text-black pixel-font">WAITING ROOM</h1>
-          </div>
-        </div>
+       
 
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Pixel Waiting Room Card */}
@@ -698,17 +690,6 @@ export default function WaitingRoomPage() {
                 {/* Current Player Card - Displayed at the top */}
                 {playerInfo && (
                   <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-6 h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
-                        <Users className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="inline-block bg-blue-500 border border-black rounded px-2 py-1">
-                        <span className="text-white font-bold text-xs pixel-font-sm">
-                          YOU
-                        </span>
-                      </div>
-                    </div>
-
                     <div className="bg-blue-100 border-2 border-blue-500 rounded p-3 pixel-player-card">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
@@ -733,17 +714,6 @@ export default function WaitingRoomPage() {
 
                 {/* Other Players Section */}
                 <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-6 h-6 bg-white border border-black rounded flex items-center justify-center">
-                      <Users className="h-4 w-4 text-black" />
-                    </div>
-                    <div className="inline-block bg-white border border-black rounded px-2 py-1">
-                      <span className="text-black font-bold text-xs pixel-font-sm">
-                        OTHER PLAYERS ({room.players.filter(p => p.username !== playerInfo?.username).length})
-                      </span>
-                    </div>
-                  </div>
-
                   <div className="grid gap-3">
                     {room.players
                       .filter(player => player.username !== playerInfo?.username)
@@ -783,11 +753,7 @@ export default function WaitingRoomPage() {
                     {room.gameStarted ? "GAME STARTING SOON..." : "WAITING FOR HOST TO START THE GAME..."}
                   </p>
                   
-                  {/* Real-time Status Indicator */}
-                  <div className="flex items-center justify-center gap-2 mt-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-white/70 text-xs pixel-font-sm">LIVE UPDATES ACTIVE</span>
-                  </div>
+                 
                 </div>
               </div>
             </div>

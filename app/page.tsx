@@ -40,6 +40,22 @@ export default function HomePage() {
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
 
+      {/* Logo GameForSmart - Top Left */}
+      <div className="absolute top-4 left-4 z-50">
+       
+          <Image
+          draggable={false}
+            src="/images/gameforsmartlogo.png"
+            alt="GameForSmart Logo"
+            width={150}
+            height={60}
+            className="h-auto w-auto max-w-[150px] sm:max-w-[200px] hover:opacity-80 transition-opacity duration-300"
+            priority
+            
+          />
+      
+      </div>
+
       {/* Top Right Menu */}
       <div className="absolute top-4 right-4 z-50 menu-container">
         <div className="relative flex items-center gap-2">
@@ -169,16 +185,6 @@ export default function HomePage() {
                   <Brain className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
                 </div>
               </div>
-              
-              {/* Pixel Card */}
-              <div className="absolute -right-4 sm:-right-8 top-2 sm:top-4 w-16 h-20 sm:w-24 sm:h-32 bg-white rounded-lg shadow-2xl border-2 sm:border-4 border-black pixel-card-float">
-                <div className="p-2 sm:p-3 h-full flex flex-col items-center justify-center">
-                  <div className="w-4 h-4 sm:w-6 sm:h-6 bg-yellow-400 border-2 border-black rounded mb-1 sm:mb-2"></div>
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 border-2 border-black rounded flex items-center justify-center">
-                    <HelpCircle className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -194,7 +200,7 @@ export default function HomePage() {
           {/* Pixel Description */}
           <div className="max-w-2xl mx-auto mb-6 sm:mb-12">
             <div className="bg-black/20 border-2 border-white/30 rounded-lg px-4 sm:px-6 py-3 sm:py-4 pixel-description">
-              <p className="text-sm sm:text-base lg:text-lg text-white font-medium pixel-font-sm">
+              <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-white font-medium">
                 {t('home.description')}
               </p>
             </div>

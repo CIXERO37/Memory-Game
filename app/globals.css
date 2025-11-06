@@ -1953,12 +1953,13 @@
 
 /* Pixel Theme Styles */
 .pixel-card {
-  border-radius: 0px !important;
+  border-radius: 12px !important;
+  overflow: hidden; /* ensure inner content and shadows follow the rounded shape */
   image-rendering: pixelated;
   -webkit-image-rendering: pixelated;
   -moz-image-rendering: crisp-edges;
   image-rendering: crisp-edges;
-  box-shadow: 
+  box-shadow:
     inset 2px 2px 0px rgba(255, 255, 255, 0.3),
     inset -2px -2px 0px rgba(0, 0, 0, 0.3),
     2px 2px 0px rgba(0, 0, 0, 0.5);

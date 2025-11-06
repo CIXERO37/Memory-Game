@@ -871,9 +871,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           {/* Left side - Title and Room Code */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="relative flex-shrink-0">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
-                <Users className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-              </div>
+              
             </div>
               <div className="min-w-0">
                 {/* Enhanced MEMORY QUIZ Title */}
@@ -882,7 +880,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
                     {t('lobby.memoryQuiz')}
                   </h1>
                 </div>
-                <p className="text-xs sm:text-sm text-blue-200 mt-1">{t('lobby.room')} {params.roomCode}</p>
+                
               </div>
           </div>
           
