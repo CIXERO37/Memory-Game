@@ -169,9 +169,6 @@ export default function LoginPage() {
         <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
          
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
-              <LogIn className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
             <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 py-1 sm:py-2 pixel-header-title">
               <h1 className="text-lg sm:text-xl font-bold text-black">LOGIN</h1>
             </div>
