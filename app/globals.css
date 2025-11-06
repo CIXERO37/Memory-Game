@@ -1115,10 +1115,9 @@
 
 .pixel-room-code {
   animation: pixel-card-glow 3s ease-in-out infinite alternate;
-  min-height: 150px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .pixel-room-code .room-code-text {

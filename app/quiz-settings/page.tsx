@@ -10,7 +10,7 @@ import { getQuizById } from "@/lib/quiz-data"
 import { quizApi } from "@/lib/supabase"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Clock, HelpCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -20,9 +20,8 @@ function QuizSettingsPageContent() {
   const { t } = useTranslation()
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null)
   const [hostId] = useState(() => Math.random().toString(36).substr(2, 9))
-  const [timeLimit, setTimeLimit] = useState([5 
-  ]) // Default 10 menit
-  const [questionCount, setQuestionCount] = useState([10]) // Default 10 questions
+  const [timeLimit, setTimeLimit] = useState("5") // Default 5 menit
+  const [questionCount, setQuestionCount] = useState("10") // Default 10 questions
   const [maxQuestions, setMaxQuestions] = useState(50) // Default max questions
   const [quiz, setQuiz] = useState<any>(null)
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
@@ -44,7 +43,7 @@ function QuizSettingsPageContent() {
           if (quizData) {
             setQuiz(quizData)
             setMaxQuestions(quizData.questions?.length || 50)
-            setQuestionCount([Math.min(10, quizData.questions?.length || 50)])
+            setQuestionCount(String(Math.min(10, quizData.questions?.length || 50)))
             setIsLoadingQuiz(false)
             return
           }
@@ -59,7 +58,7 @@ function QuizSettingsPageContent() {
         if (localQuizData) {
           setQuiz(localQuizData)
           setMaxQuestions(localQuizData.questions.length)
-          setQuestionCount([Math.min(10, localQuizData.questions.length)])
+          setQuestionCount(String(Math.min(10, localQuizData.questions.length)))
         } else {
           // If neither found, create a fallback quiz object
           console.warn("[QuizSettings] Quiz not found in both Supabase and local data for ID:", quizId)
@@ -74,7 +73,7 @@ function QuizSettingsPageContent() {
           }
           setQuiz(fallbackQuiz)
           setMaxQuestions(50) // Default max questions
-          setQuestionCount([10]) // Default question count
+          setQuestionCount("10") // Default question count
         }
         setIsLoadingQuiz(false)
       }
@@ -96,13 +95,13 @@ function QuizSettingsPageContent() {
       const quizTitle = `Quiz ${selectedQuiz}` // You can enhance this to get actual quiz title
       
       console.log("[QuizSettings] Creating room with settings:", {
-        timeLimit: timeLimit[0],
-        questionCount: questionCount[0]
+        timeLimit: parseInt(timeLimit),
+        questionCount: parseInt(questionCount)
       })
       
       const room = await roomManager.createRoom(hostId, {
-        questionCount: questionCount[0],
-        totalTimeLimit: timeLimit[0],
+        questionCount: parseInt(questionCount),
+        totalTimeLimit: parseInt(timeLimit),
       }, selectedQuiz, quizTitle)
 
       if (!room) {
@@ -158,8 +157,8 @@ function QuizSettingsPageContent() {
         JSON.stringify({
           quizId: selectedQuiz,
           settings: {
-            questionCount: questionCount[0],
-            totalTimeLimit: timeLimit[0],
+            questionCount: parseInt(questionCount),
+            totalTimeLimit: parseInt(timeLimit),
           },
         }),
       )
@@ -241,9 +240,6 @@ function QuizSettingsPageContent() {
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
             <div className="inline-block bg-white border-2 border-black rounded px-3 sm:px-4 py-1 sm:py-2 pixel-header-title">
               <h1 className="text-lg sm:text-xl font-bold text-black pixel-font">{t('quizSettings.title')}</h1>
             </div>
@@ -300,22 +296,23 @@ function QuizSettingsPageContent() {
                       </div>
                     </div>
                     <div className="bg-yellow-400 border-2 border-black rounded px-2 sm:px-3 py-1">
-                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{timeLimit[0]} {t('quizSettings.minutes')}</span>
+                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{timeLimit} {t('quizSettings.minutes')}</span>
                     </div>
                   </div>
                   <div className="relative">
-                    <Slider 
-                      value={timeLimit} 
-                      onValueChange={setTimeLimit} 
-                      max={30} 
-                      min={5} 
-                      step={5} 
-                      className="w-full pixel-slider"
-                    />
-                    <div className="flex justify-between text-xs text-black mt-2 pixel-font-sm">
-                      <span>5 {t('quizSettings.minutes')}</span>
-                      <span>30 {t('quizSettings.minutes')}</span>
-                    </div>
+                    <Select value={timeLimit} onValueChange={setTimeLimit}>
+                      <SelectTrigger className="w-full bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black h-10 sm:h-12">
+                        <SelectValue placeholder="Select time limit" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-2 border-black">
+                        <SelectItem value="5">5 {t('quizSettings.minutes')}</SelectItem>
+                        <SelectItem value="10">10 {t('quizSettings.minutes')}</SelectItem>
+                        <SelectItem value="15">15 {t('quizSettings.minutes')}</SelectItem>
+                        <SelectItem value="20">20 {t('quizSettings.minutes')}</SelectItem>
+                        <SelectItem value="25">25 {t('quizSettings.minutes')}</SelectItem>
+                        <SelectItem value="30">30 {t('quizSettings.minutes')}</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -331,22 +328,25 @@ function QuizSettingsPageContent() {
                       </div>
                     </div>
                     <div className="bg-orange-400 border-2 border-black rounded px-2 sm:px-3 py-1">
-                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{questionCount[0]} {t('quizSettings.questionsShort')}</span>
+                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{questionCount} {t('quizSettings.questionsShort')}</span>
                     </div>
                   </div>
                   <div className="relative">
-                    <Slider
-                      value={questionCount}
-                      onValueChange={setQuestionCount}
-                      max={maxQuestions}
-                      min={5}
-                      step={5}
-                      className="w-full pixel-slider"
-                    />
-                    <div className="flex justify-between text-xs text-black mt-2 pixel-font-sm">
-                      <span>5</span>
-                      <span>{maxQuestions}</span>
-                    </div>
+                    <Select value={questionCount} onValueChange={setQuestionCount}>
+                      <SelectTrigger className="w-full bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black h-10 sm:h-12">
+                        <SelectValue placeholder="Select question count" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-2 border-black">
+                        {Array.from({ length: Math.max(1, Math.floor(maxQuestions / 5)) }, (_, i) => {
+                          const value = Math.min((i + 1) * 5, maxQuestions)
+                          return (
+                            <SelectItem key={value} value={String(value)}>
+                              {value} {t('quizSettings.questionsShort')}
+                            </SelectItem>
+                          )
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

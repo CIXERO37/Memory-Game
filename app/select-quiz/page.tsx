@@ -257,22 +257,49 @@ export default function SelectQuizPage() {
 
       <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Pixel Header */}
-        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
-          <Link href="/">
-            <div className="relative pixel-button-container">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <Button variant="outline" size="default" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-[44px] min-w-[44px]">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+        <div className="relative flex items-center justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
+          {/* Left side - Back Button and Memory Quiz Logo */}
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <Link href="/">
+              <div className="relative pixel-button-container">
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <Button variant="outline" size="default" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-[44px] min-w-[44px]">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </div>
+            </Link>
+            {/* Memory Quiz Logo with glow effect */}
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+              <img 
+                draggable={false}
+                src="/images/memoryquiz.png" 
+                alt="Memory Quiz" 
+                className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+                style={{ 
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
+                }}
+              />
             </div>
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-500 border-2 border-black rounded flex items-center justify-center">
-              <FileSearch className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
+          </div>
+          
+          {/* Center - Title */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
             <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 py-1 sm:py-2 pixel-header-title">
               <h1 className="text-lg sm:text-xl font-bold text-black">{t('selectQuiz.title')}</h1>
             </div>
+          </div>
+          
+          {/* Right side - GameForSmart Logo with glow effect */}
+          <div className="flex-shrink-0">
+            <img 
+              draggable={false}
+              src="/images/gameforsmartlogo.png" 
+              alt="GameForSmart Logo" 
+              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+              style={{ 
+                filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6)) drop-shadow(0 0 16px rgba(255,165,0,0.4))',
+              }}
+            />
           </div>
         </div>
 

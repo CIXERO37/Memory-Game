@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Users, Copy, QrCode, Share, Play, Maximize2, ChevronLeft, ChevronRight, AlertTriangle, X } from "lucide-react"
+import { ArrowLeft, Users, Copy, QrCode, Share, Play, Maximize2, ChevronLeft, ChevronRight, AlertTriangle, X, Check } from "lucide-react"
+import { QRCodeSVG } from "qrcode.react"
 import Link from "next/link"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
@@ -30,7 +31,8 @@ function LobbyPageContent() {
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
-  const [qrOpen, setQrOpen] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
+  const [qrSize, setQrSize] = useState(800)
   const [localRoom, setLocalRoom] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
@@ -553,8 +555,41 @@ function LobbyPageContent() {
 
 
   const shareUrl = roomCode && typeof window !== 'undefined' ? `${window.location.origin}/join?room=${roomCode}` : ""
-  const smallQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=384x384&data=${encodeURIComponent(shareUrl)}` : ""
-  const largeQrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=4000x4000&data=${encodeURIComponent(shareUrl)}` : ""
+  const joinUrl = shareUrl // Use joinUrl for consistency with HostContent
+
+  // Calculate QR code size for modal - update when modal opens or window resizes
+  // Account for border (8px * 2 = 16px) and padding (16px * 2 = 32px) = 48px total
+  useEffect(() => {
+    if (showQRModal && typeof window !== 'undefined') {
+      const updateQrSize = () => {
+        // Modal is 98vw x 98vh, but we need to account for:
+        // - Border: 8px on each side = 16px total
+        // - Padding: 16px on each side = 32px total  
+        // - Close button space: ~16px
+        // Total: ~64px to be safe
+        const borderPadding = 80 // Conservative padding to ensure QR fits
+        // Use the smaller dimension to ensure QR code fits (square aspect ratio)
+        const modalWidth = window.innerWidth * 0.98
+        const modalHeight = window.innerHeight * 0.98
+        const availableWidth = modalWidth - borderPadding
+        const availableHeight = modalHeight - borderPadding
+        // Use 90% of available space to be extra safe
+        const size = Math.min(
+          availableWidth * 0.9,
+          availableHeight * 0.9,
+          4000 // Maximum size for very large screens
+        )
+        setQrSize(Math.max(400, Math.floor(size))) // Ensure minimum size and round down
+      }
+      updateQrSize()
+      const resizeTimer = setTimeout(updateQrSize, 100) // Small delay to ensure DOM is ready
+      window.addEventListener('resize', updateQrSize)
+      return () => {
+        window.removeEventListener('resize', updateQrSize)
+        clearTimeout(resizeTimer)
+      }
+    }
+  }, [showQRModal])
 
   const copyRoomCode = () => {
     if (!roomCode) return
@@ -773,27 +808,27 @@ function LobbyPageContent() {
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
       {/* Background blur overlay when QR is open */}
-      {qrOpen && (
+      {showQRModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-40" />
       )}
       
       {/* Pixel Grid Background */}
-      <div className={`absolute inset-0 opacity-20 ${qrOpen ? 'blur-md' : ''}`}>
+      <div className={`absolute inset-0 opacity-20 ${showQRModal ? 'blur-md' : ''}`}>
         <div className="pixel-grid"></div>
       </div>
       
       {/* Retro Scanlines */}
-      <div className={`absolute inset-0 opacity-10 ${qrOpen ? 'blur-md' : ''}`}>
+      <div className={`absolute inset-0 opacity-10 ${showQRModal ? 'blur-md' : ''}`}>
         <div className="scanlines"></div>
       </div>
       
       {/* Floating Pixel Elements */}
-      <div className={`absolute inset-0 overflow-hidden ${qrOpen ? 'blur-md' : ''}`}>
+      <div className={`absolute inset-0 overflow-hidden ${showQRModal ? 'blur-md' : ''}`}>
         <PixelBackgroundElements />
       </div>
 
       {/* Pixel Header with responsive layout */}
-      <div className={`relative z-10 w-full px-4 pt-6 ${qrOpen ? 'blur-md' : ''}`}>
+      <div className={`relative z-10 w-full px-4 pt-6 ${showQRModal ? 'blur-md' : ''}`}>
         <div className="flex items-center justify-between gap-2">
           {/* Left side - Navigation and Title */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -809,18 +844,16 @@ function LobbyPageContent() {
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 border-2 border-black rounded flex items-center justify-center flex-shrink-0">
-                <Users className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 md:px-4 py-1 sm:py-2 pixel-header-title flex-shrink-0">
-                <h1 className="text-xs sm:text-sm md:text-lg font-bold text-black">{t('lobby.lobby')}</h1>
-              </div>
-              {/* Simple and Clean MEMORY QUIZ Title */}
-              <div className="bg-white border-2 border-black rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-lg inline-block">
-                <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-black tracking-wide whitespace-nowrap">
-                  {t('lobby.memoryQuiz')}
-                </h1>
-              </div>
+              {/* Memory Quiz Logo with glow effect */}
+              <img 
+                draggable={false}
+                src="/images/memoryquiz.png" 
+                alt="Memory Quiz" 
+                className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+                style={{ 
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
+                }}
+              />
             </div>
           </div>
           
@@ -830,13 +863,13 @@ function LobbyPageContent() {
               draggable={false}
               src="/images/gameforsmartlogo.png" 
               alt="GameForSmart Logo" 
-              className={`h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg ${qrOpen ? 'blur-sm' : ''}`}
+              className={`h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg ${showQRModal ? 'blur-sm' : ''}`}
             />
           </div>
         </div>
       </div>
 
-      <div className={`relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6 ${qrOpen ? 'blur-md' : ''}`}>
+      <div className={`relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6 ${showQRModal ? 'blur-md' : ''}`}>
         <div className="mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
           {/* Pixel Room Info */}
           <div className="relative pixel-lobby-container">
@@ -868,7 +901,7 @@ function LobbyPageContent() {
                 </div>
 
                 {/* Simplified Room Code Display */}
-                <div className="bg-white border-2 border-black rounded p-3 sm:p-4 md:p-6 pixel-room-code relative">
+                <div className="bg-white border-2 border-black rounded pt-2 pb-3 sm:pt-3 sm:pb-4 md:pt-4 md:pb-6 px-3 sm:px-4 md:px-6 pixel-room-code relative">
                   {/* Copy icon di pojok kanan atas */}
                   <button
                     onClick={copyRoomCode}
@@ -879,61 +912,88 @@ function LobbyPageContent() {
                   </button>
                   
                   {/* Room code di tengah - diperbesar dengan overflow protection */}
-                  <div className="text-center pt-1 sm:pt-2 px-8 sm:px-12 md:px-16">
+                  <div className="text-center pt-0 px-8 sm:px-12 md:px-16">
                     <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black font-mono text-black room-code-text break-all leading-tight">
                       {roomCode}
                     </div>
                   </div>
                 </div>
 
-                {/* Pixel QR Card */}
-                {smallQrUrl && (
-                  <div className="bg-white border-2 border-black rounded p-3 sm:p-4 pixel-qr-card">
-                    <div className="flex justify-end items-center mb-3">
-                      <button
-                        onClick={() => setQrOpen(true)}
-                        aria-label="Enlarge QR"
-                        className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border-2 border-black rounded flex items-center justify-center hover:bg-gray-300 min-h-[44px] min-w-[44px]"
-                      >
-                        <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </button>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <img
-                        src={smallQrUrl}
-                        alt="Room share QR"
-                        className="rounded border-2 border-black bg-white p-2 w-48 h-48 sm:w-96 sm:h-96 object-contain"
+                {/* Pixel QR Card - Compact QR Code */}
+                {joinUrl && (
+                  <div className="bg-white border-2 border-black rounded p-2 sm:p-3 md:p-4 pixel-qr-card">
+                    <div className="relative inline-block w-full max-w-full">
+                      <div className="bg-white text-black rounded-lg py-2 sm:py-3 px-3 sm:px-4 w-full flex flex-col justify-center items-center relative">
+                        {/* Maximize button in top-right corner */}
+                        <button
+                          onClick={() => setShowQRModal(true)}
+                          className="absolute top-1 right-1 p-1.5 hover:bg-gray-100 rounded transition-colors z-10 border-2 border-black"
+                          title="Click to enlarge QR code"
+                        >
+                          <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                        </button>
                         
-                      />
-                      {shareUrl && (
-                        <div className="mt-4 relative mx-auto max-w-full">
-                          <div className="inline-block bg-gray-100 border-2 border-black rounded pl-3 pr-10 py-2 text-xs font-medium break-all">
-                            {shareUrl}
-                          </div>
-                          <button
-                            onClick={copyShareLink}
-                            aria-label="Copy share link"
-                            className={`absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-6 w-6 sm:h-7 sm:w-7 rounded ${copiedLink ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
-                          >
-                            {copiedLink ? <span className="font-bold text-xs">✓</span> : <Copy className="h-3 w-3" />}
-                          </button>
+                        {/* QR Code - Compact size to minimize scrolling */}
+                        <div className="mb-3 py-0.5 w-full flex justify-center">
+                          <QRCodeSVG 
+                            value={joinUrl} 
+                            size={typeof window !== 'undefined' ? Math.min(window.innerWidth * 0.3, 300) : 300}
+                            className="mx-auto"
+                            style={{ width: '100%', maxWidth: '300px', height: 'auto' }}
+                          />
                         </div>
-                      )}
+                        
+                        {/* Share Link with Copy Button */}
+                        <div className="w-full">
+                          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2 sm:p-3 border-2 border-black">
+                            <span className="text-xs sm:text-sm font-mono break-all flex-1 text-gray-900">{joinUrl}</span>
+                            <button
+                              onClick={copyShareLink}
+                              className="p-2 hover:bg-gray-200 rounded transition-colors flex-shrink-0 border border-black"
+                              title="Copy join link"
+                            >
+                              {copiedLink ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <Copy className="w-4 h-4 text-gray-600" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
 
-              <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-                <DialogContent className="max-w-[75vw] w-full max-h-[75vh] z-50 backdrop-blur-sm bg-white/95 border-8 border-black shadow-2xl p-2 overflow-hidden">
-                  <div className="flex justify-center items-center h-full">
-                    {largeQrUrl && (
-                      <div className="bg-white border-4 border-black rounded-lg shadow-2xl p-4 flex items-center justify-center" style={{ width: 'min(60vw, 55vh)', height: 'min(60vw, 60vh)' }}>
-                        <img
-                          src={largeQrUrl}
-                          alt="Room share QR large"
-                          className="w-full h-full object-contain"
-                          width={4000}
-                          height={4000}
+              {/* Large QR Modal - Almost Fullscreen */}
+              <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
+                <DialogContent 
+                  className="!max-w-fit !w-auto !h-auto z-50 backdrop-blur-sm bg-white border-8 border-black shadow-2xl !p-4 !overflow-hidden"
+                  showCloseButton={true}
+                >
+                  <div className="flex justify-center items-center h-full w-full min-w-0 min-h-0 box-border overflow-hidden">
+                    {joinUrl && (
+                      <div 
+                        className="flex items-center justify-center min-w-0 min-h-0 box-border overflow-hidden" 
+                        style={{ 
+                          maxWidth: 'calc(100% - 32px)', 
+                          maxHeight: 'calc(100% - 32px)',
+                          width: `${qrSize}px`,
+                          height: `${qrSize}px`
+                        }}
+                      >
+                        <QRCodeSVG 
+                          value={joinUrl} 
+                          size={qrSize}
+                          style={{ 
+                            display: 'block',
+                            width: `${qrSize}px`,
+                            height: `${qrSize}px`,
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            boxSizing: 'border-box',
+                            flexShrink: 0
+                          }}
                         />
                       </div>
                     )}
@@ -952,9 +1012,6 @@ function LobbyPageContent() {
                 {/* Pixel Players Header */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 sm:w-6 sm:h-6 bg-white border border-black rounded flex items-center justify-center">
-                      <Users className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
-                    </div>
                     <div className={`inline-block bg-white border border-black rounded px-2 py-1 transition-all duration-500 ${
                       playerCountChanged ? 'animate-pulse bg-green-100 border-green-400' : 
                       playerLeft ? 'animate-pulse bg-red-100 border-red-400' : ''
