@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Users, Play, Brain, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X } from "lucide-react"
+import { Users, Play, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X, Maximize2, Minimize2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
@@ -15,6 +15,7 @@ import { LanguageSelector } from "@/components/language-selector"
 export default function HomePage() {
   const dragCardRef = useRef<HTMLDivElement | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation } = useAuth()
   const { t } = useTranslation()
 
@@ -35,6 +36,70 @@ export default function HomePage() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isMenuOpen])
+
+  // Check fullscreen status
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreenActive = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      )
+      setIsFullscreen(isFullscreenActive)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+    }
+  }, [])
+
+  // Toggle fullscreen
+  const toggleFullscreen = async () => {
+    try {
+      const doc = document.documentElement as any
+      const isFullscreenActive = !!(
+        document.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      )
+
+      if (!isFullscreenActive) {
+        if (doc.requestFullscreen) {
+          await doc.requestFullscreen()
+        } else if (doc.webkitRequestFullscreen) {
+          doc.webkitRequestFullscreen()
+        } else if (doc.mozRequestFullScreen) {
+          doc.mozRequestFullScreen()
+        } else if (doc.msRequestFullscreen) {
+          doc.msRequestFullscreen()
+        }
+        setIsFullscreen(true)
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen()
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen()
+        } else if ((document as any).mozCancelFullScreen) {
+          (document as any).mozCancelFullScreen()
+        } else if ((document as any).msExitFullscreen) {
+          (document as any).msExitFullscreen()
+        }
+        setIsFullscreen(false)
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error)
+    }
+  }
 
 
   return (
@@ -90,6 +155,27 @@ export default function HomePage() {
             <div className="py-2">
               {/* Language Selection */}
               <LanguageSelector onClose={() => setIsMenuOpen(false)} />
+              
+              {/* Divider */}
+              <div className="border-t border-purple-300/50 my-1"></div>
+              
+              {/* Fullscreen Toggle */}
+              <button
+                onClick={() => {
+                  toggleFullscreen()
+                  setIsMenuOpen(false)
+                }}
+                className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3"
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-5 h-5 text-white" />
+                ) : (
+                  <Maximize2 className="w-5 h-5 text-white" />
+                )}
+                <span className="text-white font-medium">
+                  {isFullscreen ? t('Exit Fullscreen') || 'Exit Fullscreen' : t('Fullscreen') || 'Fullscreen'}
+                </span>
+              </button>
               
               {/* Divider */}
               <div className="border-t border-purple-300/50 my-1"></div>
@@ -175,32 +261,27 @@ export default function HomePage() {
       <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 min-h-screen flex flex-col justify-center">
         {/* Main Content */}
         <div className="text-center mb-8 sm:mb-16">
-          {/* Pixel Brain Icon with Card */}
-          <div className="relative inline-block mb-4 sm:mb-8 pixel-logo-container">
-            <div className="relative">
-              {/* Pixel Brain */}
-              <div className="w-20 h-20 sm:w-32 sm:h-32 mx-auto relative pixel-brain">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg opacity-20 blur-lg animate-pulse"></div>
-                <div className="relative w-full h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 sm:border-4 border-white shadow-2xl flex items-center justify-center">
-                  <Brain className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Pixel Title */}
           <div className="mb-4 sm:mb-6">
-            <div className="inline-block bg-white border-2 sm:border-4 border-black rounded-lg px-4 sm:px-8 py-2 sm:py-4 shadow-2xl pixel-title-container">
-              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black pixel-title">
-                {t('home.title')}
-              </h1>
+            <div className="inline-block">
+              <img
+                src="/images/memoryquiz.png"
+                alt="MEMORY QUIZ"
+                className="h-auto w-auto object-contain animate-smooth-bounce"
+                style={{ 
+                  // filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
+                  width: 'min(75vw, 500px)',
+                  maxWidth: '500px',
+                }}
+                draggable={false}
+              />
             </div>
           </div>
           
           {/* Pixel Description */}
           <div className="max-w-2xl mx-auto mb-6 sm:mb-12">
             <div className="bg-black/20 border-2 border-white/30 rounded-lg px-4 sm:px-6 py-3 sm:py-4 pixel-description">
-              <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-white font-medium">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white font-medium">
                 {t('home.description')}
               </p>
             </div>
@@ -208,7 +289,7 @@ export default function HomePage() {
         </div>
 
         {/* Pixel Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
+        <div className="flex flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
           <Link href="/select-quiz" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
