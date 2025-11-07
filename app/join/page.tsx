@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Play } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { AvatarSelector } from "@/components/avatar-selector"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
@@ -438,18 +439,37 @@ function JoinPageContent() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
+        {/* Top-right GameForSmart Logo */}
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
+          <Image
+            src="/images/gameforsmartlogo.png"
+            alt="GameForSmart Logo"
+            width={240}
+            height={72}
+            className="h-10 sm:h-14 md:h-16 w-auto"
+            priority
+          />
+        </div>
         {/* Header */}
         <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 min-h-[44px] min-w-[44px]">
-              <ArrowLeft className="h-4 w-4 sm:mr-2" />
-             
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Play className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
-            <h1 className="text-lg sm:text-2xl font-bold text-white">Join a Game</h1>
-          </div>
+        <Link href="/">
+              <div className="relative pixel-button-container">
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <Button variant="outline" size="default" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-[44px] min-w-[44px]">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </div>
+            </Link>
+            {/* MemoryQuiz Logo to the right of ArrowLeft */}
+            <Image
+              src="/images/memoryquiz.png"
+              alt="Memory Quiz Logo"
+              width={240}
+              height={72}
+              className="h-10 sm:h-14 md:h-16 w-auto"
+              priority
+            />
+         
         </div>
 
         <div className="max-w-md mx-auto">
@@ -514,6 +534,7 @@ function JoinPageContent() {
                             className="room-code-input h-12 sm:h-auto"
                           />
                         </div>
+                        
                         {roomCodeError && (
                           <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
                             <p className="text-xs sm:text-sm text-white font-bold">{roomCodeError}</p>
