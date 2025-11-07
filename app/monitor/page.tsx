@@ -468,12 +468,13 @@ function MonitorPageContent() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                  {/* Enhanced MEMORY QUIZ Title */}
-                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 border-2 border-white rounded-lg px-4 sm:px-6 py-2 sm:py-3 shadow-2xl transform hover:scale-105 transition-all duration-300">
-                    <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
-                      {t('monitor.title')}
-                    </h1>
-                  </div>
+                  {/* MEMORY QUIZ Image */}
+                  <img 
+                    src="/images/memoryquiz.png" 
+                    alt="MEMORY QUIZ" 
+                    className="h-12 w-auto sm:h-16 md:h-20 object-contain"
+                    draggable={false}
+                  />
                   {/* GameForSmart Logo */}
                   <img 
                     src="/images/gameforsmartlogo.png" 

@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Trophy, Users, Home, Star, Crown, Medal, Award, Zap, Sparkles } from "lucide-react"
+import { Trophy, Users, Home, Star, Crown, Medal, Award, Zap, Sparkles, RotateCw } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
 import { useTranslation } from "react-i18next"
+import { supabase } from "@/lib/supabase"
 
 interface Player {
   id: string
@@ -52,6 +53,10 @@ function LeaderboardPageContent() {
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const [playersWithCorrectAvatars, setPlayersWithCorrectAvatars] = useState<Player[]>([])
+  const [quizId, setQuizId] = useState<string | null>(null)
+  const [quizTitle, setQuizTitle] = useState<string | null>(null)
+  const [hostId, setHostId] = useState<string | null>(null)
+  const [isRestarting, setIsRestarting] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
   const roomCode = searchParams.get("roomCode")
@@ -67,6 +72,23 @@ function LeaderboardPageContent() {
         const roomData = await roomManager.getRoom(roomCode)
         if (roomData) {
           setRoom(roomData)
+          setHostId(roomData.hostId)
+          
+          // Fetch quizId and quizTitle from database
+          try {
+            const { data: roomDbData, error } = await supabase
+              .from('rooms')
+              .select('quiz_id, quiz_title')
+              .eq('room_code', roomCode)
+              .single()
+            
+            if (!error && roomDbData) {
+              setQuizId(roomDbData.quiz_id)
+              setQuizTitle(roomDbData.quiz_title)
+            }
+          } catch (error) {
+            console.warn("Error fetching quiz data from database:", error)
+          }
           
           // Fetch session data for each player to get correct avatars
           const playersWithAvatars = await Promise.all(
@@ -200,6 +222,91 @@ function LeaderboardPageContent() {
 
   const champion = sortedPlayers[0]
 
+  // Handle restart game
+  const handleRestart = async () => {
+    if (!room || !hostId || !quizId || !quizTitle || isRestarting) {
+      console.error("[Leaderboard] Missing required data for restart:", { room, hostId, quizId, quizTitle })
+      return
+    }
+
+    setIsRestarting(true)
+
+    try {
+      console.log("[Leaderboard] Restarting game with settings:", {
+        questionCount: room.settings.questionCount,
+        totalTimeLimit: room.settings.totalTimeLimit,
+        quizId,
+        quizTitle
+      })
+
+      // Create new room with same settings
+      const newRoom = await roomManager.createRoom(
+        hostId,
+        {
+          questionCount: room.settings.questionCount,
+          totalTimeLimit: room.settings.totalTimeLimit,
+        },
+        quizId,
+        quizTitle
+      )
+
+      if (!newRoom) {
+        console.error("[Leaderboard] Failed to create new room")
+        alert("Failed to create new room. Please try again.")
+        setIsRestarting(false)
+        return
+      }
+
+      console.log("[Leaderboard] New room created successfully:", newRoom)
+
+      // Verify room exists before proceeding
+      const verifyRoom = await roomManager.getRoom(newRoom.code)
+      if (!verifyRoom) {
+        console.error("[Leaderboard] Room verification failed")
+        alert("Room was created but verification failed. Please try again.")
+        setIsRestarting(false)
+        return
+      }
+
+      console.log("[Leaderboard] Room verification successful:", verifyRoom)
+
+      // Store host info in session manager
+      try {
+        await sessionManager.createOrUpdateSession(
+          null, // Generate new session ID
+          'host',
+          {
+            id: hostId,
+            roomCode: newRoom.code,
+            quizId: quizId,
+          },
+          newRoom.code
+        )
+        console.log("[Leaderboard] Host session created in Supabase")
+      } catch (error) {
+        console.error("[Leaderboard] Error creating host session:", error)
+      }
+
+      // Store host info in localStorage as fallback
+      try {
+        localStorage.setItem('hostId', hostId)
+        localStorage.setItem('roomCode', newRoom.code)
+        localStorage.setItem('quizId', quizId)
+        console.log("[Leaderboard] Host info stored in localStorage")
+      } catch (error) {
+        console.error("[Leaderboard] Error storing host info in localStorage:", error)
+      }
+
+      // Redirect to lobby
+      console.log("[Leaderboard] Redirecting to lobby with room code:", newRoom.code)
+      router.push(`/lobby?roomCode=${newRoom.code}`)
+    } catch (error) {
+      console.error("[Leaderboard] Error restarting game:", error)
+      alert("An error occurred while restarting the game. Please try again.")
+      setIsRestarting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
       {/* Pixel Grid Background */}
@@ -259,53 +366,27 @@ function LeaderboardPageContent() {
         </svg>
       </div>
 
+      {/* Memory Quiz Logo - Top Left */}
+      <div className="absolute top-4 left-4 z-50">
+        <img
+          src="/images/memoryquiz.png"
+          alt="MEMORY QUIZ"
+          className="h-12 w-auto sm:h-16 md:h-20 lg:h-24 object-contain"
+          draggable={false}
+        />
+      </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Combined Memory Quiz and GameForSmart Card */}
-        <div className="text-center mb-8">
-          <div className="relative inline-block">
-            {/* Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/60 to-orange-400/60 blur-lg rounded-lg animate-pulse"></div>
-            
-            {/* Main Container */}
-            <div className="relative bg-gradient-to-r from-yellow-500 to-orange-500 border-4 border-white rounded-lg px-8 py-4 shadow-2xl transform hover:scale-105 transition-all duration-300">
-              {/* Inner Shadow Effect */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-lg"></div>
-              
-              {/* Content Container */}
-              <div className="relative flex items-center justify-center gap-6">
-                {/* Memory Quiz Text */}
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-widest uppercase drop-shadow-lg" 
-                    style={{
-                      textShadow: '2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000',
-                      fontFamily: 'Arial Black, sans-serif'
-                    }}>
-                  {t('lobby.memoryQuiz')}
-                </h1>
-                
-                {/* GameForSmart Logo */}
-                <div className="relative">
-                  <img 
-                    src="/images/gameforsmartlogo.png" 
-                    alt="GameForSmart Logo" 
-                    className="h-10 sm:h-12 w-auto object-contain"
-                  />
-                  
-                  {/* Sparkle Effects */}
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-300 border border-white rounded-full animate-ping"></div>
-                  <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-lime-300 border border-white rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
-                </div>
-              </div>
-              
-              {/* Decorative Elements */}
-              <div className="absolute -top-1 -left-1 w-3 h-3 bg-yellow-300 border-2 border-white rounded-full"></div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-300 border-2 border-white rounded-full"></div>
-              <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-orange-300 border-2 border-white rounded-full"></div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-300 border-2 border-white rounded-full"></div>
-            </div>
-          </div>
-        </div>
+      {/* GameForSmart Logo - Top Right */}
+      <div className="absolute top-4 right-4 z-50">
+        <img
+          src="/images/gameforsmartlogo.png"
+          alt="GameForSmart Logo"
+          className="h-12 w-auto sm:h-16 md:h-20 lg:h-24 object-contain"
+          draggable={false}
+        />
+      </div>
 
+      <div className="relative z-10 container mx-auto px-4 py-8 mt-16 sm:mt-20 md:mt-24 lg:mt-28">
         {/* Modern Header Section */}
         <div className="text-center mb-6">
           {/* Main Title with Enhanced Effects */}
@@ -619,34 +700,47 @@ function LeaderboardPageContent() {
            </div>
          )}
 
-        {/* Modern Back to Dashboard Button */}
-        <div className="text-center relative">
-          <div className="relative inline-block">
-            {/* Button Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/60 to-purple-500/60 blur-2xl opacity-70 animate-pulse"></div>
+        {/* Back Button - Left Center Card */}
+        <div className="fixed left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-50">
+          <button
+            className="relative bg-gradient-to-br from-blue-500/40 to-purple-600/40 border-2 sm:border-2 md:border-4 border-blue-400/70 rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 lg:p-6 backdrop-blur-sm shadow-xl sm:shadow-2xl transform hover:scale-105 transition-all duration-500 group"
+            onClick={() => {
+              router.push("/")
+            }}
+          >
+            {/* Card Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-lg sm:blur-xl group-hover:blur-xl sm:group-hover:blur-2xl transition-all duration-500 rounded-xl sm:rounded-2xl md:rounded-3xl"></div>
             
-            <button
-              className="relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border-4 border-white/50 px-12 py-6 text-white font-bold text-2xl transition-all duration-500 hover:scale-110 hover:shadow-2xl rounded-2xl flex items-center justify-center gap-6 backdrop-blur-sm group overflow-hidden shadow-2xl"
-              onClick={() => {
-                router.push("/")
-              }}
-            >
-              {/* Button Background Animation */}
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/30 to-pink-400/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-              
-              {/* Icon */}
-              <div className="relative z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-                <Home className="w-6 h-6" />
-              </div>
-              
-              {/* Text */}
-              <span className="relative z-10 font-bold tracking-wide">{t('lobby.back')}</span>
-              
-              {/* Decorative Elements */}
-              <div className="absolute top-3 right-3 w-3 h-3 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="absolute bottom-3 left-3 w-3 h-3 bg-white/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </button>
-          </div>
+            {/* Icon */}
+            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300">
+              <Home className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            
+            {/* Decorative Elements */}
+            <div className="absolute -top-0.5 -left-0.5 sm:-top-1 sm:-left-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-blue-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-purple-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </button>
+        </div>
+
+        {/* Restart Button - Right Center Card */}
+        <div className="fixed right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-50">
+          <button
+            className="relative bg-gradient-to-br from-blue-500/40 to-purple-600/40 border-2 sm:border-2 md:border-4 border-blue-400/70 rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 lg:p-6 backdrop-blur-sm shadow-xl sm:shadow-2xl transform hover:scale-105 transition-all duration-500 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            onClick={handleRestart}
+            disabled={isRestarting || !room || !hostId || !quizId || !quizTitle}
+          >
+            {/* Card Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-lg sm:blur-xl group-hover:blur-xl sm:group-hover:blur-2xl transition-all duration-500 rounded-xl sm:rounded-2xl md:rounded-3xl"></div>
+            
+            {/* Icon */}
+            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-300">
+              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            
+            {/* Decorative Elements */}
+            <div className="absolute -top-0.5 -left-0.5 sm:-top-1 sm:-left-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-blue-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-purple-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </button>
         </div>
       </div>
     </div>
