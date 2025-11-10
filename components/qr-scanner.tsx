@@ -15,7 +15,52 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const scannerRef = useRef<Html5Qrcode | null>(null)
+  const isStoppingRef = useRef<boolean>(false)
+  const onScanRef = useRef(onScan)
   const qrCodeRegionId = "qr-reader"
+
+  // Keep onScan callback ref up to date
+  useEffect(() => {
+    onScanRef.current = onScan
+  }, [onScan])
+
+  // Cleanup function to stop scanner safely
+  const cleanupScanner = async () => {
+    if (isStoppingRef.current) {
+      return // Already stopping, prevent double cleanup
+    }
+
+    if (scannerRef.current) {
+      isStoppingRef.current = true
+      try {
+        // Check if scanner is actually scanning before trying to stop
+        const scanner = scannerRef.current
+        // Use getState() if available, otherwise try-catch the stop
+        try {
+          await scanner.stop()
+          scanner.clear()
+        } catch (stopErr: any) {
+          // If stop fails, try to clear anyway
+          try {
+            scanner.clear()
+          } catch (clearErr) {
+            // Ignore clear errors
+            console.warn("Error clearing scanner:", clearErr)
+          }
+          // Only log if it's not a "not scanning" error
+          if (!stopErr?.message?.includes("not scanning") && !stopErr?.message?.includes("already stopped")) {
+            console.warn("Error stopping scanner:", stopErr)
+          }
+        }
+      } catch (err) {
+        // Final fallback - just log and continue
+        console.warn("Error during scanner cleanup:", err)
+      } finally {
+        scannerRef.current = null
+        isStoppingRef.current = false
+      }
+    }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -50,9 +95,9 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
           },
           (decodedText) => {
             // Success callback - QR code found
-            if (mounted) {
+            if (mounted && !isStoppingRef.current) {
               console.log("QR Code scanned:", decodedText)
-              onScan(decodedText)
+              onScanRef.current(decodedText)
             }
           },
           (errorMessage) => {
@@ -75,32 +120,69 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
 
     startScanner()
 
-    // Cleanup function
+    // Cleanup function - must be synchronous but can call async functions
     return () => {
       mounted = false
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch((err) => {
-          console.error("Error stopping scanner on cleanup:", err)
-        })
-      }
+      // Mark as stopping to prevent callbacks
+      isStoppingRef.current = true
+      
+      // Call async cleanup but don't await (cleanup must be sync)
+      // Use Promise.resolve to handle the async operation
+      Promise.resolve().then(async () => {
+        try {
+          await cleanupScanner()
+        } catch (err) {
+          // Silently handle cleanup errors in production
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("Error in cleanup:", err)
+          }
+        }
+      })
     }
-  }, [])
+  }, []) // Remove onScan from dependencies to prevent unnecessary re-renders
 
   const stopScanner = async () => {
-    if (scannerRef.current && isScanning) {
-      try {
-        await scannerRef.current.stop()
-        scannerRef.current.clear()
-        setIsScanning(false)
-      } catch (err) {
-        console.error("Error stopping scanner:", err)
+    try {
+      await cleanupScanner()
+      setIsScanning(false)
+    } catch (err) {
+      // Ensure state is updated even if cleanup fails
+      setIsScanning(false)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Error stopping scanner:", err)
       }
     }
   }
 
-  const handleClose = () => {
-    stopScanner()
-    onClose()
+  const handleClose = async () => {
+    try {
+      // Wait for scanner to stop before closing
+      await stopScanner()
+      // Small delay to ensure cleanup completes
+      setTimeout(() => {
+        try {
+          onClose()
+        } catch (err) {
+          // Silently handle errors when calling onClose
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("Error in onClose callback:", err)
+          }
+        }
+      }, 100)
+    } catch (err) {
+      // If stopScanner fails, still try to close
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Error in handleClose:", err)
+      }
+      // Still call onClose to ensure UI updates
+      try {
+        onClose()
+      } catch (closeErr) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("Error in onClose callback:", closeErr)
+        }
+      }
+    }
   }
 
   return (
