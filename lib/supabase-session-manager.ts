@@ -27,8 +27,35 @@ export interface GameSession {
 }
 
 class SupabaseSessionManager {
+  private sessionColumnsExist: boolean | null = null // Cache untuk check apakah kolom session ada
+  private sessionColumnsCheckPromise: Promise<boolean> | null = null // Promise untuk prevent multiple checks
+
   private generateSessionId(): string {
     return 'session_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now()
+  }
+
+  // Check if session columns exist in rooms table (with caching)
+  // Returns false immediately if we know columns don't exist, to avoid 406 errors
+  private async checkSessionColumnsExist(): Promise<boolean> {
+    // Return cached result if available
+    if (this.sessionColumnsExist === false) {
+      // If we know columns don't exist, return false immediately to skip queries
+      return false
+    }
+    
+    if (this.sessionColumnsExist === true) {
+      return true
+    }
+
+    // If check is already in progress, wait for it
+    if (this.sessionColumnsCheckPromise) {
+      return this.sessionColumnsCheckPromise
+    }
+
+    // Don't perform initial check - let the first actual query determine if columns exist
+    // This way we avoid an extra 406 request just for checking
+    // Instead, we'll detect it from the first real query and cache the result
+    return true // Assume columns exist initially, will be corrected on first error
   }
 
   async createOrUpdateSession(
@@ -122,7 +149,13 @@ class SupabaseSessionManager {
     try {
       // Check if Supabase is configured
       if (!isSupabaseConfigured()) {
-        console.warn('[SupabaseSessionManager] Supabase not configured, returning null')
+        return null
+      }
+
+      // Check if session columns exist - if not, skip query entirely to avoid 406 errors
+      const columnsExist = await this.checkSessionColumnsExist()
+      if (!columnsExist) {
+        // Columns don't exist, return null without making request
         return null
       }
 
@@ -133,14 +166,23 @@ class SupabaseSessionManager {
         .select('session_id, is_session_active, session_last_active, session_data')
         .eq('session_id', sessionId)
         .eq('is_session_active', true)
-        .single()
+        .maybeSingle() // Use maybeSingle instead of single to avoid errors when no rows found
 
+      // Handle errors
       if (error) {
-        console.error('[SupabaseSessionManager] Error getting session data:', error)
+        // If we get 406 error even after check, mark columns as not existing
+        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+          this.sessionColumnsExist = false // Update cache
+          return null
+        }
+        console.warn('[SupabaseSessionManager] Error getting session data (non-critical):', error.message)
         return null
       }
 
-      console.log('[SupabaseSessionManager] Raw session data from database:', data)
+      // If no data found, return null (not an error)
+      if (!data) {
+        return null
+      }
 
       // Parse session_data if available
       if (data && data.session_data) {
@@ -157,14 +199,12 @@ class SupabaseSessionManager {
           is_active: data.is_session_active
         }
         
-        console.log('[SupabaseSessionManager] Parsed session data:', sessionData)
         return sessionData
       }
 
-      console.log('[SupabaseSessionManager] No session_data found in database record')
       return null
-    } catch (error) {
-      console.error('[SupabaseSessionManager] Error in getSessionData:', error)
+    } catch (error: any) {
+      // Catch any unexpected errors and return null gracefully
       return null
     }
   }
@@ -177,13 +217,18 @@ class SupabaseSessionManager {
         .eq('session_id', sessionId)
 
       if (error) {
-        console.error('[SupabaseSessionManager] Error deleting session:', error)
+        // Error 406 or column not found - session columns may not exist
+        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+          console.warn('[SupabaseSessionManager] Session columns may not exist, skipping session delete:', error.message)
+          return true // Return true to indicate "success" (no-op)
+        }
+        console.warn('[SupabaseSessionManager] Error deleting session (non-critical):', error.message)
         return false
       }
 
       return true
-    } catch (error) {
-      console.error('[SupabaseSessionManager] Error in deleteSession:', error)
+    } catch (error: any) {
+      console.warn('[SupabaseSessionManager] Error in deleteSession (non-critical):', error?.message || error)
       return false
     }
   }
@@ -229,15 +274,31 @@ class SupabaseSessionManager {
   // Get session by room code and user type
   async getSessionByRoom(roomCode: string, userType: 'host' | 'player'): Promise<GameSession | null> {
     try {
+      // Check if session columns exist - if not, skip query entirely
+      const columnsExist = await this.checkSessionColumnsExist()
+      if (!columnsExist) {
+        return null
+      }
+
       const { data, error } = await supabase
         .from('rooms')
         .select('session_id, is_session_active, session_last_active, session_data')
         .eq('room_code', roomCode)
         .eq('is_session_active', true)
-        .single()
+        .maybeSingle() // Use maybeSingle to avoid errors when no rows found
 
+      // Handle errors
       if (error) {
-        console.error('[SupabaseSessionManager] Error getting session by room:', error)
+        // If we get 406 error even after check, mark columns as not existing
+        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+          this.sessionColumnsExist = false // Update cache
+          return null
+        }
+        return null
+      }
+
+      // If no data found, return null (not an error)
+      if (!data) {
         return null
       }
 
@@ -258,8 +319,7 @@ class SupabaseSessionManager {
       }
 
       return null
-    } catch (error) {
-      console.error('[SupabaseSessionManager] Error in getSessionByRoom:', error)
+    } catch (error: any) {
       return null
     }
   }
@@ -267,12 +327,22 @@ class SupabaseSessionManager {
   // Update session activity
   async updateSessionActivity(sessionId: string): Promise<void> {
     try {
-      await supabase
+      const { error } = await supabase
         .from('rooms')
         .update({ session_last_active: new Date().toISOString() })
         .eq('session_id', sessionId)
-    } catch (error) {
-      console.error('[SupabaseSessionManager] Error updating session activity:', error)
+      
+      if (error) {
+        // Error 406 or column not found - session columns may not exist
+        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+          // Silently skip if columns don't exist
+          return
+        }
+        console.warn('[SupabaseSessionManager] Error updating session activity (non-critical):', error.message)
+      }
+    } catch (error: any) {
+      // Silently ignore errors - session activity update is not critical
+      console.warn('[SupabaseSessionManager] Error in updateSessionActivity (non-critical):', error?.message || error)
     }
   }
 

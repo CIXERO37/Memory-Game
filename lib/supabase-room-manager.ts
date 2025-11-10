@@ -32,6 +32,8 @@ class SupabaseRoomManager {
   private listeners: Set<(room: Room | null) => void> = new Set()
   private subscriptions: Map<string, any> = new Map()
   private connectionStatus: boolean = true
+  private debounceTimers: Map<string, NodeJS.Timeout> = new Map()
+  private lastRoomData: Map<string, Room | null> = new Map()
 
   generateRoomCode(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -603,6 +605,37 @@ class SupabaseRoomManager {
       return () => {}
     }
 
+    // Debounce callback to prevent excessive requests
+    const DEBOUNCE_DELAY = 500 // 500ms debounce to batch rapid changes
+    
+    const debouncedCallback = (updatedRoom: Room | null) => {
+      // Clear existing timer for this room
+      const existingTimer = this.debounceTimers.get(roomCode)
+      if (existingTimer) {
+        clearTimeout(existingTimer)
+      }
+      
+      // Set new timer
+      const timer = setTimeout(() => {
+        // Only call callback if data actually changed
+        const lastRoom = this.lastRoomData.get(roomCode)
+        const hasChanged = !lastRoom || 
+          lastRoom.status !== updatedRoom?.status ||
+          lastRoom.players?.length !== updatedRoom?.players?.length ||
+          lastRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
+          JSON.stringify(lastRoom.players?.map(p => p.id)) !== JSON.stringify(updatedRoom?.players?.map(p => p.id))
+        
+        if (hasChanged && updatedRoom) {
+          this.lastRoomData.set(roomCode, updatedRoom)
+          callback(updatedRoom)
+        }
+        
+        this.debounceTimers.delete(roomCode)
+      }, DEBOUNCE_DELAY)
+      
+      this.debounceTimers.set(roomCode, timer)
+    }
+
     // Setting up subscription for room
 
     // Subscribe to room changes
@@ -616,9 +649,10 @@ class SupabaseRoomManager {
           filter: `room_code=eq.${roomCode}`
         }, 
         async (payload) => {
+          // Only fetch room data when room table changes
           const updatedRoom = await this.getRoom(roomCode)
           if (updatedRoom) {
-            callback(updatedRoom)
+            debouncedCallback(updatedRoom)
           }
         }
       )
@@ -630,46 +664,30 @@ class SupabaseRoomManager {
           filter: `room_id=eq.${roomId}`
         }, 
         async (payload) => {
-          console.log('[SupabaseRoomManager] Players data changed:', payload.eventType, payload)
-          
-          // Log specific player actions with more detail
+          // Log player changes for debugging (but reduce console spam)
           if (payload.eventType === 'INSERT') {
-            console.log('[SupabaseRoomManager] ✅ NEW PLAYER JOINED:', payload.new)
-            console.log('[SupabaseRoomManager] Player details:', {
-              id: payload.new.id,
-              username: payload.new.username,
-              avatar: payload.new.avatar,
-              room_id: payload.new.room_id
-            })
+            console.log('[SupabaseRoomManager] ✅ Player joined:', payload.new?.username)
           } else if (payload.eventType === 'DELETE') {
-            console.log('[SupabaseRoomManager] ❌ PLAYER LEFT:', payload.old)
-          } else if (payload.eventType === 'UPDATE') {
-            console.log('[SupabaseRoomManager] 🔄 PLAYER UPDATED:', payload.new)
+            console.log('[SupabaseRoomManager] ❌ Player left:', payload.old?.username)
           }
+          // Don't log UPDATE events for scores to reduce spam
           
-          // Immediately fetch and callback with updated room data
-          console.log('[SupabaseRoomManager] Fetching updated room data after player change...')
+          // Fetch updated room data with debouncing to prevent rapid successive calls
           const updatedRoom = await this.getRoom(roomCode)
           if (updatedRoom) {
-            console.log('[SupabaseRoomManager] ✅ Calling callback with updated room data')
-            console.log('[SupabaseRoomManager] Updated room has', updatedRoom.players.length, 'players')
-            callback(updatedRoom)
-          } else {
-            console.error('[SupabaseRoomManager] ❌ Failed to get updated room data')
+            debouncedCallback(updatedRoom)
           }
         }
       )
       .subscribe((status) => {
-        console.log('[SupabaseRoomManager] Subscription status:', status)
         if (status === 'SUBSCRIBED') {
-          console.log('[SupabaseRoomManager] ✅ Successfully subscribed to room updates for:', roomCode)
-          console.log('[SupabaseRoomManager] Now listening for player changes in room ID:', roomId)
+          console.log('[SupabaseRoomManager] ✅ Subscribed to room updates:', roomCode)
           this.connectionStatus = true
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('[SupabaseRoomManager] ❌ Subscription error for room:', roomCode)
+          console.error('[SupabaseRoomManager] ❌ Subscription error:', roomCode)
           this.connectionStatus = false
         } else if (status === 'CLOSED') {
-          console.warn('[SupabaseRoomManager] ⚠️ Subscription closed for room:', roomCode)
+          console.warn('[SupabaseRoomManager] ⚠️ Subscription closed:', roomCode)
           this.connectionStatus = false
         }
       })
@@ -678,6 +696,16 @@ class SupabaseRoomManager {
     this.listeners.add(callback)
 
     return () => {
+      // Clear debounce timer for this room
+      const timer = this.debounceTimers.get(roomCode)
+      if (timer) {
+        clearTimeout(timer)
+        this.debounceTimers.delete(roomCode)
+      }
+      
+      // Clear cached room data
+      this.lastRoomData.delete(roomCode)
+      
       console.log('[SupabaseRoomManager] Unsubscribing from room:', roomCode)
       roomSubscription.unsubscribe()
       this.subscriptions.delete(roomCode)
@@ -706,6 +734,15 @@ class SupabaseRoomManager {
   }
 
   cleanup() {
+    // Clear all debounce timers
+    this.debounceTimers.forEach(timer => {
+      clearTimeout(timer)
+    })
+    this.debounceTimers.clear()
+    
+    // Clear cached room data
+    this.lastRoomData.clear()
+    
     // Unsubscribe from all channels
     this.subscriptions.forEach(subscription => {
       subscription.unsubscribe()
