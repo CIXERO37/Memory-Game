@@ -700,46 +700,68 @@ function LeaderboardPageContent() {
            </div>
          )}
 
-        {/* Back Button - Left Center Card */}
+        {/* Back Button - Left Center */}
         <div className="fixed left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-50">
           <button
-            className="relative bg-gradient-to-br from-blue-500/40 to-purple-600/40 border-2 sm:border-2 md:border-4 border-blue-400/70 rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 lg:p-6 backdrop-blur-sm shadow-xl sm:shadow-2xl transform hover:scale-105 transition-all duration-500 group"
+            className="relative transform hover:scale-110 transition-all duration-200 group"
             onClick={() => {
               router.push("/")
             }}
+            style={{
+              imageRendering: 'pixelated',
+            }}
           >
-            {/* Card Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-lg sm:blur-xl group-hover:blur-xl sm:group-hover:blur-2xl transition-all duration-500 rounded-xl sm:rounded-2xl md:rounded-3xl"></div>
-            
-            {/* Icon */}
-            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300">
-              <Home className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+            {/* 8-bit Pixel Style Icon */}
+            <div 
+              className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
+              style={{
+                background: '#533483',
+                border: '3px solid #3d2562',
+                borderRadius: '4px',
+                boxShadow: `
+                  inset -2px -2px 0px #6b4a9e,
+                  inset 2px 2px 0px #3d2562,
+                  0 0 0 2px #2a1a3d,
+                  4px 4px 0px rgba(0, 0, 0, 0.3)
+                `,
+                imageRendering: 'pixelated',
+              }}
+            >
+              {/* Icon */}
+              <Home className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
             </div>
-            
-            {/* Decorative Elements */}
-            <div className="absolute -top-0.5 -left-0.5 sm:-top-1 sm:-left-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-blue-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-purple-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </button>
         </div>
 
-        {/* Restart Button - Right Center Card */}
+        {/* Restart Button - Right Center */}
         <div className="fixed right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-50">
           <button
-            className="relative bg-gradient-to-br from-blue-500/40 to-purple-600/40 border-2 sm:border-2 md:border-4 border-blue-400/70 rounded-xl sm:rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-5 lg:p-6 backdrop-blur-sm shadow-xl sm:shadow-2xl transform hover:scale-105 transition-all duration-500 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="relative transform hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             onClick={handleRestart}
             disabled={isRestarting || !room || !hostId || !quizId || !quizTitle}
+            style={{
+              imageRendering: 'pixelated',
+            }}
           >
-            {/* Card Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-lg sm:blur-xl group-hover:blur-xl sm:group-hover:blur-2xl transition-all duration-500 rounded-xl sm:rounded-2xl md:rounded-3xl"></div>
-            
-            {/* Icon */}
-            <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-180 transition-transform duration-300">
-              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+            {/* 8-bit Pixel Style Icon */}
+            <div 
+              className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
+              style={{
+                background: '#4a90e2',
+                border: '3px solid #2c5f8d',
+                borderRadius: '4px',
+                boxShadow: `
+                  inset -2px -2px 0px #6ba3e8,
+                  inset 2px 2px 0px #2c5f8d,
+                  0 0 0 2px #1a3d5f,
+                  4px 4px 0px rgba(0, 0, 0, 0.3)
+                `,
+                imageRendering: 'pixelated',
+              }}
+            >
+              {/* Icon */}
+              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white group-hover:rotate-180 transition-transform duration-300" />
             </div>
-            
-            {/* Decorative Elements */}
-            <div className="absolute -top-0.5 -left-0.5 sm:-top-1 sm:-left-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-blue-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 bg-purple-400 border border-white sm:border-2 border-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </button>
         </div>
       </div>

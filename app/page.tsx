@@ -264,16 +264,21 @@ export default function HomePage() {
           {/* Pixel Title */}
           <div className="mb-4 sm:mb-6">
             <div className="inline-block">
-              <img
+              <Image
                 src="/images/memoryquiz.png"
                 alt="MEMORY QUIZ"
+                width={500}
+                height={200}
                 className="h-auto w-auto object-contain animate-smooth-bounce"
                 style={{ 
-                  // filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
+                  filter: 'contrast(1.2) brightness(1.1) drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
                   width: 'min(75vw, 500px)',
                   maxWidth: '500px',
+                  imageRendering: 'crisp-edges',
                 }}
                 draggable={false}
+                priority
+                quality={100}
               />
             </div>
           </div>
