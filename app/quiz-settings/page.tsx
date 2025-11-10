@@ -21,8 +21,7 @@ function QuizSettingsPageContent() {
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null)
   const [hostId] = useState(() => Math.random().toString(36).substr(2, 9))
   const [timeLimit, setTimeLimit] = useState("5") // Default 5 menit
-  const [questionCount, setQuestionCount] = useState("10") // Default 10 questions
-  const [maxQuestions, setMaxQuestions] = useState(50) // Default max questions
+  const [questionCount, setQuestionCount] = useState("5") // Default 5 questions
   const [quiz, setQuiz] = useState<any>(null)
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(true)
@@ -42,8 +41,7 @@ function QuizSettingsPageContent() {
           
           if (quizData) {
             setQuiz(quizData)
-            setMaxQuestions(quizData.questions?.length || 50)
-            setQuestionCount(String(Math.min(10, quizData.questions?.length || 50)))
+            setQuestionCount("5") // Default to 5 questions
             setIsLoadingQuiz(false)
             return
           }
@@ -57,8 +55,7 @@ function QuizSettingsPageContent() {
         
         if (localQuizData) {
           setQuiz(localQuizData)
-          setMaxQuestions(localQuizData.questions.length)
-          setQuestionCount(String(Math.min(10, localQuizData.questions.length)))
+          setQuestionCount("5") // Default to 5 questions
         } else {
           // If neither found, create a fallback quiz object
           console.warn("[QuizSettings] Quiz not found in both Supabase and local data for ID:", quizId)
@@ -72,8 +69,7 @@ function QuizSettingsPageContent() {
             questions: []
           }
           setQuiz(fallbackQuiz)
-          setMaxQuestions(50) // Default max questions
-          setQuestionCount("10") // Default question count
+          setQuestionCount("5") // Default question count
         }
         setIsLoadingQuiz(false)
       }
@@ -337,14 +333,9 @@ function QuizSettingsPageContent() {
                         <SelectValue placeholder="Select question count" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border-2 border-black">
-                        {Array.from({ length: Math.max(1, Math.floor(maxQuestions / 5)) }, (_, i) => {
-                          const value = Math.min((i + 1) * 5, maxQuestions)
-                          return (
-                            <SelectItem key={value} value={String(value)}>
-                              {value} {t('quizSettings.questionsShort')}
-                            </SelectItem>
-                          )
-                        })}
+                        <SelectItem value="5">5 {t('quizSettings.questionsShort')}</SelectItem>
+                        <SelectItem value="10">10 {t('quizSettings.questionsShort')}</SelectItem>
+                        <SelectItem value="20">20 {t('quizSettings.questionsShort')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

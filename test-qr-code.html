@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test QR Code Generator - Memory Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483);
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        input {
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            width: 200px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: bold;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        #qrcode {
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        .url-display {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 QR Code Generator</h1>
+        <p style="color: #666; margin-bottom: 20px;">Generate QR Code for Memory Game Room</p>
+        
+        <div class="input-group">
+            <input 
+                type="text" 
+                id="roomCode" 
+                placeholder="ABC123" 
+                maxlength="6"
+                value="ABC123"
+            />
+        </div>
+        
+        <button onclick="generateQR()">Generate QR Code</button>
+        <button onclick="randomCode()">Random Code</button>
+        
+        <div id="qrcode"></div>
+        
+        <div class="url-display" id="urlDisplay"></div>
+        
+        <div class="info">
+            <strong>📱 How to use:</strong><br>
+            1. Enter a 6-character room code<br>
+            2. Click "Generate QR Code"<br>
+            3. Open join page in another device<br>
+            4. Click "SCAN" button<br>
+            5. Point camera at this QR code
+        </div>
+    </div>
+
+    <script>
+        let qr = null;
+        
+        function generateQR() {
+            const roomCode = document.getElementById('roomCode').value.toUpperCase();
+            
+            if (!roomCode || roomCode.length !== 6) {
+                alert('Please enter a 6-character room code');
+                return;
+            }
+            
+            // Clear previous QR code
+            const qrcodeDiv = document.getElementById('qrcode');
+            qrcodeDiv.innerHTML = '';
+            
+            // Generate URL - you can change this to your actual URL
+            const baseUrl = window.location.origin;
+            const joinUrl = `${baseUrl}/join?room=${roomCode}`;
+            
+            // Display URL
+            document.getElementById('urlDisplay').textContent = joinUrl;
+            
+            // Generate QR code
+            qr = new QRCode(qrcodeDiv, {
+                text: joinUrl,
+                width: 256,
+                height: 256,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+        
+        function randomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('roomCode').value = code;
+        }
+        
+        // Generate initial QR code
+        window.onload = function() {
+            generateQR();
+        };
+        
+        // Allow Enter key to generate
+        document.getElementById('roomCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateQR();
+            }
+        });
+        
+        // Auto-generate on input change
+        document.getElementById('roomCode').addEventListener('input', function(e) {
+            const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            e.target.value = value;
+            if (value.length === 6) {
+                setTimeout(generateQR, 300);
+            }
+        });
+    </script>
+</body>
+</html>
+

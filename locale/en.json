@@ -105,6 +105,7 @@
     "leaveWarningDesc": "Are you sure you want to leave? This will end the lobby for all players.",
     "stay": "STAY",
     "leave": "LEAVE",
+    "cancel": "CANCEL",
     "shareTitle": "Join my Memory Quiz Game!",
     "shareText": "Join my quiz game using this link or room code:",
     "qrCodeTitle": "Scan to Join",

@@ -46,49 +46,12 @@ export function useRoom(roomCode: string | null) {
     
     setupSubscription()
 
-    // More frequent polling as fallback for player updates
-    const pollInterval = setInterval(async () => {
-      try {
-        const currentRoom = await roomManager.getRoom(roomCode)
-        if (currentRoom) {
-          // Always check for player count changes
-          const currentPlayerCount = currentRoom.players?.length || 0
-          const previousPlayerCount = room?.players?.length || 0
-          
-          if (currentPlayerCount !== previousPlayerCount) {
-            setRoom(currentRoom)
-            return
-          }
-          
-          // Check for critical status changes
-          if (currentRoom.status === "countdown" && room?.status !== "countdown") {
-            setRoom(currentRoom)
-            return
-          }
-          
-          if (currentRoom.status === "quiz" && room?.status !== "quiz") {
-            setRoom(currentRoom)
-            return
-          }
-          
-          if (currentRoom.status === "finished" && room?.status !== "finished") {
-            setRoom(currentRoom)
-            return
-          }
-        }
-      } catch (error) {
-        console.error("[useRoom] Error polling room:", error)
-      }
-    }, 1000) // Increased frequency - poll every 1 second for better sync
-
-    const connectionCheck = setInterval(() => {
-      setIsConnected(roomManager.isChannelConnected())
-    }, 10000) // Check connection every 10 seconds
+    // No polling needed - Supabase realtime subscription handles all updates
+    // Subscription callback will trigger whenever room or players data changes
+    // This eliminates the need for continuous polling requests
 
     return () => {
-      clearInterval(pollInterval)
       if (unsubscribe) unsubscribe()
-      clearInterval(connectionCheck)
     }
   }, [roomCode])
 

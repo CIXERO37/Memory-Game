@@ -651,6 +651,37 @@ export default function WaitingRoomPage() {
         <PixelBackgroundElements />
       </div>
 
+      {/* Pixel Header with responsive layout */}
+      <div className="relative z-10 w-full px-4 pt-6">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left side - Memory Quiz Logo */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+              {/* Memory Quiz Logo with glow effect */}
+              <img 
+                draggable={false}
+                src="/images/memoryquiz.png" 
+                alt="Memory Quiz" 
+                className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+                style={{ 
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
+                }}
+              />
+            </div>
+          </div>
+          
+          {/* Right side - GameForSmart Logo */}
+          <div className="flex-shrink-0">
+            <img 
+              draggable={false}
+              src="/images/gameforsmartlogo.png" 
+              alt="GameForSmart Logo" 
+              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* New Player Joined Animation */}
         {showPlayerJoinedAnimation && (
@@ -679,7 +710,56 @@ export default function WaitingRoomPage() {
           <div className="relative pixel-waiting-container">
             <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
             <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl pixel-waiting-card">
-              <div className="p-6">
+              <div className="p-6 relative">
+                {/* Leave Room Button - Top Right Corner */}
+                <div className="absolute top-6 right-6 z-10">
+                  <div className="relative pixel-button-container">
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold">
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          <span className="pixel-font-sm">LEAVE ROOM</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-gradient-to-br from-blue-500 to-purple-500 border-4 border-black shadow-2xl pixel-dialog">
+                        <AlertDialogHeader>
+                          <div className="text-center mb-4">
+                            <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3">
+                              <span className="text-2xl">⚠️</span>
+                            </div>
+                            <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 mb-3">
+                              <AlertDialogTitle className="text-black font-bold text-lg pixel-font">LEAVE ROOM?</AlertDialogTitle>
+                            </div>
+                          </div>
+                          <div className="bg-black/20 border border-white/30 rounded px-4 py-3 text-center">
+                            <AlertDialogDescription className="text-white text-sm pixel-font-sm">
+                              ARE YOU SURE YOU WANT TO LEAVE THIS ROOM?
+                            </AlertDialogDescription>
+                          </div>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter className="flex gap-3 justify-center mt-6">
+                          <div className="relative pixel-button-container">
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                            <AlertDialogCancel className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm">
+                              STAY IN ROOM
+                            </AlertDialogCancel>
+                          </div>
+                          <div className="relative pixel-button-container">
+                            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                            <AlertDialogAction 
+                              onClick={handleLeaveRoom} 
+                              className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm"
+                            >
+                              LEAVE ROOM
+                            </AlertDialogAction>
+                          </div>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+
                 {/* Pixel Header */}
                 <div className="text-center mb-6">
                   <div className="inline-block bg-white border-2 border-black rounded px-4 py-2">
@@ -756,54 +836,6 @@ export default function WaitingRoomPage() {
                  
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center">
-            <div className="relative pixel-button-container">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    <span className="pixel-font-sm">LEAVE ROOM</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-gradient-to-br from-blue-500 to-purple-500 border-4 border-black shadow-2xl pixel-dialog">
-                  <AlertDialogHeader>
-                    <div className="text-center mb-4">
-                      <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3">
-                        <span className="text-2xl">⚠️</span>
-                      </div>
-                      <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 mb-3">
-                        <AlertDialogTitle className="text-black font-bold text-lg pixel-font">LEAVE ROOM?</AlertDialogTitle>
-                      </div>
-                    </div>
-                    <div className="bg-black/20 border border-white/30 rounded px-4 py-3 text-center">
-                      <AlertDialogDescription className="text-white text-sm pixel-font-sm">
-                        ARE YOU SURE YOU WANT TO LEAVE THIS ROOM? YOU WILL NEED TO REJOIN WITH THE ROOM CODE IF YOU WANT TO PARTICIPATE IN THE GAME.
-                      </AlertDialogDescription>
-                    </div>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="flex gap-3 justify-center mt-6">
-                    <div className="relative pixel-button-container">
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                      <AlertDialogCancel className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm">
-                        STAY IN ROOM
-                      </AlertDialogCancel>
-                    </div>
-                    <div className="relative pixel-button-container">
-                      <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                      <AlertDialogAction 
-                        onClick={handleLeaveRoom} 
-                        className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm"
-                      >
-                        LEAVE ROOM
-                      </AlertDialogAction>
-                    </div>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
         </div>

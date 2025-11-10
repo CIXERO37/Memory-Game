@@ -102,6 +102,7 @@
     "leaveWarningDesc": "您确定要离开吗？这将结束所有玩家的大厅。",
     "stay": "留下",
     "leave": "离开",
+    "cancel": "取消",
     "shareTitle": "加入我的记忆测验游戏！",
     "shareText": "使用此链接或房间代码加入我的测验游戏：",
     "qrCodeTitle": "扫描加入",

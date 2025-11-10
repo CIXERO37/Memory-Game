@@ -404,56 +404,64 @@ function LobbyPageContent() {
     // Try to hydrate from Supabase session first
     const initializeHostSession = async () => {
       try {
-        // Try to get session from Supabase
+        // Try to get session from Supabase (non-blocking - if it fails, fallback to localStorage)
         const sessionId = sessionManager.getSessionIdFromStorage()
         if (sessionId) {
-          try {
-            const sessionData = await sessionManager.getSessionData(sessionId)
-            if (sessionData && sessionData.user_type === 'host') {
-            const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = sessionData.user_data
-            setHostId(storedHostId)
-            setQuizId(storedQuizId)
-            
-            if (!roomCodeParam) {
-              setRoomCode(storedRoomCode)
-              // Load room data immediately
-              const loadRoom = async () => {
-                try {
-                  const room = await roomManager.getRoom(storedRoomCode)
-                  if (room) {
-                    setLocalRoom(room)
+          // Try to get session data, but don't block if it fails (e.g., 406 error)
+          const sessionData = await sessionManager.getSessionData(sessionId)
+          
+          // Only use session data if it was successfully retrieved and is for a host
+          if (sessionData && sessionData.user_type === 'host') {
+            try {
+              const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = sessionData.user_data
+              setHostId(storedHostId)
+              setQuizId(storedQuizId)
+              
+              if (!roomCodeParam) {
+                setRoomCode(storedRoomCode)
+                // Load room data immediately
+                const loadRoom = async () => {
+                  try {
+                    const room = await roomManager.getRoom(storedRoomCode)
+                    if (room) {
+                      setLocalRoom(room)
+                    }
+                  } catch (error) {
+                    console.error("[Lobby] Error loading room:", error)
                   }
-                } catch (error) {
-                  console.error("[Lobby] Error loading room:", error)
                 }
-              }
-              loadRoom()
-            } else if (roomCodeParam === storedRoomCode) {
-              // Room code matches, this is a valid host session
-              setRoomCode(roomCodeParam)
-              // Load room data immediately
-              const loadRoom = async () => {
-                try {
-                  const room = await roomManager.getRoom(roomCodeParam)
-                  if (room) {
-                    setLocalRoom(room)
+                loadRoom()
+              } else if (roomCodeParam === storedRoomCode) {
+                // Room code matches, this is a valid host session
+                setRoomCode(roomCodeParam)
+                // Load room data immediately
+                const loadRoom = async () => {
+                  try {
+                    const room = await roomManager.getRoom(roomCodeParam)
+                    if (room) {
+                      setLocalRoom(room)
+                    }
+                  } catch (error) {
+                    console.error("[Lobby] Error loading room:", error)
                   }
-                } catch (error) {
-                  console.error("[Lobby] Error loading room:", error)
                 }
+                loadRoom()
+              } else {
+                // Room code doesn't match, clear old data and treat as new room
+                console.log("Room code mismatch, clearing old host data")
+                await sessionManager.clearSession().catch(() => {
+                  // Ignore errors when clearing session
+                })
+                setRoomCode(roomCodeParam)
               }
-              loadRoom()
-            } else {
-              // Room code doesn't match, clear old data and treat as new room
-              console.log("Room code mismatch, clearing old host data")
-              await sessionManager.clearSession()
-              setRoomCode(roomCodeParam)
+              return
+            } catch (error) {
+              console.warn("[Lobby] Error processing session data, falling back to localStorage:", error)
+              // Continue with fallback logic below
             }
-            return
-          }
-          } catch (error) {
-            console.warn("[Lobby] Error getting session data:", error)
-            // Continue with fallback logic
+          } else {
+            // Session data not found or not a host session, continue with fallback
+            console.log("[Lobby] No valid host session found, using localStorage fallback")
           }
         }
         
@@ -512,46 +520,8 @@ function LobbyPageContent() {
     console.log("[Lobby] Current values:", { roomCode, hostId, gameStarted, roomStatus: currentRoom?.status })
   }, [currentRoom, roomCode, hostId, gameStarted])
 
-  // Light polling as fallback for critical updates (countdown, game start, player changes)
-  useEffect(() => {
-    if (!roomCode) return
-
-    const refreshInterval = setInterval(async () => {
-      try {
-        const latestRoom = await roomManager.getRoom(roomCode)
-        if (latestRoom) {
-          // Check for player count changes that might be missed by subscription
-          const currentPlayerCount = currentRoom?.players?.length || 0
-          const latestPlayerCount = latestRoom.players?.length || 0
-          
-          // Only update for critical status changes or player count changes
-          const currentStatus = currentRoom?.status
-          const latestStatus = latestRoom.status
-          const currentCountdown = currentRoom?.countdownStartTime
-          const latestCountdown = latestRoom.countdownStartTime
-          
-          if ((latestStatus === "countdown" && currentStatus !== "countdown") ||
-              (latestStatus === "quiz" && currentStatus !== "quiz") ||
-              (latestCountdown !== currentCountdown && latestStatus === "countdown") ||
-              (latestPlayerCount !== currentPlayerCount)) {
-            console.log("[Lobby] Critical change detected via polling:", {
-              currentStatus,
-              latestStatus,
-              currentCountdown,
-              latestCountdown,
-              currentPlayerCount,
-              latestPlayerCount
-            })
-            setLocalRoom(latestRoom)
-          }
-        }
-      } catch (error) {
-        console.error("[Lobby] Error in refresh interval:", error)
-      }
-    }, 3000) // Check every 3 seconds for player changes and critical updates
-
-    return () => clearInterval(refreshInterval)
-  }, [roomCode, currentRoom?.status, currentRoom?.countdownStartTime, currentRoom?.players?.length])
+  // Removed polling - subscription handles all real-time updates
+  // Subscription in useEffect above (lines 254-399) is sufficient for all updates
 
 
   const shareUrl = roomCode && typeof window !== 'undefined' ? `${window.location.origin}/join?room=${roomCode}` : ""
@@ -1053,18 +1023,7 @@ function LobbyPageContent() {
                 </div>
                 
                 {/* Pixel Status */}
-                <div className="mb-4">
-                  <div className="bg-black/20 border border-white/30 rounded px-3 py-2">
-                    <span className="text-white text-xs sm:text-sm pixel-font-sm">
-                      {currentRoom && currentRoom.players.length === 0
-                        ? t('lobby.waitingForPlayers')
-                        : gameStarted
-                          ? t('lobby.gameInProgress')
-                          : t('lobby.readyToStart')}
-                    </span>
-                  </div>
-                  
-                </div>
+                
                 {/* Pixel Players List */}
                 {currentRoom && currentRoom.players.length === 0 ? (
                   <div className="text-center py-6 sm:py-8">

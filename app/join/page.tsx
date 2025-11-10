@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Play } from "lucide-react"
+import { ArrowLeft, Play, Camera } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { AvatarSelector } from "@/components/avatar-selector"
@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { useGlobalAudio } from "@/hooks/use-global-audio"
+import { QRScanner } from "@/components/qr-scanner"
 
 function JoinPageContent() {
   const searchParams = useSearchParams()
@@ -33,6 +34,7 @@ function JoinPageContent() {
   const [hasClickedJoin, setHasClickedJoin] = useState(false)
   const [usernameError, setUsernameError] = useState("")
   const [roomCodeError, setRoomCodeError] = useState("")
+  const [showScanner, setShowScanner] = useState(false)
 
   // Resume audio when on join page
   useEffect(() => {
@@ -215,6 +217,17 @@ function JoinPageContent() {
     if (extractedCode) {
       setRoomCode(extractedCode)
       e.preventDefault() // Prevent default paste behavior
+    }
+  }
+
+  // Handle QR code scan
+  const handleQRScan = (data: string) => {
+    const extractedCode = extractRoomCodeFromUrl(data)
+    if (extractedCode) {
+      setRoomCode(extractedCode)
+      setShowScanner(false)
+      // Clear any previous room code error
+      setRoomCodeError("")
     }
   }
 
@@ -513,8 +526,18 @@ function JoinPageContent() {
 
                     {!searchParams.get("room") && (
                       <div className="space-y-2">
-                        <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                          <Label htmlFor="roomCode" className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
+                        <div className="flex items-center justify-between">
+                          <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                            <Label htmlFor="roomCode" className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={() => setShowScanner(true)}
+                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-[36px]"
+                          >
+                            <Camera className="h-4 w-4" />
+                            <span>SCAN</span>
+                          </Button>
                         </div>
                         <div className="relative">
                           <Input
@@ -550,8 +573,18 @@ function JoinPageContent() {
 
                     {searchParams.get("room") && (
                       <div className="space-y-2">
-                        <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                          <Label className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
+                        <div className="flex items-center justify-between">
+                          <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                            <Label className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={() => setShowScanner(true)}
+                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-[36px]"
+                          >
+                            <Camera className="h-4 w-4" />
+                            <span>SCAN</span>
+                          </Button>
                         </div>
                         <div className="relative">
                           <Input
@@ -616,6 +649,14 @@ function JoinPageContent() {
           </div>
 
       </div>
+
+      {/* QR Scanner Modal */}
+      {showScanner && (
+        <QRScanner
+          onScan={handleQRScan}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </div>
   )
 }
