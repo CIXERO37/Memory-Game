@@ -3,7 +3,6 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-import { GlobalAudioInitializer } from '../components/global-audio-initializer'
 import { AuthGuard } from '../components/auth-guard'
 import { I18nInitializer } from '../components/i18n-initializer'
 
@@ -31,7 +30,6 @@ export default function RootLayout({
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <I18nInitializer>
-          <GlobalAudioInitializer />
           <AuthGuard>
             {children}
           </AuthGuard>

@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast"
 import { useRoom } from "@/hooks/use-room"
 import { CountdownTimer } from "@/components/countdown-timer"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
-import { useGlobalAudio } from "@/hooks/use-global-audio"
 import { useTranslation } from "react-i18next"
 
 function LobbyPageContent() {
@@ -44,7 +43,6 @@ function LobbyPageContent() {
   const lastUpdateTimeRef = useRef<number>(0)
   const { toast } = useToast()
   const { room, loading } = useRoom(roomCode || "")
-  const { resumeAudio } = useGlobalAudio()
   
   // Use localRoom if available, otherwise use room from hook
   // Prioritize localRoom for countdown state to prevent override
@@ -77,11 +75,6 @@ function LobbyPageContent() {
       setCurrentPage(currentPage - 1)
     }
   }
-
-  // Resume audio when on lobby page
-  useEffect(() => {
-    resumeAudio()
-  }, [resumeAudio])
 
   // Handle browser navigation (back button, refresh, close tab)
   useEffect(() => {
@@ -697,8 +690,8 @@ function LobbyPageContent() {
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         <div className="relative z-10 text-center">
           <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-6">
               <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                 <div className="h-8 w-8 text-black animate-spin">⏳</div>
               </div>
@@ -721,7 +714,7 @@ function LobbyPageContent() {
 
   if (loading && !currentRoom) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center text-white">
           <div className="text-xl">{t('lobby.loadingRoom')}</div>
         </div>
@@ -732,7 +725,7 @@ function LobbyPageContent() {
   // Add a small delay to prevent flash of "ROOM NOT FOUND" when creating new rooms
   if (!currentRoom && !loading && !roomCode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="text-center text-white">
           <div className="text-xl">Initializing...</div>
         </div>
@@ -754,7 +747,7 @@ function LobbyPageContent() {
       } else {
         // Show loading while trying to create room
         return (
-          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+          <div className="min-h-screen bg-linear-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
             <div className="text-center text-white">
               <div className="text-xl">Creating room...</div>
             </div>
@@ -781,18 +774,18 @@ function LobbyPageContent() {
 
             <div className="relative z-10 text-center">
               <div className="relative inline-block mb-6">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
+                <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <div className="relative bg-linear-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
                   <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                     <span className="text-2xl">⚠️</span>
                   </div>
                   <h3 className="text-lg font-bold text-white mb-2 pixel-font">ROOM NOT FOUND</h3>
                   <p className="text-white/80 mb-4 pixel-font-sm">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
                   <div className="relative pixel-button-container">
-                    <div className="absolute inset-0 bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                    <div className="absolute inset-0 bg-linear-to-br from-orange-600 to-orange-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                     <Button 
                       onClick={() => router.push("/select-quiz")}
-                      className="relative bg-gradient-to-br from-orange-500 to-orange-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-orange-400 hover:to-orange-500 transform hover:scale-105 transition-all duration-200 font-bold"
+                      className="relative bg-linear-to-br from-orange-500 to-orange-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-orange-400 hover:to-orange-500 transform hover:scale-105 transition-all duration-200 font-bold"
                     >
                       <span className="pixel-font-sm">CREATE NEW ROOM</span>
                     </Button>
@@ -834,11 +827,11 @@ function LobbyPageContent() {
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div 
               onClick={() => handleNavigationAttempt("/quiz-settings")}
-              className="cursor-pointer flex-shrink-0"
+              className="cursor-pointer shrink-0"
             >
               <div className="relative pixel-button-container">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                <Button variant="outline" size="sm" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200">
+                <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <Button variant="outline" size="sm" className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200">
                   <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
@@ -858,7 +851,7 @@ function LobbyPageContent() {
           </div>
           
           {/* Right side - GameForSmart Logo */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <img 
               draggable={false}
               src="/images/gameforsmartlogo.png" 
@@ -873,8 +866,8 @@ function LobbyPageContent() {
         <div className="mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
           {/* Pixel Room Info */}
           <div className="relative pixel-lobby-container">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
               <div className="p-4 sm:p-6 space-y-2">
                
                 {/* Quiz Info Pills */}
@@ -949,7 +942,7 @@ function LobbyPageContent() {
                             <span className="text-xs sm:text-sm font-mono break-all flex-1 text-gray-900">{joinUrl}</span>
                             <button
                               onClick={copyShareLink}
-                              className="p-2 hover:bg-gray-200 rounded transition-colors flex-shrink-0 border border-black"
+                              className="p-2 hover:bg-gray-200 rounded transition-colors shrink-0 border border-black"
                               title="Copy join link"
                             >
                               {copiedLink ? (
@@ -968,7 +961,7 @@ function LobbyPageContent() {
               {/* Large QR Modal - Almost Fullscreen */}
               <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
                 <DialogContent 
-                  className="!max-w-fit !w-auto !h-auto z-50 backdrop-blur-sm bg-white border-8 border-black shadow-2xl !p-4 !overflow-hidden"
+                  className="max-w-fit! w-auto! h-auto! z-50 backdrop-blur-sm bg-white border-8 border-black shadow-2xl p-4! overflow-hidden!"
                   showCloseButton={true}
                 >
                   <div className="flex justify-center items-center h-full w-full min-w-0 min-h-0 box-border overflow-hidden">
@@ -1006,8 +999,8 @@ function LobbyPageContent() {
 
           {/* Pixel Players List */}
           <div className="relative pixel-lobby-container">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
+            <div className="absolute inset-0 bg-linear-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-green-500 to-cyan-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
               <div className="p-4 sm:p-6">
                 {/* Pixel Players Header */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
@@ -1024,7 +1017,7 @@ function LobbyPageContent() {
                   {currentRoom && !gameStarted && (
                     <div className="w-full sm:w-auto">
                       <div className="relative pixel-button-container">
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                        <div className="absolute inset-0 bg-linear-to-br from-purple-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                         <button 
                           onClick={() => {
                             console.log("[Lobby] START QUIZ button clicked, button state:", {
@@ -1037,7 +1030,7 @@ function LobbyPageContent() {
                             startGame()
                           }}
                           disabled={!roomCode || !hostId || !currentRoom || currentRoom.players.length === 0}
-                          className="relative w-full sm:w-auto bg-gradient-to-br from-purple-500 to-purple-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-purple-400 hover:to-purple-500 transform hover:scale-105 transition-all duration-200 font-bold px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none min-h-[44px]"
+                          className="relative w-full sm:w-auto bg-linear-to-br from-purple-500 to-purple-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-purple-400 hover:to-purple-500 transform hover:scale-105 transition-all duration-200 font-bold px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none min-h-[44px]"
                         >
                           <Play className="h-3 w-3 sm:h-4 sm:w-4" />
                           <span className="pixel-font-sm">{t('lobby.startGame')}</span>
@@ -1105,11 +1098,11 @@ function LobbyPageContent() {
                     {totalPages > 1 && (
                       <div className="flex items-center justify-between">
                         <div className="relative pixel-button-container">
-                          <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                          <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                           <Button 
                             onClick={goToPreviousPage}
                             disabled={currentPage === 0}
-                            className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
+                            className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
                           >
                             <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             <span className="pixel-font-sm text-xs sm:text-sm">PREV</span>
@@ -1123,11 +1116,11 @@ function LobbyPageContent() {
                         </div>
 
                         <div className="relative pixel-button-container">
-                          <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                          <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                           <Button 
                             onClick={goToNextPage}
                             disabled={currentPage === totalPages - 1}
-                            className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
+                            className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
                           >
                             <span className="pixel-font-sm text-xs sm:text-sm">NEXT</span>
                             <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
@@ -1147,8 +1140,8 @@ function LobbyPageContent() {
       <Dialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
         <DialogContent className="max-w-md bg-transparent border-none p-0 z-50">
           <div className="relative pixel-dialog-container">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg border-4 border-black shadow-2xl p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-600 rounded-lg border-4 border-black shadow-2xl p-6">
               {/* Dialog Header */}
               <div className="text-center mb-6">
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
@@ -1163,20 +1156,20 @@ function LobbyPageContent() {
               {/* Dialog Buttons */}
               <div className="flex gap-4 justify-center">
                 <div className="relative pixel-button-container">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={cancelLeave}
-                    className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
+                    className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
                     <span className="pixel-font-sm">{t('lobby.cancel')}</span>
                   </Button>
                 </div>
 
                 <div className="relative pixel-button-container">
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={confirmLeave}
-                    className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
+                    className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
                     <span className="pixel-font-sm">{t('lobby.leave')}</span>
                   </Button>
@@ -1191,8 +1184,8 @@ function LobbyPageContent() {
       <Dialog open={showKickDialog} onOpenChange={setShowKickDialog}>
         <DialogContent className="max-w-md bg-transparent border-none p-0 z-50">
           <div className="relative pixel-dialog-container">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
               {/* Dialog Header */}
               <div className="text-center mb-6">
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
@@ -1209,20 +1202,20 @@ function LobbyPageContent() {
               {/* Dialog Buttons */}
               <div className="flex gap-4 justify-center">
                 <div className="relative pixel-button-container">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={cancelKickPlayer}
-                    className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
+                    className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
                     <span className="pixel-font-sm">{t('lobby.cancel')}</span>
                   </Button>
                 </div>
 
                 <div className="relative pixel-button-container">
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={confirmKickPlayer}
-                    className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
+                    className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
                     <span className="pixel-font-sm">{t('lobby.kickPlayer')}</span>
                   </Button>
@@ -1266,16 +1259,16 @@ function PixelBackgroundElements() {
       ))}
       
       {/* Floating Pixel Blocks */}
-      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+      <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+      <div className="absolute top-40 right-20 w-12 h-12 bg-linear-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-linear-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-linear-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
     </>
@@ -1288,8 +1281,8 @@ export default function LobbyPage() {
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         <div className="relative z-10 text-center">
           <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
               <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-black animate-spin" />
               </div>

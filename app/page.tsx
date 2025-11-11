@@ -5,7 +5,6 @@ import { Users, Play, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X, 
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
-import { GlobalAudioPlayer } from "@/components/global-audio-player"
 import { useAuth } from "@/hooks/use-auth"
 import { UserProfileComponent } from "@/components/user-profile"
 import { LogoutConfirmationDialog } from "@/components/logout-confirmation-dialog"
@@ -144,11 +143,6 @@ export default function HomePage() {
           </button>
         </div>
         
-        {/* Audio Player - positioned below */}
-        <div className="absolute top-14 right-0">
-          <GlobalAudioPlayer />
-        </div>
-        
         {/* Dropdown Menu */}
         {isMenuOpen && (
           <div className="absolute top-14 right-0 bg-purple-800/95 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-2xl min-w-48 overflow-hidden">
@@ -215,16 +209,16 @@ export default function HomePage() {
         <PixelBackgroundElements />
         {/* Floating Brain Elements */}
         <div className="absolute top-20 left-10 w-32 h-32 opacity-20 animate-float">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-blue-400 to-purple-400 blur-xl"></div>
         </div>
         <div className="absolute top-40 right-20 w-24 h-24 opacity-30 animate-float-delayed">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 blur-lg"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-cyan-400 to-blue-400 blur-lg"></div>
         </div>
         <div className="absolute bottom-32 left-1/4 w-40 h-40 opacity-25 animate-float-slow">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400 blur-2xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-purple-400 to-pink-400 blur-2xl"></div>
         </div>
         <div className="absolute bottom-20 right-1/3 w-28 h-28 opacity-35 animate-float-delayed-slow">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-green-400 to-cyan-400 blur-xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-green-400 to-cyan-400 blur-xl"></div>
         </div>
 
         {/* Neural Network Lines */}
@@ -297,8 +291,8 @@ export default function HomePage() {
         <div className="flex flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
           <Link href="/select-quiz" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-gradient-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-lg sm:text-2xl lg:text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
+              <div className="absolute inset-0 bg-linear-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-linear-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-lg sm:text-2xl lg:text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black rounded border-2 border-white flex items-center justify-center">
                     <Server className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
@@ -311,8 +305,8 @@ export default function HomePage() {
           
           <Link href="/join" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-gradient-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg sm:text-2xl lg:text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
+              <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-linear-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg sm:text-2xl lg:text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded border-2 border-black flex items-center justify-center">
                     <Play className="w-3 h-3 sm:w-5 sm:h-5 text-black" />
@@ -367,16 +361,16 @@ function PixelBackgroundElements() {
       ))}
       
       {/* Floating Pixel Blocks */}
-      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+      <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+      <div className="absolute top-40 right-20 w-12 h-12 bg-linear-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-linear-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-linear-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
     </>

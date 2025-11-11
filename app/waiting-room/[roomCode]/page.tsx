@@ -497,8 +497,8 @@ export default function WaitingRoomPage() {
         </div>
         <div className="relative z-10 text-center w-full max-w-sm">
           <div className="relative inline-block mb-4 sm:mb-6 w-full">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
                 <Users className="h-6 w-6 sm:h-8 sm:w-8 text-black animate-pulse" />
               </div>
@@ -529,8 +529,8 @@ export default function WaitingRoomPage() {
         </div>
         <div className="relative z-10 text-center w-full max-w-sm">
           <div className="relative inline-block mb-4 sm:mb-6 w-full">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
                 <Users className="h-6 w-6 sm:h-8 sm:w-8 text-black animate-pulse" />
               </div>
@@ -560,8 +560,8 @@ export default function WaitingRoomPage() {
         </div>
         <div className="relative z-10 text-center w-full max-w-sm">
           <div className="relative inline-block mb-4 sm:mb-6 w-full">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-red-500 to-red-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
                 <span className="text-xl sm:text-2xl">⚠️</span>
               </div>
@@ -569,19 +569,19 @@ export default function WaitingRoomPage() {
               <p className="text-white/80 mb-3 sm:mb-4 pixel-font-sm text-xs sm:text-sm px-2">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
               <div className="space-y-2 sm:space-y-3">
                 <div className="relative pixel-button-container">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-blue-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={() => router.push(`/join?room=${roomCode}`)} 
-                    className="relative bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
+                    className="relative bg-linear-to-br from-blue-500 to-blue-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-blue-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
                   >
                     <span className="pixel-font-sm text-xs sm:text-sm">TRY TO REJOIN</span>
                   </Button>
                 </div>
                 <div className="relative pixel-button-container">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={() => router.push("/join")} 
-                    className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
+                    className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
                   >
                     <span className="pixel-font-sm text-xs sm:text-sm">JOIN DIFFERENT ROOM</span>
                   </Button>
@@ -631,8 +631,8 @@ export default function WaitingRoomPage() {
         </div>
         <div className="relative z-10 text-center w-full max-w-sm">
           <div className="relative inline-block mb-4 sm:mb-6 w-full">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-green-500 to-green-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
                 <span className="text-xl sm:text-2xl animate-pulse">🎮</span>
               </div>
@@ -682,7 +682,7 @@ export default function WaitingRoomPage() {
           </div>
           
           {/* Right side - GameForSmart Logo */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <img 
               draggable={false}
               src="/images/gameforsmartlogo.png" 
@@ -698,10 +698,10 @@ export default function WaitingRoomPage() {
         {showPlayerJoinedAnimation && (
           <div className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce w-[90%] sm:w-auto max-w-sm">
             <div className="relative inline-block w-full">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-2 sm:p-3 md:p-4">
+              <div className="absolute inset-0 bg-linear-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <div className="relative bg-linear-to-br from-green-500 to-green-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-2 sm:p-3 md:p-4">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-black rounded flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-black rounded flex items-center justify-center shrink-0">
                     <Users className="h-3 w-3 sm:h-5 sm:w-5 text-black animate-pulse" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -719,22 +719,22 @@ export default function WaitingRoomPage() {
         <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
           {/* Pixel Waiting Room Card */}
           <div className="relative pixel-waiting-container">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-waiting-card">
+            <div className="absolute inset-0 bg-linear-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-green-500 to-cyan-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-waiting-card">
               <div className="p-3 sm:p-4 md:p-6 relative">
                 {/* Leave Room Button - Top Right Corner */}
                 <div className="absolute top-2 right-2 sm:top-4 sm:right-4 md:top-6 md:right-6 z-10">
                   <div className="relative pixel-button-container">
-                    <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                    <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold text-[10px] sm:text-xs md:text-sm px-2 py-1 sm:px-3 sm:py-2 md:px-4 md:py-2 min-h-[32px] sm:min-h-[36px] md:min-h-[44px]">
+                        <Button className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold text-[10px] sm:text-xs md:text-sm px-2 py-1 sm:px-3 sm:py-2 md:px-4 md:py-2 min-h-[32px] sm:min-h-[36px] md:min-h-[44px]">
                           <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                           <span className="pixel-font-sm hidden sm:inline">LEAVE ROOM</span>
                           <span className="pixel-font-sm sm:hidden">LEAVE</span>
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-gradient-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black shadow-2xl pixel-dialog max-w-[90vw] sm:max-w-md">
+                      <AlertDialogContent className="bg-linear-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black shadow-2xl pixel-dialog max-w-[90vw] sm:max-w-md">
                         <AlertDialogHeader>
                           <div className="text-center mb-3 sm:mb-4">
                             <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-2 sm:mb-3">
@@ -752,16 +752,16 @@ export default function WaitingRoomPage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center mt-4 sm:mt-6">
                           <div className="relative pixel-button-container w-full sm:w-auto">
-                            <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                            <AlertDialogCancel className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]">
+                            <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                            <AlertDialogCancel className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]">
                               STAY IN ROOM
                             </AlertDialogCancel>
                           </div>
                           <div className="relative pixel-button-container w-full sm:w-auto">
-                            <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                            <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                             <AlertDialogAction 
                               onClick={handleLeaveRoom} 
-                              className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]"
+                              className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]"
                             >
                               LEAVE ROOM
                             </AlertDialogAction>
@@ -784,7 +784,7 @@ export default function WaitingRoomPage() {
                   <div className="mb-3 sm:mb-4 md:mb-6">
                     <div className="bg-blue-100 border-2 border-blue-500 rounded p-2 sm:p-3 pixel-player-card">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
                           <RobustGoogleAvatar
                             avatarUrl={playerInfo.avatar}
                             alt={`${playerInfo.username} avatar`}
@@ -814,7 +814,7 @@ export default function WaitingRoomPage() {
                         return (
                           <div key={player.id} className="bg-white border-2 border-black rounded p-2 sm:p-3 pixel-player-card">
                             <div className="flex items-center gap-2 sm:gap-3">
-                              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
                                 <RobustGoogleAvatar
                                   avatarUrl={player.avatar}
                                   alt={`${player.username} avatar`}
@@ -886,16 +886,16 @@ function PixelBackgroundElements() {
       ))}
       
       {/* Floating Pixel Blocks */}
-      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+      <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+      <div className="absolute top-40 right-20 w-12 h-12 bg-linear-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-linear-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-linear-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
     </>
