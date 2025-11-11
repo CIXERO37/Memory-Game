@@ -482,7 +482,7 @@ export default function WaitingRoomPage() {
 
   if (loading || !playerInfo) {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         {/* Pixel Grid Background */}
         <div className="absolute inset-0 opacity-20">
           <div className="pixel-grid"></div>
@@ -495,15 +495,15 @@ export default function WaitingRoomPage() {
         <div className="absolute inset-0 overflow-hidden">
           <PixelBackgroundElements />
         </div>
-        <div className="relative z-10 text-center">
-          <div className="relative inline-block mb-6">
+        <div className="relative z-10 text-center w-full max-w-sm">
+          <div className="relative inline-block mb-4 sm:mb-6 w-full">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
-              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-black animate-pulse" />
+            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-black animate-pulse" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 pixel-font">LOADING...</h3>
-              <p className="text-white/80 pixel-font-sm">CONNECTING TO ROOM</p>
+              <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-2 pixel-font">LOADING...</h3>
+              <p className="text-white/80 pixel-font-sm text-xs sm:text-sm">CONNECTING TO ROOM</p>
             </div>
           </div>
         </div>
@@ -514,7 +514,7 @@ export default function WaitingRoomPage() {
   // Show loading state if room is not loaded yet but we have player info
   if (!room && !loading) {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         {/* Pixel Grid Background */}
         <div className="absolute inset-0 opacity-20">
           <div className="pixel-grid"></div>
@@ -527,15 +527,15 @@ export default function WaitingRoomPage() {
         <div className="absolute inset-0 overflow-hidden">
           <PixelBackgroundElements />
         </div>
-        <div className="relative z-10 text-center">
-          <div className="relative inline-block mb-6">
+        <div className="relative z-10 text-center w-full max-w-sm">
+          <div className="relative inline-block mb-4 sm:mb-6 w-full">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
-              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-black animate-pulse" />
+            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-black animate-pulse" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 pixel-font">LOADING ROOM...</h3>
-              <p className="text-white/80 pixel-font-sm">PLEASE WAIT</p>
+              <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-2 pixel-font">LOADING ROOM...</h3>
+              <p className="text-white/80 pixel-font-sm text-xs sm:text-sm">PLEASE WAIT</p>
             </div>
           </div>
         </div>
@@ -545,7 +545,7 @@ export default function WaitingRoomPage() {
 
   if (!room) {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         {/* Pixel Grid Background */}
         <div className="absolute inset-0 opacity-20">
           <div className="pixel-grid"></div>
@@ -558,32 +558,32 @@ export default function WaitingRoomPage() {
         <div className="absolute inset-0 overflow-hidden">
           <PixelBackgroundElements />
         </div>
-        <div className="relative z-10 text-center">
-          <div className="relative inline-block mb-6">
+        <div className="relative z-10 text-center w-full max-w-sm">
+          <div className="relative inline-block mb-4 sm:mb-6 w-full">
             <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
-              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                <span className="text-2xl">⚠️</span>
+            <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
+                <span className="text-xl sm:text-2xl">⚠️</span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 pixel-font">ROOM NOT FOUND</h3>
-              <p className="text-white/80 mb-4 pixel-font-sm">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
-              <div className="space-y-3">
+              <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-2 pixel-font">ROOM NOT FOUND</h3>
+              <p className="text-white/80 mb-3 sm:mb-4 pixel-font-sm text-xs sm:text-sm px-2">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
+              <div className="space-y-2 sm:space-y-3">
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={() => router.push(`/join?room=${roomCode}`)} 
-                    className="relative bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-200 font-bold w-full"
+                    className="relative bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
                   >
-                    <span className="pixel-font-sm">TRY TO REJOIN</span>
+                    <span className="pixel-font-sm text-xs sm:text-sm">TRY TO REJOIN</span>
                   </Button>
                 </div>
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                   <Button 
                     onClick={() => router.push("/join")} 
-                    className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold w-full"
+                    className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
                   >
-                    <span className="pixel-font-sm">JOIN DIFFERENT ROOM</span>
+                    <span className="pixel-font-sm text-xs sm:text-sm">JOIN DIFFERENT ROOM</span>
                   </Button>
                 </div>
               </div>
@@ -616,7 +616,7 @@ export default function WaitingRoomPage() {
 
   if (gameStarting) {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         {/* Pixel Grid Background */}
         <div className="absolute inset-0 opacity-20">
           <div className="pixel-grid"></div>
@@ -629,15 +629,15 @@ export default function WaitingRoomPage() {
         <div className="absolute inset-0 overflow-hidden">
           <PixelBackgroundElements />
         </div>
-        <div className="relative z-10 text-center">
-          <div className="relative inline-block mb-6">
+        <div className="relative z-10 text-center w-full max-w-sm">
+          <div className="relative inline-block mb-4 sm:mb-6 w-full">
             <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-4 border-black shadow-2xl p-6">
-              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                <span className="text-2xl animate-pulse">🎮</span>
+            <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-4 sm:p-6">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3 sm:mb-4">
+                <span className="text-xl sm:text-2xl animate-pulse">🎮</span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 pixel-font">STARTING QUIZ...</h3>
-              <p className="text-white/80 pixel-font-sm">REDIRECTING TO THE GAME</p>
+              <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-2 pixel-font">STARTING QUIZ...</h3>
+              <p className="text-white/80 pixel-font-sm text-xs sm:text-sm">REDIRECTING TO THE GAME</p>
             </div>
           </div>
         </div>
@@ -663,17 +663,17 @@ export default function WaitingRoomPage() {
       </div>
 
       {/* Pixel Header with responsive layout */}
-      <div className="relative z-10 w-full px-4 pt-6">
-        <div className="flex items-center justify-between gap-2">
+      <div className="relative z-10 w-full px-2 sm:px-4 pt-3 sm:pt-4 md:pt-6">
+        <div className="flex items-center justify-between gap-1 sm:gap-2">
           {/* Left side - Memory Quiz Logo */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
             <div className="flex items-center gap-1 sm:gap-2 min-w-0">
               {/* Memory Quiz Logo with glow effect */}
               <img 
                 draggable={false}
                 src="/images/memoryquiz.png" 
                 alt="Memory Quiz" 
-                className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+                className="h-6 sm:h-8 md:h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain max-w-[45%] sm:max-w-none"
                 style={{ 
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
                 }}
@@ -687,26 +687,26 @@ export default function WaitingRoomPage() {
               draggable={false}
               src="/images/gameforsmartlogo.png" 
               alt="GameForSmart Logo" 
-              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+              className="h-6 sm:h-8 md:h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain drop-shadow-lg max-w-[45%] sm:max-w-none"
             />
           </div>
         </div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-2 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
         {/* New Player Joined Animation */}
         {showPlayerJoinedAnimation && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
-            <div className="relative inline-block">
+          <div className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50 animate-bounce w-[90%] sm:w-auto max-w-sm">
+            <div className="relative inline-block w-full">
               <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-green-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-4 border-black shadow-2xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white border-2 border-black rounded flex items-center justify-center">
-                    <Users className="h-5 w-5 text-black animate-pulse" />
+              <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-lg border-2 sm:border-4 border-black shadow-2xl p-2 sm:p-3 md:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white border-2 border-black rounded flex items-center justify-center flex-shrink-0">
+                    <Users className="h-3 w-3 sm:h-5 sm:w-5 text-black animate-pulse" />
                   </div>
-                  <div>
-                    <div className="text-white font-bold text-sm pixel-font">NEW PLAYER JOINED!</div>
-                    <div className="text-white/80 text-xs pixel-font-sm">REFRESHING PLAYER LIST...</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-white font-bold text-xs sm:text-sm pixel-font truncate">NEW PLAYER JOINED!</div>
+                    <div className="text-white/80 text-[10px] sm:text-xs pixel-font-sm truncate">REFRESHING PLAYER LIST...</div>
                   </div>
                 </div>
               </div>
@@ -716,51 +716,52 @@ export default function WaitingRoomPage() {
 
        
 
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
           {/* Pixel Waiting Room Card */}
           <div className="relative pixel-waiting-container">
             <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl pixel-waiting-card">
-              <div className="p-6 relative">
+            <div className="relative bg-gradient-to-br from-green-500 to-cyan-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-waiting-card">
+              <div className="p-3 sm:p-4 md:p-6 relative">
                 {/* Leave Room Button - Top Right Corner */}
-                <div className="absolute top-6 right-6 z-10">
+                <div className="absolute top-2 right-2 sm:top-4 sm:right-4 md:top-6 md:right-6 z-10">
                   <div className="relative pixel-button-container">
                     <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold">
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          <span className="pixel-font-sm">LEAVE ROOM</span>
+                        <Button className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold text-[10px] sm:text-xs md:text-sm px-2 py-1 sm:px-3 sm:py-2 md:px-4 md:py-2 min-h-[32px] sm:min-h-[36px] md:min-h-[44px]">
+                          <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                          <span className="pixel-font-sm hidden sm:inline">LEAVE ROOM</span>
+                          <span className="pixel-font-sm sm:hidden">LEAVE</span>
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-gradient-to-br from-blue-500 to-purple-500 border-4 border-black shadow-2xl pixel-dialog">
+                      <AlertDialogContent className="bg-gradient-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black shadow-2xl pixel-dialog max-w-[90vw] sm:max-w-md">
                         <AlertDialogHeader>
-                          <div className="text-center mb-4">
-                            <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-3">
-                              <span className="text-2xl">⚠️</span>
+                          <div className="text-center mb-3 sm:mb-4">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-2 sm:mb-3">
+                              <span className="text-xl sm:text-2xl">⚠️</span>
                             </div>
-                            <div className="inline-block bg-white border-2 border-black rounded px-4 py-2 mb-3">
-                              <AlertDialogTitle className="text-black font-bold text-lg pixel-font">LEAVE ROOM?</AlertDialogTitle>
+                            <div className="inline-block bg-white border-2 border-black rounded px-3 py-1.5 sm:px-4 sm:py-2 mb-2 sm:mb-3">
+                              <AlertDialogTitle className="text-black font-bold text-sm sm:text-base md:text-lg pixel-font">LEAVE ROOM?</AlertDialogTitle>
                             </div>
                           </div>
-                          <div className="bg-black/20 border border-white/30 rounded px-4 py-3 text-center">
-                            <AlertDialogDescription className="text-white text-sm pixel-font-sm">
+                          <div className="bg-black/20 border border-white/30 rounded px-3 py-2 sm:px-4 sm:py-3 text-center">
+                            <AlertDialogDescription className="text-white text-xs sm:text-sm pixel-font-sm">
                               ARE YOU SURE YOU WANT TO LEAVE THIS ROOM?
                             </AlertDialogDescription>
                           </div>
                         </AlertDialogHeader>
-                        <AlertDialogFooter className="flex gap-3 justify-center mt-6">
-                          <div className="relative pixel-button-container">
+                        <AlertDialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center mt-4 sm:mt-6">
+                          <div className="relative pixel-button-container w-full sm:w-auto">
                             <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                            <AlertDialogCancel className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm">
+                            <AlertDialogCancel className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]">
                               STAY IN ROOM
                             </AlertDialogCancel>
                           </div>
-                          <div className="relative pixel-button-container">
+                          <div className="relative pixel-button-container w-full sm:w-auto">
                             <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                             <AlertDialogAction 
                               onClick={handleLeaveRoom} 
-                              className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm"
+                              className="relative bg-gradient-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]"
                             >
                               LEAVE ROOM
                             </AlertDialogAction>
@@ -772,18 +773,18 @@ export default function WaitingRoomPage() {
                 </div>
 
                 {/* Pixel Header */}
-                <div className="text-center mb-6">
-                  <div className="inline-block bg-white border-2 border-black rounded px-4 py-2">
-                    <h2 className="text-lg font-bold text-black pixel-font">WAITING ROOM</h2>
+                <div className="text-center mb-3 sm:mb-4 md:mb-6">
+                  <div className="inline-block bg-white border-2 border-black rounded px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2">
+                    <h2 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-black pixel-font">WAITING ROOM</h2>
                   </div>
                 </div>
                 
                 {/* Current Player Card - Displayed at the top */}
                 {playerInfo && (
-                  <div className="mb-6">
-                    <div className="bg-blue-100 border-2 border-blue-500 rounded p-3 pixel-player-card">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                  <div className="mb-3 sm:mb-4 md:mb-6">
+                    <div className="bg-blue-100 border-2 border-blue-500 rounded p-2 sm:p-3 pixel-player-card">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden flex-shrink-0">
                           <RobustGoogleAvatar
                             avatarUrl={playerInfo.avatar}
                             alt={`${playerInfo.username} avatar`}
@@ -792,10 +793,10 @@ export default function WaitingRoomPage() {
                             height={40}
                           />
                         </div>
-                        <div className="flex-1">
-                          <div className="font-bold text-black pixel-font-sm">
-                            {playerInfo.username.toUpperCase()}
-                            <span className="text-blue-600 ml-2">(YOU)</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-black pixel-font-sm text-xs sm:text-sm truncate">
+                            <span className="truncate block">{playerInfo.username.toUpperCase()}</span>
+                            <span className="text-blue-600 text-[10px] sm:text-xs">(YOU)</span>
                           </div>
                         </div>
                       </div>
@@ -804,16 +805,16 @@ export default function WaitingRoomPage() {
                 )}
 
                 {/* Other Players Section */}
-                <div className="mb-6">
-                  <div className="grid gap-3">
+                <div className="mb-3 sm:mb-4 md:mb-6">
+                  <div className="grid gap-2 sm:gap-3">
                     {room.players
                       .filter(player => player.username !== playerInfo?.username)
                       .map((player) => {
                         console.log("[WaitingRoom] Rendering other player:", player)
                         return (
-                          <div key={player.id} className="bg-white border-2 border-black rounded p-3 pixel-player-card">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
+                          <div key={player.id} className="bg-white border-2 border-black rounded p-2 sm:p-3 pixel-player-card">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <RobustGoogleAvatar
                                   avatarUrl={player.avatar}
                                   alt={`${player.username} avatar`}
@@ -822,10 +823,10 @@ export default function WaitingRoomPage() {
                                   height={32}
                                 />
                               </div>
-                              <div className="flex-1">
-                                <div className="font-bold text-black pixel-font-sm">
-                                  {player.username.toUpperCase()}
-                                  {player.isHost && <span className="text-orange-600 ml-2">(HOST)</span>}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-bold text-black pixel-font-sm text-xs sm:text-sm">
+                                  <span className="truncate block">{player.username.toUpperCase()}</span>
+                                  {player.isHost && <span className="text-orange-600 text-[10px] sm:text-xs">(HOST)</span>}
                                 </div>
                               </div>
                             </div>
@@ -836,11 +837,11 @@ export default function WaitingRoomPage() {
                 </div>
 
                 {/* Pixel Status Section */}
-                <div className="bg-black/20 border border-white/30 rounded p-4 text-center">
-                  <div className="w-8 h-8 mx-auto bg-white border border-black rounded flex items-center justify-center mb-3">
-                    <Clock className="h-5 w-5 text-black" />
+                <div className="bg-black/20 border border-white/30 rounded p-3 sm:p-4 text-center">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 mx-auto bg-white border border-black rounded flex items-center justify-center mb-2 sm:mb-3">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-black" />
                   </div>
-                  <p className="text-white text-sm pixel-font-sm">
+                  <p className="text-white text-xs sm:text-sm pixel-font-sm leading-tight sm:leading-normal">
                     {room.gameStarted ? "GAME STARTING SOON..." : "WAITING FOR HOST TO START THE GAME..."}
                   </p>
                   
