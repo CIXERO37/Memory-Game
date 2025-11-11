@@ -14,14 +14,12 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
-import { useGlobalAudio } from "@/hooks/use-global-audio"
 import { QRScanner } from "@/components/qr-scanner"
 
 function JoinPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { userProfile, isAuthenticated, loading } = useAuth()
-  const { resumeAudio } = useGlobalAudio()
   const [username, setUsername] = useState("")
   const [roomCode, setRoomCode] = useState("")
   const [selectedAvatar, setSelectedAvatar] = useState("") // Will be set to random avatar
@@ -35,11 +33,6 @@ function JoinPageContent() {
   const [usernameError, setUsernameError] = useState("")
   const [roomCodeError, setRoomCodeError] = useState("")
   const [showScanner, setShowScanner] = useState(false)
-
-  // Resume audio when on join page
-  useEffect(() => {
-    resumeAudio()
-  }, [resumeAudio])
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")
@@ -467,8 +460,8 @@ function JoinPageContent() {
         <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
         <Link href="/">
               <div className="relative pixel-button-container">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                <Button variant="outline" size="default" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-[44px] min-w-[44px]">
+                <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <Button variant="outline" size="default" className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-[44px] min-w-[44px]">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </div>
@@ -488,8 +481,8 @@ function JoinPageContent() {
         <div className="max-w-md mx-auto">
             <div className="relative pixel-card-container">
               {/* Pixel Card Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-card-shadow"></div>
-              <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-card-main">
+              <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-card-shadow"></div>
+              <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-card-main">
                 <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                   {/* Pixel Header */}
                   <div className="text-center space-y-2">
@@ -691,16 +684,16 @@ function FloatingPixelElements() {
       ))}
       
       {/* Floating Pixel Blocks */}
-      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+      <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+      <div className="absolute top-40 right-20 w-12 h-12 bg-linear-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-linear-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-linear-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
     </>
@@ -713,8 +706,8 @@ export default function JoinPage() {
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         <div className="relative z-10 text-center">
           <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
               <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                 <Play className="h-8 w-8 text-black animate-spin" />
               </div>

@@ -8,7 +8,6 @@ import { roomManager } from "@/lib/room-manager"
 import { useRoom } from "@/hooks/use-room"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabaseRoomManager } from "@/lib/supabase-room-manager"
-import { useGlobalAudio } from "@/hooks/use-global-audio"
 import { useTranslation } from "react-i18next"
 
 interface MemoryChallengePageProps {
@@ -30,18 +29,6 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [playerData, setPlayerData] = useState<any>(null)
   const { room } = useRoom(params.roomCode)
-  const { pauseAudio } = useGlobalAudio()
-
-  // Disable audio when on memory challenge page
-  useEffect(() => {
-    pauseAudio()
-    
-    // Resume audio when leaving the page
-    return () => {
-      // Note: We don't resume audio here as it should stay paused for memory challenge
-      // Audio will resume when user navigates to other pages
-    }
-  }, [pauseAudio])
 
   // Load player data from session manager
   useEffect(() => {
@@ -317,7 +304,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+            <div className="w-12 h-12 bg-linear-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
               <Target className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">VALIDATING ACCESS...</h2>
@@ -343,7 +330,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="w-12 h-12 bg-gradient-to-r from-red-400 to-orange-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+            <div className="w-12 h-12 bg-linear-to-r from-red-400 to-orange-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
               <Target className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">ACCESS DENIED</h2>
@@ -372,16 +359,16 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         <PixelBackgroundElements />
         {/* Floating Brain Elements */}
         <div className="absolute top-20 left-10 w-32 h-32 opacity-20 animate-float">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-blue-400 to-purple-400 blur-xl"></div>
         </div>
         <div className="absolute top-40 right-20 w-24 h-24 opacity-30 animate-float-delayed">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 blur-lg"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-cyan-400 to-blue-400 blur-lg"></div>
         </div>
         <div className="absolute bottom-32 left-1/4 w-40 h-40 opacity-25 animate-float-slow">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400 blur-2xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-purple-400 to-pink-400 blur-2xl"></div>
         </div>
         <div className="absolute bottom-20 right-1/3 w-28 h-28 opacity-35 animate-float-delayed-slow">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-green-400 to-cyan-400 blur-xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-green-400 to-cyan-400 blur-xl"></div>
         </div>
 
         {/* Neural Network Lines */}
@@ -417,8 +404,8 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         <div className="flex items-center justify-between gap-2 mb-6">
           {/* Left side - Title and Description */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="relative flex-shrink-0">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
+            <div className="relative shrink-0">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-linear-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
                 <Target className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
             </div>
@@ -434,7 +421,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
           </div>
           
           {/* Right side - GameForSmart Logo */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <img 
               src="/images/gameforsmartlogo.png" 
               alt="GameForSmart Logo" 
@@ -474,9 +461,9 @@ function PixelBackgroundElements() {
       <div className="absolute top-1/3 right-40 w-3 h-3 bg-yellow-400 animate-float-delayed opacity-55"></div>
       
       {/* Pixel Blocks */}
-      <div className="absolute top-60 left-1/3 w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-400 animate-pixel-float opacity-30"></div>
-      <div className="absolute bottom-40 right-20 w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-400 animate-pixel-block-float opacity-25"></div>
-      <div className="absolute top-80 right-1/2 w-4 h-4 bg-gradient-to-r from-purple-400 to-pink-400 animate-pixel-float-delayed opacity-35"></div>
+      <div className="absolute top-60 left-1/3 w-6 h-6 bg-linear-to-r from-blue-400 to-purple-400 animate-pixel-float opacity-30"></div>
+      <div className="absolute bottom-40 right-20 w-8 h-8 bg-linear-to-r from-cyan-400 to-blue-400 animate-pixel-block-float opacity-25"></div>
+      <div className="absolute top-80 right-1/2 w-4 h-4 bg-linear-to-r from-purple-400 to-pink-400 animate-pixel-float-delayed opacity-35"></div>
       
       {/* Falling Pixels */}
       <div className="absolute top-0 left-1/4 w-2 h-2 bg-blue-400 animate-falling opacity-40"></div>

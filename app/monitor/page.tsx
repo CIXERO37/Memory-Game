@@ -13,7 +13,6 @@ import { getTimerDisplayText } from "@/lib/timer-utils"
 import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
-import { useGlobalAudio } from "@/hooks/use-global-audio"
 import { useTranslation } from "react-i18next"
 
 function MonitorPageContent() {
@@ -39,7 +38,6 @@ function MonitorPageContent() {
       })
     }
   }, [room])
-  const { pauseAudio } = useGlobalAudio()
 
   // Get quiz settings from room data
   const quizSettings = room ? {
@@ -83,17 +81,6 @@ function MonitorPageContent() {
   }
   
   const timerState = useSynchronizedTimer(room, quizSettings.timeLimit, handleTimeUp)
-  
-  // Disable audio when on monitor page
-  useEffect(() => {
-    pauseAudio()
-    
-    // Resume audio when leaving the page
-    return () => {
-      // Note: We don't resume audio here as it should stay paused for monitor
-      // Audio will resume when user navigates to other pages
-    }
-  }, [pauseAudio])
   
   // Show warning when time is running low
   useEffect(() => {
@@ -351,7 +338,7 @@ function MonitorPageContent() {
           <div className="pixel-grid"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
+          <div className="bg-linear-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
             <div className="text-white text-sm sm:text-base">{t('monitor.loadingHostMonitor')}</div>
           </div>
         </div>
@@ -366,7 +353,7 @@ function MonitorPageContent() {
           <div className="pixel-grid"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
+          <div className="bg-linear-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center pixel-lobby-card">
             <div className="text-white text-sm sm:text-base">{t('monitor.loadingRoom')}</div>
             <div className="text-blue-200 text-xs sm:text-sm mt-2">{t('monitor.connectingGame')}</div>
           </div>
@@ -422,16 +409,16 @@ function MonitorPageContent() {
         <PixelBackgroundElements />
         {/* Floating Brain Elements */}
         <div className="absolute top-20 left-10 w-32 h-32 opacity-20 animate-float">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-400 to-purple-400 blur-xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-blue-400 to-purple-400 blur-xl"></div>
         </div>
         <div className="absolute top-40 right-20 w-24 h-24 opacity-30 animate-float-delayed">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-400 blur-lg"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-cyan-400 to-blue-400 blur-lg"></div>
         </div>
         <div className="absolute bottom-32 left-1/4 w-40 h-40 opacity-25 animate-float-slow">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400 blur-2xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-purple-400 to-pink-400 blur-2xl"></div>
         </div>
         <div className="absolute bottom-20 right-1/3 w-28 h-28 opacity-35 animate-float-delayed-slow">
-          <div className="w-full h-full rounded-full bg-gradient-to-r from-green-400 to-cyan-400 blur-xl"></div>
+          <div className="w-full h-full rounded-full bg-linear-to-r from-green-400 to-cyan-400 blur-xl"></div>
         </div>
 
         {/* Neural Network Lines */}
@@ -509,8 +496,8 @@ function MonitorPageContent() {
                 console.log("Button clicked, calling endGame...")
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative bg-gradient-to-br from-blue-500 to-cyan-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-sm sm:text-base lg:text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto min-h-[44px]">
+              <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <button className="relative bg-linear-to-br from-blue-500 to-cyan-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-sm sm:text-base lg:text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto min-h-[44px]">
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 sm:w-5 sm:h-5 bg-black rounded border-2 border-white flex items-center justify-center">
                     <span className="text-white font-bold text-xs sm:text-sm">✕</span>
@@ -543,7 +530,7 @@ function MonitorPageContent() {
 
         {/* Player Progress Cards */}
         <div className="space-y-6 sm:space-y-8 mb-6 sm:mb-8">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-4 sm:p-6 pixel-lobby-card">
+          <div className="bg-linear-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-4 sm:p-6 pixel-lobby-card">
             {players.length === 0 ? (
               <div className="text-center py-8 sm:py-12">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-400 rounded border-2 sm:border-4 border-white mx-auto mb-4 sm:mb-6 flex items-center justify-center">
@@ -576,7 +563,7 @@ function MonitorPageContent() {
                 })
 
                 return (
-                  <div key={player.id} className="relative bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
+                  <div key={player.id} className="relative bg-linear-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
                     <div className="flex items-center justify-between mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <div className="flex items-center gap-1 sm:gap-2">
@@ -642,20 +629,20 @@ function MonitorPageContent() {
                           <div 
                             className={`h-full rounded-lg transition-all duration-500 ${
                               questionsAnswered >= quizSettings.questionCount
-                                ? 'bg-gradient-to-r from-green-400 to-emerald-400'
+                                ? 'bg-linear-to-r from-green-400 to-emerald-400'
                                 : questionsAnswered > 0
-                                  ? 'bg-gradient-to-r from-blue-400 to-purple-400'
-                                  : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                                  ? 'bg-linear-to-r from-blue-400 to-purple-400'
+                                  : 'bg-linear-to-r from-gray-400 to-gray-500'
                             }`}
                             style={{ width: `${Math.max(quizProgress, 2)}%` }}
                           />
                           {/* Progress bar animation for active players */}
                           {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
                           )}
                           {/* Completion celebration effect */}
                           {questionsAnswered >= quizSettings.questionCount && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-300/30 to-transparent animate-ping"></div>
+                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-green-300/30 to-transparent animate-ping"></div>
                           )}
                         </div>
                       </div>
@@ -703,16 +690,16 @@ function PixelBackgroundElements() {
       ))}
       
       {/* Floating Pixel Blocks */}
-      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
+      <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
+      <div className="absolute top-40 right-20 w-12 h-12 bg-linear-to-br from-green-400 to-cyan-400 opacity-40 pixel-block-float-delayed">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-linear-to-br from-red-400 to-pink-400 opacity-35 pixel-block-float-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-linear-to-br from-yellow-400 to-orange-400 opacity-45 pixel-block-float-delayed-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
     </>
@@ -727,7 +714,7 @@ export default function MonitorPage() {
           <div className="pixel-grid"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center">
+          <div className="bg-linear-to-br from-blue-500/20 to-purple-500/20 border-2 sm:border-4 border-white/30 rounded-lg p-6 sm:p-8 text-center">
             <div className="text-white text-sm sm:text-base">LOADING...</div>
           </div>
         </div>

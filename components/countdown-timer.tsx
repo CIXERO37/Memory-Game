@@ -68,8 +68,8 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
           </div>
           <div className="relative z-10 text-center">
             <div className="relative inline-block mb-6">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-8">
+              <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <div className="relative bg-linear-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-8">
                 <div className="w-20 h-20 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-6 countdown-icon">
                   <Clock className="w-10 h-10 text-black animate-spin" />
                 </div>
@@ -126,8 +126,8 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
         
 
         <div className="relative inline-block mb-6">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-          <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-8">
+          <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+          <div className="relative bg-linear-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-8">
             {/* Countdown Icon with Continuous Spin */}
             <div className="w-20 h-20 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-6 countdown-icon">
               <Clock className="w-10 h-10 text-black animate-spin" />
@@ -195,16 +195,16 @@ function PixelBackgroundElements() {
       ))}
       
       {/* Floating Pixel Blocks */}
-      <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 opacity-30 pixel-block-float">
+      <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-cyan-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute top-40 right-20 w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-400 opacity-40 pixel-block-float-delayed">
+      <div className="absolute top-40 right-20 w-12 h-12 bg-linear-to-br from-cyan-400 to-blue-400 opacity-40 pixel-block-float-delayed">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-400 opacity-35 pixel-block-float-slow">
+      <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-linear-to-br from-indigo-400 to-purple-400 opacity-35 pixel-block-float-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
-      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-400 opacity-45 pixel-block-float-delayed-slow">
+      <div className="absolute bottom-20 right-1/3 w-14 h-14 bg-linear-to-br from-blue-400 to-indigo-400 opacity-45 pixel-block-float-delayed-slow">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
     </>
