@@ -44,38 +44,64 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
     countdownDuration: room.countdownDuration 
   })
   
+  // Show countdown even if data is not fully ready, but room status is countdown
+  // This ensures players see the countdown number immediately
   if (!room.countdownStartTime || !room.countdownDuration) {
-    return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
-        {/* Pixel Grid Background */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="pixel-grid"></div>
-        </div>
-        {/* Retro Scanlines */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="scanlines"></div>
-        </div>
-        {/* Floating Pixel Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <PixelBackgroundElements />
-        </div>
-        <div className="relative z-10 text-center">
-          <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-6">
-              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                <Clock className="h-8 w-8 text-black animate-spin" />
+    // If countdown is active from hook, show it even without room data
+    if (isActive && countdown > 0) {
+      // Continue to show countdown with available data
+    } else {
+      // Show preparing state but also show countdown if available
+      return (
+        <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+          {/* Pixel Grid Background */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="pixel-grid"></div>
+          </div>
+          {/* Retro Scanlines */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="scanlines"></div>
+          </div>
+          {/* Floating Pixel Elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <PixelBackgroundElements />
+          </div>
+          <div className="relative z-10 text-center">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <div className="relative bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg border-4 border-black shadow-2xl p-8">
+                <div className="w-20 h-20 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-6 countdown-icon">
+                  <Clock className="w-10 h-10 text-black animate-spin" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4 pixel-font countdown-message">
+                  PREPARING COUNTDOWN...
+                </h3>
+                <p className="text-white/80 pixel-font-sm mb-6">GET READY FOR THE QUIZ!</p>
+                {/* Show countdown number even in preparing state if available */}
+                {countdown > 0 && (
+                  <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
+                    countdown <= 1 ? 'pixel-countdown final' :
+                    countdown <= 3 ? 'pixel-countdown urgent' :
+                    'pixel-countdown'
+                  }`}>
+                    <span className={`text-9xl font-black ${
+                      isInDelayPeriod ? 'text-yellow-400' :
+                      countdown <= 3 ? 'text-red-400' : 'text-white'
+                    }`}>
+                      {countdown}
+                    </span>
+                  </div>
+                )}
               </div>
-              <h3 className="text-lg font-bold text-white mb-2 pixel-font">PREPARING COUNTDOWN...</h3>
-              <p className="text-white/80 pixel-font-sm">GET READY FOR THE QUIZ!</p>
             </div>
           </div>
         </div>
-      </div>
-    )
+      )
+    }
   }
 
-  if (!isActive || countdown <= 0) {
+  // Don't return null if countdown is active, show it even if countdown is 0 initially
+  if (!isActive && countdown <= 0 && room.countdownStartTime && room.countdownDuration) {
     return null
   }
 
@@ -114,19 +140,21 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
             
             
             
-            {/* Countdown Number with Smooth Animation */}
-            <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
-              countdown <= 1 ? 'pixel-countdown final' :
-              countdown <= 3 ? 'pixel-countdown urgent' :
-              'pixel-countdown'
-            }`}>
-              <span className={`text-9xl font-black ${
-                isInDelayPeriod ? 'text-yellow-400' :
-                countdown <= 3 ? 'text-red-400' : 'text-white'
+            {/* Countdown Number with Smooth Animation - Always show if countdown is active or room is in countdown status */}
+            {(isActive || room.status === "countdown") && (
+              <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
+                countdown <= 1 ? 'pixel-countdown final' :
+                countdown <= 3 ? 'pixel-countdown urgent' :
+                'pixel-countdown'
               }`}>
-                {countdown}
-              </span>
-            </div>
+                <span className={`text-9xl font-black ${
+                  isInDelayPeriod ? 'text-yellow-400' :
+                  countdown <= 3 ? 'text-red-400' : 'text-white'
+                }`}>
+                  {countdown > 0 ? countdown : (room.countdownDuration || 10)}
+                </span>
+              </div>
+            )}
             
             
            

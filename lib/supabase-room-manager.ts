@@ -605,10 +605,42 @@ class SupabaseRoomManager {
       return () => {}
     }
 
-    // Debounce callback to prevent excessive requests
-    const DEBOUNCE_DELAY = 500 // 500ms debounce to batch rapid changes
+    // Initialize lastRoomData with current room state to ensure proper comparison
+    // Also trigger initial callback to ensure UI is in sync
+    const initialRoom = await this.getRoom(roomCode)
+    if (initialRoom) {
+      this.lastRoomData.set(roomCode, initialRoom)
+      // Trigger initial callback to ensure UI is synced with current state
+      // Use a small delay to ensure subscription is fully set up first
+      setTimeout(() => {
+        callback(initialRoom)
+      }, 100)
+    }
+
+    // Reduced debounce delay for faster updates, especially for player joins and score updates
+    const DEBOUNCE_DELAY = 100 // 100ms debounce for faster response
     
-    const debouncedCallback = (updatedRoom: Room | null) => {
+    const debouncedCallback = (updatedRoom: Room | null, immediate: boolean = false) => {
+      // For immediate updates (like player join/leave or score updates), skip debounce
+      if (immediate) {
+        const lastRoom = this.lastRoomData.get(roomCode)
+        // Enhanced change detection to include score and progress changes
+        const hasChanged = !lastRoom || 
+          lastRoom.status !== updatedRoom?.status ||
+          lastRoom.players?.length !== updatedRoom?.players?.length ||
+          lastRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
+          JSON.stringify(lastRoom.players?.map(p => p.id).sort()) !== JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
+          // Check for score/progress changes
+          JSON.stringify(lastRoom.players?.map(p => ({ id: p.id, quizScore: p.quizScore, memoryScore: p.memoryScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id))) !== 
+          JSON.stringify(updatedRoom?.players?.map(p => ({ id: p.id, quizScore: p.quizScore, memoryScore: p.memoryScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id)))
+        
+        if (hasChanged && updatedRoom) {
+          this.lastRoomData.set(roomCode, updatedRoom)
+          callback(updatedRoom)
+        }
+        return
+      }
+
       // Clear existing timer for this room
       const existingTimer = this.debounceTimers.get(roomCode)
       if (existingTimer) {
@@ -619,15 +651,21 @@ class SupabaseRoomManager {
       const timer = setTimeout(() => {
         // Only call callback if data actually changed
         const lastRoom = this.lastRoomData.get(roomCode)
+        // Enhanced change detection to include score and progress changes
         const hasChanged = !lastRoom || 
           lastRoom.status !== updatedRoom?.status ||
           lastRoom.players?.length !== updatedRoom?.players?.length ||
           lastRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
-          JSON.stringify(lastRoom.players?.map(p => p.id)) !== JSON.stringify(updatedRoom?.players?.map(p => p.id))
+          JSON.stringify(lastRoom.players?.map(p => p.id).sort()) !== JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
+          // Check for score/progress changes
+          JSON.stringify(lastRoom.players?.map(p => ({ id: p.id, quizScore: p.quizScore, memoryScore: p.memoryScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id))) !== 
+          JSON.stringify(updatedRoom?.players?.map(p => ({ id: p.id, quizScore: p.quizScore, memoryScore: p.memoryScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id)))
         
         if (hasChanged && updatedRoom) {
           this.lastRoomData.set(roomCode, updatedRoom)
           callback(updatedRoom)
+        } else if (!hasChanged) {
+          console.log('[SupabaseRoomManager] No changes detected, skipping callback')
         }
         
         this.debounceTimers.delete(roomCode)
@@ -664,18 +702,37 @@ class SupabaseRoomManager {
           filter: `room_id=eq.${roomId}`
         }, 
         async (payload) => {
-          // Log player changes for debugging (but reduce console spam)
+          // Log player changes for debugging
           if (payload.eventType === 'INSERT') {
             console.log('[SupabaseRoomManager] ✅ Player joined:', payload.new?.username)
           } else if (payload.eventType === 'DELETE') {
             console.log('[SupabaseRoomManager] ❌ Player left:', payload.old?.username)
+          } else if (payload.eventType === 'UPDATE') {
+            // Log score updates for debugging
+            const oldData = payload.old
+            const newData = payload.new
+            if (oldData && newData && (
+              oldData.quiz_score !== newData.quiz_score ||
+              oldData.memory_game_score !== newData.memory_game_score ||
+              oldData.questions_answered !== newData.questions_answered
+            )) {
+              console.log('[SupabaseRoomManager] 📊 Player score updated:', {
+                username: newData.username,
+                quizScore: newData.quiz_score,
+                memoryScore: newData.memory_game_score,
+                questionsAnswered: newData.questions_answered
+              })
+            }
           }
-          // Don't log UPDATE events for scores to reduce spam
           
-          // Fetch updated room data with debouncing to prevent rapid successive calls
+          // For player join/leave/score updates, use immediate callback (no debounce) for faster updates
+          const isPlayerChange = payload.eventType === 'INSERT' || payload.eventType === 'DELETE' || payload.eventType === 'UPDATE'
+          
+          // Fetch updated room data
           const updatedRoom = await this.getRoom(roomCode)
           if (updatedRoom) {
-            debouncedCallback(updatedRoom)
+            // Use immediate callback for player changes and score updates to show changes instantly
+            debouncedCallback(updatedRoom, isPlayerChange)
           }
         }
       )
