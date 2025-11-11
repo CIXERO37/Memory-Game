@@ -27,6 +27,18 @@ function MonitorPageContent() {
   const [showTimeWarning, setShowTimeWarning] = useState(false)
   const [timeUpHandled, setTimeUpHandled] = useState(false)
   const { room, loading } = useRoom(roomCode || "")
+  
+  // Force re-render when room data changes to ensure progress bars update
+  useEffect(() => {
+    if (room) {
+      // This effect will trigger re-render whenever room data changes
+      // The dependency on room ensures we re-render when subscription updates
+      console.log("[Monitor] 🔄 Room data updated, triggering re-render:", {
+        playersCount: room.players.length,
+        timestamp: new Date().toISOString()
+      })
+    }
+  }, [room])
   const { pauseAudio } = useGlobalAudio()
 
   // Get quiz settings from room data
@@ -140,18 +152,9 @@ function MonitorPageContent() {
 
   // Timer is now handled by useSynchronizedTimer hook
 
-  // ENHANCED PROGRESS BAR MONITORING
-  useEffect(() => {
-    if (room && room.players.length > 0) {
-      // Enhanced refresh for progress bar reliability - every 500ms for better sync
-      const refreshInterval = setInterval(() => {
-        setForceRefresh(prev => prev + 1)
-        console.log("[Monitor] 🔄 Force refresh triggered for progress bar reliability")
-      }, 500)
-      
-      return () => clearInterval(refreshInterval)
-    }
-  }, [room])
+  // ENHANCED PROGRESS BAR MONITORING - Real-time updates via subscription
+  // Removed aggressive polling - rely on Supabase realtime subscription instead
+  // The useRoom hook already handles real-time updates via subscription
 
   // REAL-TIME PROGRESS BROADCAST LISTENER untuk sinkronisasi instant
   useEffect(() => {
@@ -161,8 +164,14 @@ function MonitorPageContent() {
       broadcastChannel.onmessage = (event) => {
         if (event.data.type === 'progress-update') {
           console.log("[Monitor] 📡 Received progress broadcast:", event.data)
-          // Force immediate refresh when receiving progress update
-          setForceRefresh(prev => prev + 1)
+          // Force immediate refresh by manually fetching room data
+          roomManager.getRoom(roomCode).then((updatedRoom) => {
+            if (updatedRoom) {
+              // The useRoom hook will pick up the change via subscription
+              // But we can also trigger a manual refresh here
+              setForceRefresh(prev => prev + 1)
+            }
+          })
         }
       }
 
@@ -172,48 +181,43 @@ function MonitorPageContent() {
     }
   }, [roomCode])
 
-  // PROGRESS BAR VALIDATION - Check for inconsistencies
+  // FALLBACK POLLING - Only if subscription seems slow (every 2 seconds as fallback)
   useEffect(() => {
-    if (room && room.players.length > 0) {
-      const validationInterval = setInterval(() => {
-        room.players.forEach(player => {
-          if (!player.isHost) {
-            const questionsAnswered = player.questionsAnswered || 0
-            const quizScore = player.quizScore || 0
-            const maxQuestions = quizSettings.questionCount
+    if (roomCode && room) {
+      // Light polling as fallback to ensure we catch any missed updates
+      const fallbackPolling = setInterval(async () => {
+        try {
+          const latestRoom = await roomManager.getRoom(roomCode)
+          if (latestRoom) {
+            // Compare to see if there are any changes
+            const currentPlayerIds = room.players.map(p => p.id).sort().join(',')
+            const latestPlayerIds = latestRoom.players.map(p => p.id).sort().join(',')
             
-            // Log potential inconsistencies
-            if (questionsAnswered > maxQuestions) {
-              console.warn(`[Monitor] ⚠️ Player ${player.username} has answered more questions than available:`, {
-                questionsAnswered,
-                maxQuestions,
-                playerId: player.id
-              })
-            }
-            
-            if (quizScore > questionsAnswered) {
-              console.warn(`[Monitor] ⚠️ Player ${player.username} has higher score than questions answered:`, {
-                quizScore,
-                questionsAnswered,
-                playerId: player.id
-              })
-            }
-            
-            // Log progress for debugging
-            console.log(`[Monitor] 📊 Player ${player.username} progress:`, {
-              questionsAnswered,
-              quizScore,
-              progress: Math.min((questionsAnswered / maxQuestions) * 100, 100).toFixed(1) + '%',
-              playerId: player.id,
-              timestamp: new Date().toISOString()
+            // Check if scores changed
+            const scoresChanged = room.players.some(player => {
+              const latestPlayer = latestRoom.players.find(p => p.id === player.id)
+              if (!latestPlayer) return false
+              return (
+                (player.quizScore || 0) !== (latestPlayer.quizScore || 0) ||
+                (player.memoryScore || 0) !== (latestPlayer.memoryScore || 0) ||
+                (player.questionsAnswered || 0) !== (latestPlayer.questionsAnswered || 0)
+              )
             })
+            
+            if (scoresChanged || currentPlayerIds !== latestPlayerIds) {
+              console.log("[Monitor] 🔄 Fallback polling detected changes, forcing refresh")
+              // The useRoom hook subscription should handle this, but we trigger a refresh just in case
+              setForceRefresh(prev => prev + 1)
+            }
           }
-        })
-      }, 2000) // Check every 2 seconds for better sync
+        } catch (error) {
+          console.error("[Monitor] Error in fallback polling:", error)
+        }
+      }, 2000) // Poll every 2 seconds as fallback
       
-      return () => clearInterval(validationInterval)
+      return () => clearInterval(fallbackPolling)
     }
-  }, [room, quizSettings.questionCount])
+  }, [roomCode, room])
 
   // Monitor ranking calculation effect
   useEffect(() => {

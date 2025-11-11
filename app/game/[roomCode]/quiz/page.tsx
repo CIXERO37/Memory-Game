@@ -209,7 +209,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }
   }, [room, playerId, questionsAnsweredInitialized])
 
-  // Listen for room updates and sync questionsAnswered and score
+  // Listen for room updates and sync questionsAnswered and score - REAL-TIME
   useEffect(() => {
     if (room && playerId && questionsAnsweredInitialized) {
       const currentPlayer = room.players.find((p) => p.id === playerId)
@@ -217,20 +217,30 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         const dbQuestionsAnswered = currentPlayer.questionsAnswered || 0
         const dbQuizScore = currentPlayer.quizScore || 0
         
+        // Always sync from database to ensure consistency
+        // This ensures real-time updates from other sources (e.g., memory game return)
         if (dbQuestionsAnswered !== questionsAnswered) {
-          console.log("[Quiz] Syncing questionsAnswered from room update:", dbQuestionsAnswered)
+          console.log("[Quiz] 🔄 REAL-TIME: Syncing questionsAnswered from room update:", {
+            old: questionsAnswered,
+            new: dbQuestionsAnswered,
+            timestamp: new Date().toISOString()
+          })
           setQuestionsAnswered(dbQuestionsAnswered)
         }
         
         if (dbQuizScore !== score) {
-          console.log("[Quiz] Syncing quiz score from room update:", dbQuizScore)
+          console.log("[Quiz] 🔄 REAL-TIME: Syncing quiz score from room update:", {
+            old: score,
+            new: dbQuizScore,
+            timestamp: new Date().toISOString()
+          })
           setScore(dbQuizScore)
         }
         
         // Sync currentQuestion with questionsAnswered ONLY if not showing result
         // This prevents the next question from showing while player is viewing the result
         if (dbQuestionsAnswered !== currentQuestion && !isShowingResult) {
-          console.log("[Quiz] Syncing currentQuestion with questionsAnswered:", dbQuestionsAnswered)
+          console.log("[Quiz] 🔄 REAL-TIME: Syncing currentQuestion with questionsAnswered:", dbQuestionsAnswered)
           setCurrentQuestion(dbQuestionsAnswered)
         }
       }
@@ -609,6 +619,20 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           
           if (success) {
             console.log(`[Quiz] ✅ Progress updated successfully (attempt ${attempt})`)
+            
+            // Broadcast progress update immediately for instant sync
+            if (typeof window !== 'undefined') {
+              const broadcastChannel = new BroadcastChannel(`progress-update-${params.roomCode}`)
+              broadcastChannel.postMessage({ 
+                type: 'progress-update', 
+                playerId,
+                updateData,
+                timestamp: Date.now()
+              })
+              broadcastChannel.close()
+              console.log("[Quiz] 📡 Broadcasted progress update for instant sync")
+            }
+            
             return true
           } else {
             throw new Error(`Update failed on attempt ${attempt}`)

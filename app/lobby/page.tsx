@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Copy, QrCode, Share, Play, Maximize2, ChevronLeft, ChevronRight, AlertTriangle, X, Check } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import Link from "next/link"
-import { roomManager } from "@/lib/room-manager"
+import { roomManager, type Room } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { useToast } from "@/hooks/use-toast"
 import { useRoom } from "@/hooks/use-room"
@@ -41,7 +41,7 @@ function LobbyPageContent() {
   const [playerLeft, setPlayerLeft] = useState(false)
   const [showKickDialog, setShowKickDialog] = useState(false)
   const [playerToKick, setPlayerToKick] = useState<any>(null)
-  const [lastUpdateTime, setLastUpdateTime] = useState<number>(0)
+  const lastUpdateTimeRef = useRef<number>(0)
   const { toast } = useToast()
   const { room, loading } = useRoom(roomCode || "")
   const { resumeAudio } = useGlobalAudio()
@@ -277,113 +277,117 @@ function LobbyPageContent() {
           if (updatedRoom?.code === roomCode) {
             const now = Date.now()
             
-            // Debounce rapid updates (prevent multiple updates within 100ms)
-            if (now - lastUpdateTime < 100) {
+            // Debounce rapid updates (prevent multiple updates within 100ms) using ref
+            if (now - lastUpdateTimeRef.current < 100) {
               console.log("[Lobby] Debouncing rapid update")
               return
             }
-            setLastUpdateTime(now)
+            lastUpdateTimeRef.current = now
             
-            console.log("[Lobby] Received room update via Supabase subscription:", updatedRoom)
-            console.log("[Lobby] Player count changed from", currentRoom?.players?.length || 0, "to", updatedRoom?.players?.length || 0)
-            console.log("[Lobby] Current players:", currentRoom?.players?.map((p: any) => ({ id: p.id, username: p.username })))
-            console.log("[Lobby] Updated players:", updatedRoom?.players?.map((p: any) => ({ id: p.id, username: p.username })))
-            
-            // Always update the room state first to prevent race conditions
-            // But preserve countdown state if it's already active locally and server doesn't have countdown
-            if (localRoom?.status === "countdown" && updatedRoom.status !== "countdown") {
-              console.log("[Lobby] Preserving local countdown state, not overriding with server state")
-              return
-            }
-            
-            // If server has countdown data, use it (it's more authoritative)
-            if (updatedRoom.status === "countdown" && updatedRoom.countdownStartTime && updatedRoom.countdownDuration) {
-              console.log("[Lobby] Using server countdown data:", updatedRoom.countdownStartTime, updatedRoom.countdownDuration)
-            }
-            
-            setLocalRoom(updatedRoom)
-            
-            // Show toast notification for player changes
-            if (updatedRoom?.players) {
-              const newPlayerCount = updatedRoom.players.length
-              const oldPlayerCount = currentRoom?.players?.length || 0
+            // Use functional state updates to avoid stale closure issues
+            setLocalRoom((prevLocalRoom: Room | null) => {
+              console.log("[Lobby] Received room update via Supabase subscription:", updatedRoom)
+              console.log("[Lobby] Player count changed from", prevLocalRoom?.players?.length || 0, "to", updatedRoom?.players?.length || 0)
+              console.log("[Lobby] Current players:", prevLocalRoom?.players?.map((p: any) => ({ id: p.id, username: p.username })))
+              console.log("[Lobby] Updated players:", updatedRoom?.players?.map((p: any) => ({ id: p.id, username: p.username })))
               
-              if (newPlayerCount > oldPlayerCount) {
-                // Player joined
-                const newPlayers = updatedRoom.players.slice(oldPlayerCount)
-                newPlayers.forEach(player => {
-                  toast({
-                    title: t('lobby.playerJoined'),
-                    description: `🎉 ${player.username} joined the game`,
-                    duration: 3000,
-                  })
-                })
+              // Always update the room state first to prevent race conditions
+              // But preserve countdown state if it's already active locally and server doesn't have countdown
+              if (prevLocalRoom?.status === "countdown" && updatedRoom.status !== "countdown") {
+                console.log("[Lobby] Preserving local countdown state, not overriding with server state")
+                return prevLocalRoom
+              }
+              
+              // If server has countdown data, use it (it's more authoritative)
+              if (updatedRoom.status === "countdown" && updatedRoom.countdownStartTime && updatedRoom.countdownDuration) {
+                console.log("[Lobby] Using server countdown data:", updatedRoom.countdownStartTime, updatedRoom.countdownDuration)
+              }
+              
+              // Show toast notification for player changes BEFORE updating state
+              if (updatedRoom?.players && prevLocalRoom?.players) {
+                const newPlayerCount = updatedRoom.players.length
+                const oldPlayerCount = prevLocalRoom.players.length
                 
-                // Special case: first player joined
-                if (oldPlayerCount === 0 && newPlayerCount > 0) {
-                  toast({
-                    title: t('lobby.gameReady'),
-                    description: t('lobby.firstPlayerJoined'),
-                    duration: 3000,
-                  })
-                }
-                
-                // Trigger visual indicator
-                setPlayerCountChanged(true)
-                setTimeout(() => setPlayerCountChanged(false), 2000)
-              } else if (newPlayerCount < oldPlayerCount) {
-                // Player left - find which players left
-                const oldPlayerIds = currentRoom?.players?.map((p: any) => p.id) || []
-                const newPlayerIds = updatedRoom.players.map((p: any) => p.id)
-                const leftPlayerIds = oldPlayerIds.filter((id: string) => !newPlayerIds.includes(id))
-                const leftPlayers = currentRoom?.players?.filter((p: any) => leftPlayerIds.includes(p.id)) || []
-                
-                console.log("[Lobby] Players left:", leftPlayers.map((p: any) => ({ id: p.id, username: p.username })))
-                
-                if (leftPlayers.length > 0) {
-                  leftPlayers.forEach((player: any) => {
+                if (newPlayerCount > oldPlayerCount) {
+                  // Player joined
+                  const newPlayers = updatedRoom.players.slice(oldPlayerCount)
+                  newPlayers.forEach(player => {
                     toast({
-                      title: "Player Left",
-                      description: `👋 ${player.username} left the game`,
+                      title: t('lobby.playerJoined'),
+                      description: `🎉 ${player.username} joined the game`,
                       duration: 3000,
                     })
                   })
                   
-                  // Trigger visual indicator for player leaving
-                  setPlayerLeft(true)
-                  setTimeout(() => setPlayerLeft(false), 2000)
-                }
-                
-                // Special case: all players left
-                if (newPlayerCount === 0 && oldPlayerCount > 0) {
-                  toast({
-                    title: t('lobby.allPlayersLeft'),
-                    description: t('lobby.allPlayersHaveLeft'),
-                    duration: 4000,
-                  })
-                }
-                
-                // Special case: last player left
-                if (oldPlayerCount === 1 && newPlayerCount === 0) {
-                  toast({
-                    title: t('lobby.lastPlayerLeft'),
-                    description: t('lobby.lastPlayerLeft'),
-                    duration: 3000,
-                  })
-                }
-              } else if (newPlayerCount === oldPlayerCount && newPlayerCount > 0) {
-                // Same count but different players (rejoin scenario)
-                const oldPlayerIds = currentRoom?.players?.map((p: any) => p.id) || []
-                const newPlayerIds = updatedRoom.players.map((p: any) => p.id)
-                const hasChanges = !oldPlayerIds.every((id: string) => newPlayerIds.includes(id)) || 
-                                 !newPlayerIds.every((id: string) => oldPlayerIds.includes(id))
-                
-                if (hasChanges) {
-                  console.log("[Lobby] Player list changed but count remains same - possible rejoin")
-                  // Could add specific rejoin notification here if needed
+                  // Special case: first player joined
+                  if (oldPlayerCount === 0 && newPlayerCount > 0) {
+                    toast({
+                      title: t('lobby.gameReady'),
+                      description: t('lobby.firstPlayerJoined'),
+                      duration: 3000,
+                    })
+                  }
+                  
+                  // Trigger visual indicator
+                  setPlayerCountChanged(true)
+                  setTimeout(() => setPlayerCountChanged(false), 2000)
+                } else if (newPlayerCount < oldPlayerCount) {
+                  // Player left - find which players left
+                  const oldPlayerIds = prevLocalRoom.players.map((p: any) => p.id)
+                  const newPlayerIds = updatedRoom.players.map((p: any) => p.id)
+                  const leftPlayerIds = oldPlayerIds.filter((id: string) => !newPlayerIds.includes(id))
+                  const leftPlayers = prevLocalRoom.players.filter((p: any) => leftPlayerIds.includes(p.id))
+                  
+                  console.log("[Lobby] Players left:", leftPlayers.map((p: any) => ({ id: p.id, username: p.username })))
+                  
+                  if (leftPlayers.length > 0) {
+                    leftPlayers.forEach((player: any) => {
+                      toast({
+                        title: "Player Left",
+                        description: `👋 ${player.username} left the game`,
+                        duration: 3000,
+                      })
+                    })
+                    
+                    // Trigger visual indicator for player leaving
+                    setPlayerLeft(true)
+                    setTimeout(() => setPlayerLeft(false), 2000)
+                  }
+                  
+                  // Special case: all players left
+                  if (newPlayerCount === 0 && oldPlayerCount > 0) {
+                    toast({
+                      title: t('lobby.allPlayersLeft'),
+                      description: t('lobby.allPlayersHaveLeft'),
+                      duration: 4000,
+                    })
+                  }
+                  
+                  // Special case: last player left
+                  if (oldPlayerCount === 1 && newPlayerCount === 0) {
+                    toast({
+                      title: t('lobby.lastPlayerLeft'),
+                      description: t('lobby.lastPlayerLeft'),
+                      duration: 3000,
+                    })
+                  }
+                } else if (newPlayerCount === oldPlayerCount && newPlayerCount > 0) {
+                  // Same count but different players (rejoin scenario)
+                  const oldPlayerIds = prevLocalRoom.players.map((p: any) => p.id)
+                  const newPlayerIds = updatedRoom.players.map((p: any) => p.id)
+                  const hasChanges = !oldPlayerIds.every((id: string) => newPlayerIds.includes(id)) || 
+                                   !newPlayerIds.every((id: string) => oldPlayerIds.includes(id))
+                  
+                  if (hasChanges) {
+                    console.log("[Lobby] Player list changed but count remains same - possible rejoin")
+                    // Could add specific rejoin notification here if needed
+                  }
                 }
               }
-            }
+              
+              // Return updated room state
+              return updatedRoom
+            })
           }
         })
       } catch (error) {
@@ -393,10 +397,36 @@ function LobbyPageContent() {
     
     setupSubscription()
 
+    // Fallback polling for production builds where subscription might not work reliably
+    // This ensures player cards appear even if subscription fails
+    const pollingInterval = setInterval(async () => {
+      try {
+        const currentRoom = await roomManager.getRoom(roomCode)
+        if (currentRoom) {
+          setLocalRoom((prevLocalRoom: Room | null) => {
+            // Only update if there are actual changes to avoid unnecessary re-renders
+            if (!prevLocalRoom || 
+                prevLocalRoom.players?.length !== currentRoom.players?.length ||
+                JSON.stringify(prevLocalRoom.players?.map(p => p.id).sort()) !== JSON.stringify(currentRoom.players?.map(p => p.id).sort())) {
+              console.log("[Lobby] Polling detected player changes:", {
+                oldCount: prevLocalRoom?.players?.length || 0,
+                newCount: currentRoom.players?.length || 0
+              })
+              return currentRoom
+            }
+            return prevLocalRoom
+          })
+        }
+      } catch (error) {
+        console.error("[Lobby] Error in polling fallback:", error)
+      }
+    }, 2000) // Poll every 2 seconds as fallback
+
     return () => {
       if (unsubscribe) unsubscribe()
+      clearInterval(pollingInterval)
     }
-  }, [roomCode, toast])
+  }, [roomCode, toast, t])
 
   useEffect(() => {
     const roomCodeParam = searchParams.get("roomCode")
