@@ -1,7 +1,7 @@
 "use client"
 // ikan
 import { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,7 @@ import { QRScanner } from "@/components/qr-scanner"
 
 function JoinPageContent() {
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const router = useRouter()
   const { userProfile, isAuthenticated, loading } = useAuth()
   const [username, setUsername] = useState("")
@@ -38,14 +39,11 @@ function JoinPageContent() {
     const roomFromUrl = searchParams.get("room")
     if (roomFromUrl) {
       setRoomCode(roomFromUrl.toUpperCase())
-    }
-
-    // Load saved username from localStorage as fallback
-    if (typeof window !== 'undefined') {
-      const savedUsername = localStorage.getItem('lastUsername')
-      if (savedUsername && !username) {
-        console.log('Loading saved username from localStorage:', savedUsername)
-        setUsername(savedUsername)
+    } else if (typeof pathname === 'string') {
+      // Fallback: extract code from /join/<code>
+      const parts = pathname.split('/').filter(Boolean)
+      if (parts[0] === 'join' && parts[1] && /^[A-Z0-9]{6}$/i.test(parts[1])) {
+        setRoomCode(parts[1].toUpperCase())
       }
     }
 
@@ -60,9 +58,10 @@ function JoinPageContent() {
             if (sessionData && sessionData.user_type === 'player') {
               setPlayerId(sessionData.user_data.id)
               setSessionId(existingSessionId)
-              // We no longer force empty username; prefer auth username if present
-              if (!isAuthenticated && !username) {
-                setUsername("")
+              // Only set username from session if user is NOT authenticated
+              // If user is authenticated, username will be set from userProfile in the next effect
+              if (!isAuthenticated && !username && sessionData.user_data.username) {
+                setUsername(sessionData.user_data.username)
               }
               if (!selectedAvatar) {
                 setSelectedAvatar(sessionData.user_data.avatar || "")
@@ -93,14 +92,16 @@ function JoinPageContent() {
     }
 
     initializeSession()
-  }, [searchParams, router])
+  }, [searchParams, pathname, router])
 
-  // Prefill from authenticated user once available
+  // Prefill from authenticated user once available - HIGHEST PRIORITY
   useEffect(() => {
     console.log('=== JOIN PAGE DEBUG ===')
     console.log('Loading:', loading)
     console.log('Is Authenticated:', isAuthenticated)
     console.log('User Profile:', userProfile)
+    console.log('User Profile Username:', userProfile?.username)
+    console.log('User Profile Name:', userProfile?.name)
     console.log('Avatar URL:', userProfile?.avatar_url)
     console.log('User Changed Avatar:', userChangedAvatar)
     console.log('User Changed Username:', userChangedUsername)
@@ -108,11 +109,26 @@ function JoinPageContent() {
     console.log('========================')
     
     if (!loading && isAuthenticated && userProfile) {
-      // Only set username from auth if user hasn't manually changed it
+      // Get username from Google - prioritize username field, then name field
       const authUsername = userProfile.username || userProfile.name || ""
-      if (authUsername && !userChangedUsername && (!username || username === "")) {
-        console.log('Setting username from auth:', authUsername)
-        setUsername(authUsername)
+      
+      // If user is authenticated, ALWAYS use Google username unless user manually changed it
+      if (authUsername) {
+        if (!userChangedUsername) {
+          // User hasn't manually changed username, so use Google username
+          if (username !== authUsername) {
+            console.log('Setting username from Google auth:', authUsername)
+            setUsername(authUsername)
+          }
+        } else {
+          // User has manually changed username, but if current username is empty or from localStorage,
+          // still prefer Google username
+          if (!username || username.trim() === "") {
+            console.log('Username was changed but is empty, restoring from Google auth:', authUsername)
+            setUsername(authUsername)
+            setUserChangedUsername(false) // Reset flag since we're using Google username
+          }
+        }
       }
       
       // If logged in and user hasn't manually changed avatar, prefer auth avatar
@@ -120,39 +136,51 @@ function JoinPageContent() {
         console.log('Setting selected avatar to:', userProfile.avatar_url)
         setSelectedAvatar(userProfile.avatar_url)
       }
+    } else if (!loading && !isAuthenticated) {
+      // User is not authenticated, load from localStorage as fallback
+      if (typeof window !== 'undefined' && !username && !userChangedUsername) {
+        const savedUsername = localStorage.getItem('lastUsername')
+        if (savedUsername) {
+          console.log('Loading saved username from localStorage (not authenticated):', savedUsername)
+          setUsername(savedUsername)
+        }
+      }
     }
-  }, [loading, isAuthenticated, userProfile, userChangedAvatar, userChangedUsername])
+  }, [loading, isAuthenticated, userProfile, userChangedAvatar, userChangedUsername, username])
 
   // Additional effect to handle username persistence when auth state changes
   useEffect(() => {
-    // If user becomes authenticated and username is empty and not manually changed, set it
-    if (!loading && isAuthenticated && userProfile && !username.trim() && !userChangedUsername) {
+    // If user becomes authenticated and username is empty or doesn't match Google username, update it
+    if (!loading && isAuthenticated && userProfile && !userChangedUsername) {
       const authUsername = userProfile.username || userProfile.name || ""
       if (authUsername) {
-        console.log('Restoring username from auth:', authUsername)
-        setUsername(authUsername)
+        // If username is empty or different from Google username, update it
+        if (!username || username.trim() === "" || username !== authUsername) {
+          console.log('Updating username to match Google auth:', authUsername)
+          setUsername(authUsername)
+        }
       }
     }
-  }, [isAuthenticated, userProfile, username, loading, userChangedUsername])
+  }, [isAuthenticated, userProfile, loading, userChangedUsername, username])
 
   // Emergency fallback: restore username if it becomes empty unexpectedly
   useEffect(() => {
     if (!loading && !username.trim() && !userChangedUsername) {
-      // Try to restore from auth first
+      // Try to restore from auth first (highest priority)
       if (isAuthenticated && userProfile) {
         const authUsername = userProfile.username || userProfile.name || ""
         if (authUsername) {
-          console.log('Emergency restore from auth:', authUsername)
+          console.log('Emergency restore from Google auth:', authUsername)
           setUsername(authUsername)
           return
         }
       }
       
-      // Fallback to localStorage
-      if (typeof window !== 'undefined') {
+      // Fallback to localStorage only if not authenticated
+      if (!isAuthenticated && typeof window !== 'undefined') {
         const savedUsername = localStorage.getItem('lastUsername')
         if (savedUsername) {
-          console.log('Emergency restore from localStorage:', savedUsername)
+          console.log('Emergency restore from localStorage (not authenticated):', savedUsername)
           setUsername(savedUsername)
         }
       }
@@ -517,7 +545,7 @@ function JoinPageContent() {
                         )}
                     </div>
 
-                    {!searchParams.get("room") && (
+                    {!roomCode && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="inline-block bg-white rounded px-2 py-1 border border-black">
@@ -564,7 +592,7 @@ function JoinPageContent() {
                       </div>
                     )}
 
-                    {searchParams.get("room") && (
+                    {roomCode && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="inline-block bg-white rounded px-2 py-1 border border-black">
