@@ -6,10 +6,10 @@ import Image from "next/image"
 import { RobustGoogleAvatar } from "./robust-google-avatar"
 
 const allAvatars = [
-  "/ava1.png", "/ava2.png", "/ava3.png", "/ava4.png", 
-  "/ava5.png", "/ava6.png", "/ava7.png", "/ava8.png", 
-  "/ava9.png", "/ava10.png", "/ava11.png", "/ava12.png", 
-  "/ava13.png", "/ava14.png", "/ava15.png", "/ava16.png"
+  "/ava1.webp", "/ava2.webp", "/ava3.webp", "/ava4.webp", 
+  "/ava5.webp", "/ava6.webp", "/ava7.webp", "/ava8.webp", 
+  "/ava9.webp", "/ava10.webp", "/ava11.webp", "/ava12.webp", 
+  "/ava13.webp", "/ava14.webp", "/ava15.webp", "/ava16.webp"
 ]
 
 interface AvatarSelectorProps {

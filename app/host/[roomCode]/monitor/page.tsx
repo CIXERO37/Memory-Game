@@ -726,7 +726,7 @@ function MonitorPageContent() {
                     draggable={false}
                   />
                   <img 
-                    src="/images/gameforsmartlogo.png" 
+                    src="/images/gameforsmartlogo.webp" 
                     alt="GameForSmart Logo" 
                     className="h-12 w-auto sm:h-16 md:h-20 object-contain"
                   />

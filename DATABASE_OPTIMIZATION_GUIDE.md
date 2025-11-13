@@ -252,7 +252,7 @@ rooms {
   "user_type": "host",
   "user_data": {
     "username": "John Doe",
-    "avatar": "ava1.png"
+    "avatar": "ava1.webp"
   },
   "room_code": "ABC123",
   "device_info": {

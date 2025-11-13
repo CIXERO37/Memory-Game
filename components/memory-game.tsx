@@ -6,14 +6,14 @@ import { cn } from "@/lib/utils"
 
 // Animal images from memogame folder
 const animalImages = [
-  { name: "cat", src: "/memogame/cat.png" },
-  { name: "cow", src: "/memogame/cow.png" },
-  { name: "crab", src: "/memogame/crab.png" },
-  { name: "jellyfish", src: "/memogame/jellyfish.png" },
-  { name: "koala", src: "/memogame/koala.png" },
-  { name: "parrot", src: "/memogame/parrot.png" },
-  { name: "sea-turtle", src: "/memogame/sea-turtle.png" },
-  { name: "whale", src: "/memogame/whale.png" }
+  { name: "cat", src: "/memogame/cat.webp" },
+  { name: "cow", src: "/memogame/cow.webp" },
+  { name: "crab", src: "/memogame/crab.webp" },
+  { name: "jellyfish", src: "/memogame/jellyfish.webp" },
+  { name: "koala", src: "/memogame/koala.webp" },
+  { name: "parrot", src: "/memogame/parrot.webp" },
+  { name: "sea-turtle", src: "/memogame/sea-turtle.webp" },
+  { name: "whale", src: "/memogame/whale.webp" }
 ]
 
 interface MemoryCard {

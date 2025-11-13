@@ -853,17 +853,18 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             <div className="relative shrink-0">
             </div>
               <div className="min-w-0">
-                <div className="bg-linear-to-r from-blue-500 to-purple-600 border-2 border-white rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-2xl transition-all duration-300 inline-block">
-                  <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-white tracking-wider uppercase drop-shadow-lg whitespace-nowrap">
-                    {t('lobby.memoryQuiz')}
-                  </h1>
-                </div>
+                <img 
+                  draggable={false}
+                  src="/images/memoryquiz.webp" 
+                  alt="Memory Quiz" 
+                  className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+                />
               </div>
           </div>
           
           <div className="shrink-0">
             <img 
-              src="/images/gameforsmartlogo.png" 
+              src="/images/gameforsmartlogo.webp" 
               alt="GameForSmart Logo" 
               className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
             />

@@ -301,13 +301,30 @@ function LeaderboardHostPageContent() {
         </div>
       </div>
 
+      {/* Top-left Memory Quiz Logo */}
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 z-20">
+        <img 
+          draggable={false}
+          src="/images/memoryquiz.webp" 
+          alt="Memory Quiz" 
+          className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+        />
+      </div>
+      {/* Top-right GameForSmart Logo */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-20">
+        <img 
+          src="/images/gameforsmartlogo.webp" 
+          alt="GameForSmart Logo" 
+          className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+        />
+      </div>
       <div className="relative z-10 container mx-auto px-4 py-8 mt-16 sm:mt-20 md:mt-24 lg:mt-28">
         <div className="text-center mb-6">
           <div className="relative inline-block mb-4">
             <div className="flex items-center justify-center gap-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-yellow-400/50 blur-lg animate-pulse"></div>
-                <div className="relative w-16 h-16 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center animate-bounce-slow">
+                <div className="relative w-16 h-16 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full border-4 border-white shadow-2xl flex items-center justify-center mx-auto animate-bounce-slow">
                   <Crown className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -350,7 +367,7 @@ function LeaderboardHostPageContent() {
                             alt={`${sortedPlayers[1].username}'s avatar`}
                             className="w-full h-full object-cover relative z-10"
                             onError={(e) => {
-                              e.currentTarget.src = "/ava1.png"
+                              e.currentTarget.src = "/ava1.webp"
                             }}
                           />
                         )}
@@ -404,7 +421,7 @@ function LeaderboardHostPageContent() {
                                 alt={`${champion.username}'s avatar`}
                                 className="w-full h-full object-cover relative z-10"
                                 onError={(e) => {
-                                  e.currentTarget.src = "/ava1.png"
+                                  e.currentTarget.src = "/ava1.webp"
                                 }}
                               />
                             )}
@@ -463,7 +480,7 @@ function LeaderboardHostPageContent() {
                             alt={`${sortedPlayers[2].username}'s avatar`}
                             className="w-full h-full object-cover relative z-10"
                             onError={(e) => {
-                              e.currentTarget.src = "/ava1.png"
+                              e.currentTarget.src = "/ava1.webp"
                             }}
                           />
                         )}
@@ -524,7 +541,7 @@ function LeaderboardHostPageContent() {
                                 alt={`${player.username}'s avatar`}
                                 className="w-full h-full object-cover relative z-10"
                                 onError={(e) => {
-                                  e.currentTarget.src = "/ava1.png"
+                                  e.currentTarget.src = "/ava1.webp"
                                 }}
                               />
                             )}

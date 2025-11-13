@@ -109,7 +109,7 @@ export default function HomePage() {
        
           <Image
           draggable={false}
-            src="/images/gameforsmartlogo.png"
+            src="/images/gameforsmartlogo.webp"
             alt="GameForSmart Logo"
             width={150}
             height={60}
@@ -380,18 +380,18 @@ function PixelBackgroundElements() {
 function FallingPixelCards() {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const stream: Array<{ id: string; image: string; color: string; x: string; delay: string; dur: string; rot: string; w?: string; h?: string; }> = [
-    { id: '1', image: '/memogame/cat.png', color: 'bg-red-500', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
-    { id: '2', image: '/memogame/cow.png', color: 'bg-blue-500', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
-    { id: '3', image: '/memogame/koala.png', color: 'bg-green-500', x: '20%', delay: '1.1s', dur: '13s', rot: '2deg' },
-    { id: '4', image: '/memogame/crab.png', color: 'bg-yellow-500', x: '28%', delay: '3.6s', dur: '12.2s', rot: '-10deg' },
-    { id: '5', image: '/memogame/parrot.png', color: 'bg-purple-500', x: '36%', delay: '0.7s', dur: '14s', rot: '0deg' },
-    { id: '6', image: '/memogame/whale.png', color: 'bg-pink-500', x: '44%', delay: '2.1s', dur: '11.8s', rot: '6deg' },
-    { id: '7', image: '/memogame/jellyfish.png', color: 'bg-cyan-500', x: '52%', delay: '4.1s', dur: '12.6s', rot: '-4deg' },
-    { id: '8', image: '/memogame/sea-turtle.png', color: 'bg-orange-500', x: '60%', delay: '1.5s', dur: '13.4s', rot: '3deg' },
-    { id: '9', image: '/memogame/cat.png', color: 'bg-lime-500', x: '68%', delay: '3.2s', dur: '12.1s', rot: '-8deg' },
-    { id: '10', image: '/memogame/cow.png', color: 'bg-indigo-500', x: '76%', delay: '0.3s', dur: '10.9s', rot: '5deg' },
-    { id: '11', image: '/memogame/koala.png', color: 'bg-emerald-500', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
-    { id: '12', image: '/memogame/crab.png', color: 'bg-violet-500', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
+    { id: '1', image: '/memogame/cat.webp', color: 'bg-red-500', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
+    { id: '2', image: '/memogame/cow.webp', color: 'bg-blue-500', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
+    { id: '3', image: '/memogame/koala.webp', color: 'bg-green-500', x: '20%', delay: '1.1s', dur: '13s', rot: '2deg' },
+    { id: '4', image: '/memogame/crab.webp', color: 'bg-yellow-500', x: '28%', delay: '3.6s', dur: '12.2s', rot: '-10deg' },
+    { id: '5', image: '/memogame/parrot.webp', color: 'bg-purple-500', x: '36%', delay: '0.7s', dur: '14s', rot: '0deg' },
+    { id: '6', image: '/memogame/whale.webp', color: 'bg-pink-500', x: '44%', delay: '2.1s', dur: '11.8s', rot: '6deg' },
+    { id: '7', image: '/memogame/jellyfish.webp', color: 'bg-cyan-500', x: '52%', delay: '4.1s', dur: '12.6s', rot: '-4deg' },
+    { id: '8', image: '/memogame/sea-turtle.webp', color: 'bg-orange-500', x: '60%', delay: '1.5s', dur: '13.4s', rot: '3deg' },
+    { id: '9', image: '/memogame/cat.webp', color: 'bg-lime-500', x: '68%', delay: '3.2s', dur: '12.1s', rot: '-8deg' },
+    { id: '10', image: '/memogame/cow.webp', color: 'bg-indigo-500', x: '76%', delay: '0.3s', dur: '10.9s', rot: '5deg' },
+    { id: '11', image: '/memogame/koala.webp', color: 'bg-emerald-500', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
+    { id: '12', image: '/memogame/crab.webp', color: 'bg-violet-500', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
   ]
 
   useEffect(() => {
