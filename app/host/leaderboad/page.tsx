@@ -325,9 +325,9 @@ function LeaderboardHostPageContent() {
 
         <div className="max-w-7xl mx-auto mb-16">
           <div className="relative">
-            <div className="flex justify-center items-end gap-6 sm:gap-12 relative">
+            <div className="flex justify-center items-center gap-6 sm:gap-12 relative">
               {sortedPlayers[1] && (
-                <div className="flex flex-col items-center relative group">
+                <div className="flex flex-col items-center relative group self-end mb-8">
                   <div className="relative transform group-hover:scale-105 transition-all duration-500">
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-400/30 to-slate-600/30 blur-xl group-hover:blur-2xl transition-all duration-500"></div>
                     <div className="relative bg-gradient-to-br from-slate-500/40 to-slate-700/40 border-4 border-slate-400/70 rounded-3xl p-8 backdrop-blur-sm shadow-2xl min-w-[280px]">
@@ -366,50 +366,73 @@ function LeaderboardHostPageContent() {
               )}
 
               {champion && (
-                <div className="flex flex-col items-center relative z-20 group">
-                  <div className="relative transform group-hover:scale-105 transition-all duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/40 to-amber-500/40 blur-2xl group-hover:blur-3xl transition-all duration-500 animate-pulse"></div>
-                    <div className="relative bg-gradient-to-br from-yellow-500/50 to-amber-600/50 border-6 border-yellow-400/80 rounded-3xl p-10 backdrop-blur-sm shadow-2xl min-w-[320px] animate-pulse">
-                      <div className="absolute top-6 right-6 w-12 h-12 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full border-3 border-white shadow-xl flex items-center justify-center">
-                        <span className="text-xl font-bold text-white">1</span>
+                <div className="flex flex-col items-center relative z-20 group -mt-8">
+                  <div className="relative transform group-hover:scale-[1.02] transition-all duration-300">
+                    {/* Subtle glow effect */}
+                    <div className="absolute -inset-4 bg-gradient-to-br from-yellow-400/30 via-amber-400/20 to-yellow-500/30 rounded-3xl blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
+                    
+                    {/* Main card */}
+                    <div className="relative bg-gradient-to-b from-yellow-300 via-yellow-200 to-yellow-400 rounded-3xl p-12 shadow-[0_25px_70px_rgba(251,191,36,0.5)] min-w-[360px] border-4 border-yellow-100/70">
+                      {/* Top-left sparkle decoration */}
+                      <div className="absolute top-6 left-6 opacity-60">
+                        <Sparkles className="w-5 h-5 text-yellow-600" />
                       </div>
-                      <div className="w-32 h-32 rounded-full border-6 border-yellow-400 overflow-hidden mx-auto mb-8 shadow-2xl">
-                        <div className="absolute inset-0 bg-yellow-400/50 rounded-full blur-lg animate-pulse"></div>
-                        {/^https?:\/\//.test(champion.avatar) ? (
-                          <RobustGoogleAvatar
-                            avatarUrl={champion.avatar}
-                            alt={`${champion.username}'s avatar`}
-                            width={128}
-                            height={128}
-                            className="w-full h-full relative z-10"
-                          />
-                        ) : (
-                          <img
-                            src={champion.avatar}
-                            alt={`${champion.username}'s avatar`}
-                            className="w-full h-full object-cover relative z-10"
-                            onError={(e) => {
-                              e.currentTarget.src = "/ava1.png"
-                            }}
-                          />
-                        )}
+                      
+                      {/* Rank badge with star */}
+                      <div className="absolute top-6 right-6 flex items-start justify-center gap-0">
+                        <Star className="w-5 h-5 text-yellow-600 -mt-1.5 -mr-1 z-10" fill="currentColor" />
+                        <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-full border-3 border-white shadow-lg flex items-center justify-center relative">
+                          <span className="text-2xl font-bold text-white">1</span>
+                        </div>
                       </div>
-                      <h2 className="text-3xl font-bold text-yellow-200 mb-8 text-center whitespace-pre-line">{formatPlayerName(champion.username)}</h2>
-                      <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl px-8 py-6 shadow-2xl">
-                        <div className="text-5xl font-bold text-white text-center">{(champion.quizScore || 0) + (champion.memoryScore || 0)}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
+                      
+                      {/* Profile picture */}
+                      <div className="relative w-36 h-36 mx-auto mb-6">
+                        <div className="w-full h-full rounded-full bg-white p-2 shadow-2xl border-4 border-yellow-100">
+                          <div className="w-full h-full rounded-full overflow-hidden bg-white">
+                            {/^https?:\/\//.test(champion.avatar) ? (
+                              <RobustGoogleAvatar
+                                avatarUrl={champion.avatar}
+                                alt={`${champion.username}'s avatar`}
+                                width={128}
+                                height={128}
+                                className="w-full h-full relative z-10"
+                              />
+                            ) : (
+                              <img
+                                src={champion.avatar}
+                                alt={`${champion.username}'s avatar`}
+                                className="w-full h-full object-cover relative z-10"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/ava1.png"
+                                }}
+                              />
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="absolute top-4 left-4">
-                        <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
+                      
+                      {/* Player name */}
+                      <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center whitespace-pre-line leading-tight">
+                        {formatPlayerName(champion.username)}
+                      </h2>
+                      
+                      {/* Points display box */}
+                      <div className="mt-8 bg-gradient-to-br from-amber-600 to-yellow-700 rounded-2xl px-10 py-7 shadow-lg border-2 border-amber-700/40">
+                        <div className="text-5xl font-bold text-white text-center mb-1 leading-none">
+                          {(champion.quizScore || 0) + (champion.memoryScore || 0)}
+                        </div>
+                        <div className="text-lg text-white text-center font-bold tracking-wide uppercase">
+                          {t('lobby.points')}
+                        </div>
                       </div>
-                      <div className="absolute top-4 right-4">
-                        <Star className="w-6 h-6 text-amber-400 animate-pulse" style={{ animationDelay: '0.5s' }} />
+                      
+                      {/* Bottom decorations */}
+                      <div className="absolute bottom-6 left-6 opacity-50">
+                        <Zap className="w-5 h-5 text-yellow-700" />
                       </div>
-                      <div className="absolute bottom-4 left-4">
-                        <Zap className="w-6 h-6 text-yellow-300 animate-pulse" style={{ animationDelay: '1s' }} />
-                      </div>
-                      <div className="absolute bottom-4 right-4">
-                        <Award className="w-6 h-6 text-amber-300 animate-pulse" style={{ animationDelay: '1.5s' }} />
+                      <div className="absolute bottom-6 right-6 opacity-50">
+                        <Award className="w-5 h-5 text-amber-700" />
                       </div>
                     </div>
                   </div>
@@ -417,7 +440,7 @@ function LeaderboardHostPageContent() {
               )}
 
               {sortedPlayers[2] && (
-                <div className="flex flex-col items-center relative group">
+                <div className="flex flex-col items-center relative group self-end mb-8">
                   <div className="relative transform group-hover:scale-105 transition-all duration-500">
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-orange-600/30 blur-xl group-hover:blur-2xl transition-all duration-500"></div>
                     <div className="relative bg-gradient-to-br from-amber-600/40 to-orange-700/40 border-4 border-amber-500/70 rounded-3xl p-8 backdrop-blur-sm shadow-2xl min-w-[280px]">

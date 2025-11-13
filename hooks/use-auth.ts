@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
@@ -12,13 +12,67 @@ export interface UserProfile {
   username: string
 }
 
+// Cache key for localStorage
+const PROFILE_CACHE_KEY = 'user_profile_cache'
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+// Request deduplication - prevent multiple simultaneous requests
+const pendingProfileRequests = new Map<string, Promise<UserProfile>>()
+
+// Cache interface
+interface CachedProfile {
+  profile: UserProfile
+  timestamp: number
+  userId: string
+}
+
+// Get cached profile
+function getCachedProfile(userId: string): UserProfile | null {
+  try {
+    const cached = localStorage.getItem(PROFILE_CACHE_KEY)
+    if (!cached) return null
+    
+    const { profile, timestamp, userId: cachedUserId }: CachedProfile = JSON.parse(cached)
+    
+    // Check if cache is for same user and still valid
+    if (cachedUserId === userId && Date.now() - timestamp < CACHE_DURATION) {
+      return profile
+    }
+    
+    // Cache expired or different user, clear it
+    localStorage.removeItem(PROFILE_CACHE_KEY)
+    return null
+  } catch {
+    return null
+  }
+}
+
+// Save profile to cache
+function cacheProfile(userId: string, profile: UserProfile): void {
+  try {
+    const cached: CachedProfile = {
+      profile,
+      timestamp: Date.now(),
+      userId
+    }
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(cached))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false)
+  const initializedRef = useRef(false)
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (initializedRef.current) return
+    initializedRef.current = true
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -37,21 +91,46 @@ export function useAuth() {
           setUserProfile(quickProfile)
           setLoading(false) // Set loading false immediately for fast render
           
-          // Then fetch from database in background (non-blocking)
-          // This updates the profile if database has different/better data
-          createUserProfileWithDatabase(session.user)
-            .then(enhancedProfile => {
-              // Only update if different (to avoid unnecessary re-renders)
-              if (enhancedProfile.username !== quickProfile.username || 
-                  enhancedProfile.avatar_url !== quickProfile.avatar_url ||
-                  enhancedProfile.name !== quickProfile.name) {
-                console.log('Updating profile from database:', enhancedProfile)
-                setUserProfile(enhancedProfile)
-              }
-            })
-            .catch(() => {
-              // Already have quickProfile, so ignore errors silently
-            })
+          // Check cache first before making database request
+          const cachedProfile = getCachedProfile(session.user.id)
+          if (cachedProfile) {
+            // Use cached profile if it's different from quick profile
+            if (cachedProfile.username !== quickProfile.username || 
+                cachedProfile.avatar_url !== quickProfile.avatar_url ||
+                cachedProfile.name !== quickProfile.name) {
+              console.log('Using cached profile:', cachedProfile)
+              setUserProfile(cachedProfile)
+            }
+            // Cache is still valid, skip database request
+            return
+          }
+          
+          // Only fetch from database if metadata doesn't have sufficient info
+          // or if cache is missing/expired
+          const needsDatabaseFetch = !quickProfile.avatar_url || !quickProfile.name || !quickProfile.username
+          
+          if (needsDatabaseFetch) {
+            // Then fetch from database in background (non-blocking)
+            createUserProfileWithDatabase(session.user)
+              .then(enhancedProfile => {
+                // Cache the enhanced profile
+                cacheProfile(session.user.id, enhancedProfile)
+                
+                // Only update if different (to avoid unnecessary re-renders)
+                if (enhancedProfile.username !== quickProfile.username || 
+                    enhancedProfile.avatar_url !== quickProfile.avatar_url ||
+                    enhancedProfile.name !== quickProfile.name) {
+                  console.log('Updating profile from database:', enhancedProfile)
+                  setUserProfile(enhancedProfile)
+                }
+              })
+              .catch(() => {
+                // Already have quickProfile, so ignore errors silently
+              })
+          } else {
+            // Metadata has sufficient info, cache it
+            cacheProfile(session.user.id, quickProfile)
+          }
         } else {
           console.log('No initial session found')
           setLoading(false)
@@ -77,28 +156,52 @@ export function useAuth() {
           setUserProfile(quickProfile)
           setLoading(false) // Set loading false immediately
           
-          // Enhance from database in background (non-blocking)
-          createUserProfileWithDatabase(session.user)
-            .then(enhancedProfile => {
-              if (enhancedProfile.username !== quickProfile.username || 
-                  enhancedProfile.avatar_url !== quickProfile.avatar_url ||
-                  enhancedProfile.name !== quickProfile.name) {
-                console.log('Updating profile from database:', enhancedProfile)
-                setUserProfile(enhancedProfile)
-              }
-            })
-            .catch(() => {
-              // Ignore errors, already have quickProfile
-            })
+          // Check cache first
+          const cachedProfile = getCachedProfile(session.user.id)
+          if (cachedProfile) {
+            if (cachedProfile.username !== quickProfile.username || 
+                cachedProfile.avatar_url !== quickProfile.avatar_url ||
+                cachedProfile.name !== quickProfile.name) {
+              setUserProfile(cachedProfile)
+            }
+            return
+          }
+          
+          // Only fetch if needed
+          const needsDatabaseFetch = !quickProfile.avatar_url || !quickProfile.name || !quickProfile.username
+          
+          if (needsDatabaseFetch) {
+            // Enhance from database in background (non-blocking)
+            createUserProfileWithDatabase(session.user)
+              .then(enhancedProfile => {
+                cacheProfile(session.user.id, enhancedProfile)
+                if (enhancedProfile.username !== quickProfile.username || 
+                    enhancedProfile.avatar_url !== quickProfile.avatar_url ||
+                    enhancedProfile.name !== quickProfile.name) {
+                  console.log('Updating profile from database:', enhancedProfile)
+                  setUserProfile(enhancedProfile)
+                }
+              })
+              .catch(() => {
+                // Ignore errors, already have quickProfile
+              })
+          } else {
+            cacheProfile(session.user.id, quickProfile)
+          }
         } else {
           setUser(null)
           setUserProfile(null)
           setLoading(false)
+          // Clear cache on logout
+          localStorage.removeItem(PROFILE_CACHE_KEY)
         }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      initializedRef.current = false
+    }
   }, [])
 
   const logout = async () => {
@@ -131,7 +234,14 @@ export function useAuth() {
 }
 
 // Helper function to create user profile, with database fallback (with timeout)
+// Uses request deduplication to prevent multiple simultaneous requests
 async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
+  // Check if there's already a pending request for this user
+  const existingRequest = pendingProfileRequests.get(user.id)
+  if (existingRequest) {
+    return existingRequest
+  }
+
   const email = user.email || ''
   const name = user.user_metadata?.full_name || user.user_metadata?.name || ''
   
@@ -148,57 +258,68 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
     username = email.split('@')[0]
   }
   
-  try {
-    // Try to fetch from users_profile table with timeout
-    // This prevents blocking if database is slow
-    const queryPromise = supabase
-      .from('users_profile')
-      .select('username, full_name, avatar_url')
-      .eq('id', user.id)
-      .single()
-    
-    // Add timeout to prevent blocking
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database query timeout')), 2000)
-    )
-    
-    const result = await Promise.race([
-      queryPromise,
-      timeoutPromise
-    ]) as Awaited<typeof queryPromise>
-    
-    const { data: profileData, error } = result
-    
-    if (!error && profileData) {
-      // Use username from database if available
-      if (profileData.username) {
-        username = profileData.username
-      }
-      // Use avatar from database if available
-      if (profileData.avatar_url) {
-        avatar_url = profileData.avatar_url
-      }
-      // Use full_name from database if available and name is empty
-      if (!name && profileData.full_name) {
-        const nameFromDb = profileData.full_name
-        if (!username) {
-          username = nameFromDb
+  // Create the request promise
+  const requestPromise = (async () => {
+    try {
+      // Try to fetch from users_profile table with timeout
+      // This prevents blocking if database is slow
+      const queryPromise = supabase
+        .from('users_profile')
+        .select('username, full_name, avatar_url')
+        .eq('id', user.id)
+        .single()
+      
+      // Add timeout to prevent blocking (reduced to 1.5s for faster failure)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 1500)
+      )
+      
+      const result = await Promise.race([
+        queryPromise,
+        timeoutPromise
+      ]) as Awaited<typeof queryPromise>
+      
+      const { data: profileData, error } = result
+      
+      if (!error && profileData) {
+        // Use username from database if available
+        if (profileData.username) {
+          username = profileData.username
+        }
+        // Use avatar from database if available
+        if (profileData.avatar_url) {
+          avatar_url = profileData.avatar_url
+        }
+        // Use full_name from database if available and name is empty
+        if (!name && profileData.full_name) {
+          const nameFromDb = profileData.full_name
+          if (!username) {
+            username = nameFromDb
+          }
         }
       }
+    } catch (error) {
+      // Silently fail - we already have username from metadata
+      // This is expected if database is slow or unavailable
+      console.warn('Database fetch failed or timed out, using metadata')
+    } finally {
+      // Remove from pending requests after completion
+      pendingProfileRequests.delete(user.id)
     }
-  } catch (error) {
-    // Silently fail - we already have username from metadata
-    // This is expected if database is slow or unavailable
-    console.warn('Database fetch failed or timed out, using metadata')
-  }
 
-  return {
-    id: user.id,
-    email,
-    name: name || username, // Use name from metadata or username as fallback
-    avatar_url,
-    username
-  }
+    return {
+      id: user.id,
+      email,
+      name: name || username, // Use name from metadata or username as fallback
+      avatar_url,
+      username
+    }
+  })()
+
+  // Store the pending request
+  pendingProfileRequests.set(user.id, requestPromise)
+  
+  return requestPromise
 }
 
 // Legacy function for backward compatibility
