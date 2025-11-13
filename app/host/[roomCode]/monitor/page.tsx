@@ -4,9 +4,8 @@ import { useState, useEffect, Suspense } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Users, Trophy, Clock, Target, TrendingUp, TrendingDown, Play } from "lucide-react"
+import { Users, Trophy, Clock, Target, TrendingUp, TrendingDown } from "lucide-react"
 import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
 import { getTimerDisplayText } from "@/lib/timer-utils"
@@ -25,12 +24,22 @@ function MonitorPageContent() {
   const [forceRefresh, setForceRefresh] = useState(0)
   const [showTimeWarning, setShowTimeWarning] = useState(false)
   const [timeUpHandled, setTimeUpHandled] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
+  const [isHost, setIsHost] = useState(false)
+  const [isHostDetected, setIsHostDetected] = useState(false)
+  const [lastVerifiedCompletion, setLastVerifiedCompletion] = useState(false)
   const { room, loading } = useRoom(roomCode || "")
   
+  // 🚀 CRITICAL: Timing constants
+  const HOST_COMPLETION_DELAY = 5000
+  const AGGRESSIVE_POLLING_INTERVAL = 500
+
+  // Debug log
   useEffect(() => {
     if (room) {
-      console.log("[Monitor] 🔄 Room data updated, triggering re-render:", {
+      console.log("[Monitor] Room data updated:", {
         playersCount: room.players.length,
+        status: room.status,
         timestamp: new Date().toISOString()
       })
     }
@@ -53,21 +62,27 @@ function MonitorPageContent() {
     try {
       await roomManager.updateGameStatus(roomCode!, "finished")
       
-      if (typeof window !== 'undefined') {
-        const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
-        broadcastChannel.postMessage({ 
-          type: 'game-ended', 
-          roomCode: roomCode,
-          timestamp: Date.now()
-        })
-        broadcastChannel.close()
-        console.log("[Monitor] Broadcasted game end event to players")
+      let broadcastChannel: BroadcastChannel | null = null
+      try {
+        if (typeof window !== 'undefined') {
+          broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
+          broadcastChannel.postMessage({ 
+            type: 'game-ended', 
+            roomCode: roomCode,
+            timestamp: Date.now()
+          })
+          console.log("[Monitor] Broadcasted game end event to players")
+        }
+      } finally {
+        if (broadcastChannel) {
+          broadcastChannel.close()
+        }
       }
       
-      window.location.href = `/host/leaderboad`
+      window.location.href = `/host/leaderboad?roomCode=${roomCode}`
     } catch (error) {
       console.error("[Monitor] Error ending game due to timer expiration:", error)
-      window.location.href = `/host/leaderboad`
+      window.location.href = `/host/leaderboad?roomCode=${roomCode}`
     }
   }
   
@@ -100,6 +115,8 @@ function MonitorPageContent() {
               const sessionData = await sessionManager.getSessionData(sessionId)
               if (sessionData && sessionData.user_type === 'host' && sessionData.room_code) {
                 setRoomCode(sessionData.room_code)
+                setIsHost(true)
+                setIsHostDetected(true)
                 return
               }
             } catch (error) {
@@ -112,8 +129,10 @@ function MonitorPageContent() {
         
         const hostData = localStorage.getItem("currentHost")
         if (hostData) {
-          const { roomCode: storedRoomCode } = JSON.parse(hostData)
+          const { roomCode: storedRoomCode, isHost } = JSON.parse(hostData)
           setRoomCode(storedRoomCode)
+          setIsHost(isHost || false)
+          setIsHostDetected(true)
         } else {
           router.push("/select-quiz")
         }
@@ -123,14 +142,31 @@ function MonitorPageContent() {
     }
   }, [params, router])
 
+  // 🚀 Broadcast listener
   useEffect(() => {
     if (roomCode) {
       const broadcastChannel = new BroadcastChannel(`progress-update-${roomCode}`)
+      let lastUpdateTime = 0
       
       broadcastChannel.onmessage = (event) => {
         if (event.data.type === 'progress-update') {
-          console.log("[Monitor] 📡 Received progress broadcast:", event.data)
+          const now = Date.now()
+          if (now - lastUpdateTime < 1000) return
+          lastUpdateTime = now
+          
+          console.log("[Monitor] Received progress broadcast:", event.data)
+          
+          if (redirecting) {
+            console.log("[Monitor] Skipping refresh - already redirecting")
+            return
+          }
+          
           roomManager.getRoom(roomCode).then((updatedRoom) => {
+            if (updatedRoom?.status === 'finished') {
+              console.log("[Monitor] Game already finished, skipping refresh")
+              return
+            }
+            
             if (updatedRoom) {
               setForceRefresh(prev => prev + 1)
             }
@@ -142,40 +178,39 @@ function MonitorPageContent() {
         broadcastChannel.close()
       }
     }
-  }, [roomCode])
+  }, [roomCode, redirecting])
 
+  // 🚀 Aggressive polling
   useEffect(() => {
-    if (roomCode && room) {
-      const fallbackPolling = setInterval(async () => {
+    if (roomCode && room && !redirecting) {
+      const aggressivePolling = setInterval(async () => {
+        if (redirecting) {
+          console.log("[Monitor] Skipping poll - redirecting")
+          return
+        }
+        
         try {
           const latestRoom = await roomManager.getRoom(roomCode)
-          if (latestRoom) {
-            const currentPlayerIds = room.players.map(p => p.id).sort().join(',')
-            const latestPlayerIds = latestRoom.players.map(p => p.id).sort().join(',')
-            
-            const scoresChanged = room.players.some(player => {
-              const latestPlayer = latestRoom.players.find(p => p.id === player.id)
-              if (!latestPlayer) return false
-              return (
-                (player.quizScore || 0) !== (latestPlayer.quizScore || 0) ||
-                (player.memoryScore || 0) !== (latestPlayer.memoryScore || 0) ||
-                (player.questionsAnswered || 0) !== (latestPlayer.questionsAnswered || 0)
-              )
-            })
-            
-            if (scoresChanged || currentPlayerIds !== latestPlayerIds) {
-              console.log("[Monitor] 🔄 Fallback polling detected changes, forcing refresh")
-              setForceRefresh(prev => prev + 1)
-            }
+          
+          if (latestRoom?.status === 'finished') {
+            console.log("[Monitor] Game finished, stopping poll")
+            clearInterval(aggressivePolling)
+            return
+          }
+          
+          const hasChanges = JSON.stringify(latestRoom?.players) !== JSON.stringify(room?.players)
+          
+          if (hasChanges && latestRoom) {
+            setForceRefresh(prev => prev + 1)
           }
         } catch (error) {
-          console.error("[Monitor] Error in fallback polling:", error)
+          console.error("[Monitor] Error in aggressive polling:", error)
         }
-      }, 2000)
+      }, AGGRESSIVE_POLLING_INTERVAL)
       
-      return () => clearInterval(fallbackPolling)
+      return () => clearInterval(aggressivePolling)
     }
-  }, [roomCode, room])
+  }, [roomCode, room, redirecting])
 
   useEffect(() => {
     if (room) {
@@ -208,85 +243,154 @@ function MonitorPageContent() {
         setRankingChanges({})
       }, 3000)
     }
-  }, [room, previousRankings])
+  }, [room, previousRankings, forceRefresh])
 
+  // 🚀 CRITICAL: Auto-end game dengan VERIFIKASI yang lebih robust
   useEffect(() => {
-    if (room && room.players.length > 0) {
+    if (room && isHost && isHostDetected && !redirecting && !lastVerifiedCompletion) {
       const nonHostPlayers = room.players.filter(p => !p.isHost)
       const totalQuestions = room.settings.questionCount || 10
-      
-      const allPlayersCompleted = nonHostPlayers.every(player => 
-        (player.questionsAnswered || 0) >= totalQuestions
-      )
-      
+
+      console.log("[Monitor] Auto-end check:", {
+        totalPlayers: nonHostPlayers.length,
+        players: nonHostPlayers.map(p => ({
+          username: p.username,
+          answered: p.questionsAnswered || 0,
+          total: totalQuestions
+        }))
+      })
+
+      const allPlayersCompleted = nonHostPlayers.every(player => {
+        const answered = player.questionsAnswered || 0
+        return answered >= totalQuestions
+      })
+
       if (allPlayersCompleted && nonHostPlayers.length > 0) {
-        console.log("[Monitor] All players completed quiz, ending game automatically...")
-        
-        roomManager.updateGameStatus(roomCode!, "finished").then(() => {
-          if (typeof window !== 'undefined') {
+        console.log("[Monitor] All players completed! Starting robust verification...")
+
+        // 🚀 IMPROVED: Multiple verification attempts with increasing delays
+        const verifyCompletion = async (attempt = 1, maxAttempts = 3) => {
+          try {
+            console.log(`[Monitor] Verification attempt ${attempt}/${maxAttempts}`)
+
+            // Wait longer between attempts for database sync
+            const delay = attempt === 1 ? 1000 : attempt === 2 ? 2000 : 3000
+            await new Promise(resolve => setTimeout(resolve, delay))
+
+            const verifiedRoom = await roomManager.getRoom(roomCode!)
+
+            if (!verifiedRoom) {
+              console.error("[Monitor] Verification failed: room not found")
+              if (attempt < maxAttempts) {
+                return verifyCompletion(attempt + 1, maxAttempts)
+              }
+              setRedirecting(false)
+              setLastVerifiedCompletion(false)
+              return
+            }
+
+            const verifiedCompleted = verifiedRoom.players
+              .filter(p => !p.isHost)
+              .every(p => (p.questionsAnswered || 0) >= totalQuestions)
+
+            if (!verifiedCompleted) {
+              console.log(`[Monitor] Verification attempt ${attempt} failed: not all completed`)
+              if (attempt < maxAttempts) {
+                return verifyCompletion(attempt + 1, maxAttempts)
+              }
+              console.log("[Monitor] All verification attempts failed, resetting...")
+              setRedirecting(false)
+              setLastVerifiedCompletion(false)
+              return
+            }
+
+            console.log(`[Monitor] Verification attempt ${attempt} passed! Redirecting...`)
+            setLastVerifiedCompletion(true)
+            setRedirecting(true)
+
+            await roomManager.updateGameStatus(roomCode!, "finished")
+
             const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
-            broadcastChannel.postMessage({ 
-              type: 'game-ended', 
+            broadcastChannel.postMessage({
+              type: 'game-ended',
               roomCode: roomCode,
               timestamp: Date.now()
             })
             broadcastChannel.close()
-            console.log("[Monitor] Broadcasted game end event to players")
+
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+
+          } catch (error) {
+            console.error(`[Monitor] Error during verification attempt ${attempt}:`, error)
+            if (attempt < maxAttempts) {
+              return verifyCompletion(attempt + 1, maxAttempts)
+            }
+            setTimeout(() => {
+              window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+            }, 5000)
           }
-          
-          window.location.href = `/host/leaderboad`
-        }).catch((error) => {
-          console.error("[Monitor] Error ending game automatically:", error)
-          window.location.href = `/host/leaderboad`
-        })
+        }
+
+        setLastVerifiedCompletion(true)
+        setRedirecting(true)
+        verifyCompletion()
       }
     }
-  }, [room, roomCode])
+  }, [room, isHost, isHostDetected, redirecting, roomCode, forceRefresh, lastVerifiedCompletion])
+
+  // 🚀 Force refresh
+  useEffect(() => {
+    if (room && isHost && !redirecting) {
+      const forceRefreshInterval = setInterval(() => {
+        if (redirecting) return
+        setForceRefresh(prev => prev + 1)
+      }, 2000)
+      
+      return () => clearInterval(forceRefreshInterval)
+    }
+  }, [room, isHost, redirecting])
+
+  // 🚀 Monitoring
+  useEffect(() => {
+    if (room && isHost && !redirecting) {
+      const checkCompletion = setInterval(() => {
+        const nonHostPlayers = room.players.filter(p => !p.isHost)
+        const totalQuestions = room.settings.questionCount || 10
+        const completedCount = nonHostPlayers.filter(p => (p.questionsAnswered || 0) >= totalQuestions).length
+        
+        console.log("[Monitor] Monitoring status:", {
+          total: nonHostPlayers.length,
+          completed: completedCount,
+          redirecting: redirecting,
+          lastVerified: lastVerifiedCompletion
+        })
+      }, 3000)
+      
+      return () => clearInterval(checkCompletion)
+    }
+  }, [room, isHost, redirecting, lastVerifiedCompletion])
 
   const endGame = async () => {
-    console.log("End Game clicked, roomCode:", roomCode)
-    if (roomCode) {
-      try {
-        const success = await roomManager.updateGameStatus(roomCode, "finished")
-        console.log("Game status updated:", success)
+    if (!roomCode) return
+    
+    try {
+      const success = await roomManager.updateGameStatus(roomCode, "finished")
+      if (success) {
+        const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
+        broadcastChannel.postMessage({ type: 'game-ended', roomCode, timestamp: Date.now() })
+        broadcastChannel.close()
         
-        if (success) {
-          console.log("Game ended successfully, broadcasting to players...")
-          
-          if (typeof window !== 'undefined') {
-            const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
-            broadcastChannel.postMessage({ 
-              type: 'game-ended', 
-              roomCode: roomCode,
-              timestamp: Date.now()
-            })
-            broadcastChannel.close()
-            console.log("[Monitor] Broadcasted game end event to players")
+        router.push(`/host/leaderboad?roomCode=${roomCode}`)
+        setTimeout(() => {
+          if (window.location.pathname !== `/host/leaderboad`) {
+            window.location.href = `/host/leaderboad?roomCode=${roomCode}`
           }
-          
-          console.log("Redirecting to leaderboard...")
-          try {
-            router.push(`/host/leaderboad`)
-            setTimeout(() => {
-              if (window.location.pathname !== `/host/leaderboad`) {
-                console.log("Router push failed, using window.location fallback")
-                window.location.href = `/host/leaderboad`
-              }
-            }, 1000)
-          } catch (routerError) {
-            console.error("Router push failed:", routerError)
-            window.location.href = `/host/leaderboad`
-          }
-        } else {
-          console.error("Failed to update game status, using fallback redirect")
-          window.location.href = `/host/leaderboad`
-        }
-      } catch (error) {
-        console.error("Error ending game:", error)
-        window.location.href = `/host/leaderboad`
+        }, 1000)
       }
-    } else {
-      console.error("No roomCode found")
+    } catch (error) {
+      console.error("Error ending game:", error)
+      window.location.href = `/host/leaderboad?roomCode=${roomCode}`
     }
   }
 
@@ -346,6 +450,23 @@ function MonitorPageContent() {
     return bTotal - aTotal
   })
 
+  if (redirecting) {
+    return (
+      <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-linear-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+              <Trophy className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">GAME ENDING...</h2>
+            <p className="text-sm text-blue-200">Finalizing scores...</p>
+            <p className="text-xs text-blue-300 mt-2">Redirecting in 5 seconds...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
       <div className="absolute inset-0 opacity-20">
@@ -376,13 +497,12 @@ function MonitorPageContent() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="relative">
-              
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                   <img 
-                    src="/images/memoryquiz.png" 
+                    src="/images/memoryquiz.webp" 
                     alt="MEMORY QUIZ" 
                     className="h-12 w-auto sm:h-16 md:h-20 object-contain"
                     draggable={false}
@@ -404,7 +524,6 @@ function MonitorPageContent() {
                     </div>
                   </div>
                 </div>
-               
               </div>
             </div>
           </div>
@@ -412,9 +531,6 @@ function MonitorPageContent() {
             <button 
               onClick={endGame} 
               className="relative pixel-button-container w-full sm:w-auto"
-              onMouseDown={(e) => {
-                console.log("Button clicked, calling endGame...")
-              }}
             >
               <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
               <button className="relative bg-linear-to-br from-blue-500 to-cyan-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-sm sm:text-base lg:text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto min-h-[44px]">
@@ -467,18 +583,6 @@ function MonitorPageContent() {
                 const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
                 const rankingChange = rankingChanges[player.id]
 
-                console.log(`[Monitor] 📊 Player ${player.username} DETAILED:`, {
-                  questionsAnswered,
-                  questionCount: quizSettings.questionCount,
-                  progress: quizProgress,
-                  quizScore,
-                  memoryScore,
-                  totalScore,
-                  forceRefresh,
-                  timestamp: new Date().toISOString(),
-                  progressStatus: questionsAnswered >= quizSettings.questionCount ? 'COMPLETED' : 'IN_PROGRESS'
-                })
-
                 return (
                   <div key={player.id} className="relative bg-linear-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
                     <div className="flex items-center justify-between mb-2 sm:mb-3">
@@ -529,8 +633,7 @@ function MonitorPageContent() {
                     <div className="space-y-2 sm:space-y-3">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-1 sm:gap-2">
-                          </div>
+                          <span className="text-xs font-bold text-slate-300">QUIZ PROGRESS</span>
                           <span className={`text-xs sm:text-sm font-bold ${
                             questionsAnswered >= quizSettings.questionCount 
                               ? 'text-green-300' 
@@ -637,5 +740,3 @@ export default function MonitorPage() {
     </Suspense>
   )
 }
-
-

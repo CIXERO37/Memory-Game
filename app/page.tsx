@@ -259,7 +259,7 @@ export default function HomePage() {
           <div className="mb-4 sm:mb-6">
             <div className="inline-block">
               <Image
-                src="/images/memoryquiz.png"
+                src="/images/memoryquiz.webp"
                 alt="MEMORY QUIZ"
                 width={500}
                 height={200}
