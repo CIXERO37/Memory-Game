@@ -496,7 +496,7 @@ function JoinPageContent() {
             </Link>
             {/* MemoryQuiz Logo to the right of ArrowLeft */}
             <Image
-              src="/images/memoryquiz.png"
+              src="/images/memoryquiz.webp"
               alt="Memory Quiz Logo"
               width={240}
               height={72}

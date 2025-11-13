@@ -238,7 +238,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         if (!isHost) {
           window.location.href = `/result?roomCode=${params.roomCode}`
         } else {
-          window.location.href = `/leaderboard?roomCode=${params.roomCode}`
+          window.location.href = `/host/leaderboad?roomCode=${params.roomCode}`
         }
       } catch (error) {
         console.error("[Memory Challenge] Error ending game:", error)

@@ -42,9 +42,102 @@ function ResultPageContent() {
     totalScore: number
     player: Player
   } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
   const searchParams = useSearchParams()
   const router = useRouter()
   const roomCode = searchParams.get("roomCode")
+
+  // CRITICAL: Retry mechanism untuk fetch room
+  const fetchRoom = async (attempt = 1, maxAttempts = 3) => {
+    try {
+      setError(null)
+      if (!roomCode) {
+        setError("Room code not found")
+        return
+      }
+      
+      console.log(`[Result] Fetching room data (attempt ${attempt}/${maxAttempts})...`)
+      const roomData = await roomManager.getRoom(roomCode)
+      
+      if (roomData) {
+        setRoom(roomData)
+        
+        // Find current player
+        let player = null
+        const sessionId = sessionManager.getSessionIdFromStorage()
+        if (sessionId) {
+          try {
+            const sessionData = await sessionManager.getSessionData(sessionId)
+            if (sessionData && sessionData.user_type === 'player') {
+              player = sessionData.user_data
+              console.log("[Result] Player found from session:", player)
+            }
+          } catch (error) {
+            console.warn("Error getting session data:", error)
+          }
+        }
+        
+        if (!player && typeof window !== 'undefined') {
+          const playerData = localStorage.getItem("currentPlayer")
+          if (playerData) {
+            player = JSON.parse(playerData)
+            console.log("[Result] Player found from localStorage:", player)
+          }
+        }
+        
+        if (player) {
+          const allPlayers = roomData.players.filter(p => !p.isHost)
+          
+          // Sort players by total score
+          const sortedPlayers = [...allPlayers].sort((a, b) => {
+            const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
+            const bTotal = (b.quizScore || 0) + (b.memoryScore || 0)
+            return bTotal - aTotal
+          })
+          
+          const playerIndex = sortedPlayers.findIndex(p => p.id === player.id)
+          if (playerIndex !== -1) {
+            const playerObj = sortedPlayers[playerIndex]
+            // Use the avatar from session data (player) instead of room data
+            const playerWithCorrectAvatar = {
+              ...playerObj,
+              avatar: player.avatar || playerObj.avatar
+            }
+            setPlayerRanking({
+              rank: playerIndex + 1,
+              totalScore: (playerObj.quizScore || 0) + (playerObj.memoryScore || 0),
+              player: playerWithCorrectAvatar
+            })
+          } else {
+            // Player tidak ditemukan di room, coba lagi
+            if (attempt < maxAttempts) {
+              console.log(`[Result] Player not found in room, retrying... (attempt ${attempt})`)
+              setTimeout(() => fetchRoom(attempt + 1), 1000 * attempt)
+            } else {
+              setError("Player data not found. Please ensure you completed the quiz.")
+            }
+          }
+        } else {
+          setError("No player session found. Please join the game again.")
+        }
+      } else {
+        setError("Room not found. The game may have been ended.")
+      }
+    } catch (error) {
+      console.error("Error fetching room:", error)
+      if (attempt < maxAttempts) {
+        console.log(`[Result] Error fetching room, retrying... (attempt ${attempt})`)
+        setTimeout(() => fetchRoom(attempt + 1), 1000 * attempt)
+      } else {
+        setError("Failed to load results. Please try again.")
+      }
+    } finally {
+      if (attempt === 1) {
+        setLoading(false)
+      }
+    }
+  }
 
   useEffect(() => {
     if (!roomCode) {
@@ -52,97 +145,50 @@ function ResultPageContent() {
       return
     }
 
-    const fetchRoom = async () => {
-      try {
-        const roomData = await roomManager.getRoom(roomCode)
-        if (roomData) {
-          setRoom(roomData)
-          
-          // Find current player and calculate ranking
-          let player = null
-          
-          // Try to get from session manager first
-          try {
-            const sessionId = sessionManager.getSessionIdFromStorage()
-            if (sessionId) {
-              try {
-                const sessionData = await sessionManager.getSessionData(sessionId)
-                if (sessionData && sessionData.user_type === 'player') {
-                  player = sessionData.user_data
-                }
-              } catch (error) {
-                console.warn("Error getting session data:", error)
-                // Continue with fallback logic
-              }
-            }
-          } catch (error) {
-            console.warn("Error accessing session manager:", error)
-          }
-          
-          // Fallback to localStorage
-          if (!player && typeof window !== 'undefined') {
-            const playerData = localStorage.getItem("currentPlayer")
-            if (playerData) {
-              player = JSON.parse(playerData)
-            }
-          }
-          
-          if (player) {
-            const allPlayers = roomData.players.filter(p => !p.isHost)
-            
-            // Sort players by total score
-            const sortedPlayers = [...allPlayers].sort((a, b) => {
-              const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
-              const bTotal = (b.quizScore || 0) + (b.memoryScore || 0)
-              return bTotal - aTotal
-            })
-            
-            // Find player's rank
-            const playerIndex = sortedPlayers.findIndex(p => p.id === player.id)
-            if (playerIndex !== -1) {
-              const playerObj = sortedPlayers[playerIndex]
-              // Use the avatar from session data (player) instead of room data
-              const playerWithCorrectAvatar = {
-                ...playerObj,
-                avatar: player.avatar || playerObj.avatar
-              }
-              setPlayerRanking({
-                rank: playerIndex + 1,
-                totalScore: (playerObj.quizScore || 0) + (playerObj.memoryScore || 0),
-                player: playerWithCorrectAvatar
-              })
-            }
-          }
-        } else {
-          router.push("/")
-        }
-      } catch (error) {
-        console.error("Error fetching room:", error)
-        router.push("/")
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchRoom()
-  }, [roomCode, router])
+  }, [roomCode, router, retryCount])
+
+  // Add retry button if error
+  if (error) {
+    return (
+      <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
+          <div className="bg-linear-to-br from-red-500/20 to-orange-500/20 border-2 border-white/30 rounded-lg p-8 text-center max-w-md">
+            <div className="w-16 h-16 bg-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-white text-2xl">⚠️</span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">ERROR</h2>
+            <p className="text-red-200 mb-4">{error}</p>
+            <button 
+              onClick={() => {
+                setLoading(true)
+                setError(null)
+                setRetryCount(prev => prev + 1)
+              }}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-2 border-white/30 rounded-lg px-6 py-3 text-white font-bold transition-all duration-300"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
-        {/* Pixel Grid Background */}
         <div className="absolute inset-0 opacity-20">
           <div className="pixel-grid"></div>
         </div>
         
-        {/* Retro Scanlines */}
         <div className="absolute inset-0 opacity-10">
           <div className="scanlines"></div>
         </div>
         
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
+            <div className="w-12 h-12 bg-linear-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">{t('lobby.loadingResults')}</h2>
@@ -251,10 +297,10 @@ function ResultPageContent() {
             {/* Card Glow Effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/8 to-blue-400/8 rounded-lg blur-xl -z-10"></div>
             {/* Card Inner Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-lg"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent rounded-lg"></div>
             
             {/* MEMORYQUIZ Identity - Top Left Corner */}
-            <div className="absolute top-4 left-4 flex items-center p-2 ">
+            <div className="absolute top-4 left-4 flex items-center p-2">
               <div className="text-xs font-bold text-white/90 bg-gradient-to-r from-blue-400/20 to-purple-400/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
                 MEMORYQUIZ
               </div>
@@ -379,6 +425,3 @@ function PixelBackgroundElements() {
     </>
   )
 }
-
-
-// ikan

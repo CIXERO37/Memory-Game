@@ -286,40 +286,41 @@ export default function WaitingRoomPage() {
   }, [roomCode, playerInfo])
 
   // Listen for room updates via subscription to detect kicks immediately
+  // Note: This subscription is separate from useRoom hook because we need to detect kicks
+  // useRoom hook subscription is for general room updates, this one is specifically for kick detection
   useEffect(() => {
     if (!playerInfo || !roomCode) {
       console.log("[WaitingRoom] Skipping subscription setup - missing playerInfo or roomCode")
       return
     }
 
-    console.log("[WaitingRoom] Setting up subscription for player:", playerInfo.playerId)
+    console.log("[WaitingRoom] Setting up kick detection subscription for player:", playerInfo.playerId)
     let unsubscribe: (() => void) | null = null
+    let isCleaningUp = false
     
     const setupSubscription = async () => {
       try {
-        console.log("[WaitingRoom] Creating subscription for room:", roomCode)
+        console.log("[WaitingRoom] Creating kick detection subscription for room:", roomCode)
         unsubscribe = await roomManager.subscribe(roomCode, async (updatedRoom) => {
-          console.log("[WaitingRoom] Subscription callback triggered")
-          console.log("[WaitingRoom] Updated room:", updatedRoom)
+          // Skip if already cleaning up
+          if (isCleaningUp) return
+          
+          console.log("[WaitingRoom] Kick detection subscription callback triggered")
           
           // Use ref to avoid stale closure
           const currentPlayerInfo = playerInfoRef.current
-          console.log("[WaitingRoom] Current playerInfo from ref:", currentPlayerInfo)
           
           if (updatedRoom?.code === roomCode && currentPlayerInfo) {
-            console.log("[WaitingRoom] Room updated via subscription:", updatedRoom)
-            console.log("[WaitingRoom] Current player ID:", currentPlayerInfo.playerId)
-            console.log("[WaitingRoom] Players in room:", updatedRoom?.players?.map(p => ({ id: p.id, username: p.username })))
-            
             // Check if current player still exists in room
             const existingPlayer = updatedRoom?.players?.find(p => p.id === currentPlayerInfo.playerId)
-            console.log("[WaitingRoom] Existing player found:", existingPlayer)
             
             if (!existingPlayer) {
               console.log("[WaitingRoom] Player not found in room via subscription - they were kicked!", {
                 playerId: currentPlayerInfo.playerId,
                 playersInRoom: updatedRoom?.players?.map(p => p.id)
               })
+              
+              isCleaningUp = true
               
               // Clear session when kicked
               try {
@@ -343,38 +344,39 @@ export default function WaitingRoomPage() {
                 window.location.href = `/join?room=${roomCode}`
               }
               return
-            } else {
-              console.log("[WaitingRoom] Player still exists in room")
             }
-          } else {
-            console.log("[WaitingRoom] Skipping - room code mismatch or no playerInfo", {
-              roomCodeMatch: updatedRoom?.code === roomCode,
-              hasPlayerInfo: !!currentPlayerInfo
-            })
           }
         })
-        console.log("[WaitingRoom] Subscription created successfully")
+        console.log("[WaitingRoom] Kick detection subscription created successfully")
       } catch (error) {
-        console.error("[WaitingRoom] Error setting up subscription:", error)
+        console.error("[WaitingRoom] Error setting up kick detection subscription:", error)
       }
     }
     
     setupSubscription()
 
     return () => {
-      console.log("[WaitingRoom] Cleaning up subscription")
-      if (unsubscribe) unsubscribe()
+      console.log("[WaitingRoom] Cleaning up kick detection subscription")
+      isCleaningUp = true
+      if (unsubscribe) {
+        try {
+          unsubscribe()
+        } catch (error) {
+          console.error("[WaitingRoom] Error during subscription cleanup:", error)
+        }
+        unsubscribe = null
+      }
     }
   }, [playerInfo, roomCode, router])
 
-  // Periodic check as fallback (reduced frequency) - use ref to avoid stale closure
+  // Periodic check as fallback for player list updates and kick detection
   useEffect(() => {
-    if (!playerInfo || !room) {
-      console.log("[WaitingRoom] Skipping periodic check - missing playerInfo or room")
+    if (!playerInfo || !room || !roomCode) {
+      console.log("[WaitingRoom] Skipping periodic check - missing playerInfo, room, or roomCode")
       return
     }
 
-    console.log("[WaitingRoom] Setting up periodic check for player:", playerInfo.playerId)
+    console.log("[WaitingRoom] Setting up periodic check for player list updates:", playerInfo.playerId)
     const rejoinInterval = setInterval(async () => {
       try {
         // Use ref to get current player info
@@ -384,10 +386,33 @@ export default function WaitingRoomPage() {
           return
         }
 
-        console.log("[WaitingRoom] Periodic check running...")
+        console.log("[WaitingRoom] Periodic check running for player list updates...")
         const currentRoom = await roomManager.getRoom(roomCode)
         if (currentRoom) {
-          console.log("[WaitingRoom] Current room players:", currentRoom.players?.map(p => ({ id: p.id, username: p.username })))
+          // Compare player lists to detect new players
+          const currentPlayerIds = room.players.map(p => p.id).sort().join(',')
+          const latestPlayerIds = currentRoom.players.map(p => p.id).sort().join(',')
+          
+          console.log("[WaitingRoom] Player list comparison:", {
+            current: currentPlayerIds,
+            latest: latestPlayerIds,
+            currentCount: room.players.length,
+            latestCount: currentRoom.players.length
+          })
+          
+          // If player list changed, force update via subscription callback
+          if (currentPlayerIds !== latestPlayerIds) {
+            console.log("[WaitingRoom] 🔄 Player list changed detected via periodic check, forcing update")
+            // Trigger subscription callback manually to update room state
+            // The useRoom hook should pick this up, but we can also manually trigger
+            // by calling getRoom again which will update the subscription
+            const updatedRoom = await roomManager.getRoom(roomCode)
+            if (updatedRoom) {
+              // Force re-render by updating room state
+              // This will be handled by useRoom hook subscription, but we log it
+              console.log("[WaitingRoom] ✅ Player list updated:", updatedRoom.players.map(p => p.username))
+            }
+          }
           
           // Check for countdown status changes - log for debugging
           if (currentRoom.status === "countdown" && room.status !== "countdown") {
@@ -671,7 +696,7 @@ export default function WaitingRoomPage() {
               {/* Memory Quiz Logo with glow effect */}
               <img 
                 draggable={false}
-                src="/images/memoryquiz.png" 
+                src="/images/memoryquiz.webp" 
                 alt="Memory Quiz" 
                 className="h-6 sm:h-8 md:h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain max-w-[45%] sm:max-w-none"
                 style={{ 
