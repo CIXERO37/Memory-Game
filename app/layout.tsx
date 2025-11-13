@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { AuthGuard } from '../components/auth-guard'
 import { I18nInitializer } from '../components/i18n-initializer'
+import { PageTransition } from '../components/page-transition'
 
 export const metadata: Metadata = {
   title: 'quiz-MemoryCard',
@@ -31,7 +32,9 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <I18nInitializer>
           <AuthGuard>
-            {children}
+            <PageTransition>
+              {children}
+            </PageTransition>
           </AuthGuard>
           <Analytics />
         </I18nInitializer>

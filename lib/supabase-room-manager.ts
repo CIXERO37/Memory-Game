@@ -485,13 +485,22 @@ class SupabaseRoomManager {
         return false
       }
 
-      // Build new game progress
+      // Build new game progress (make updates monotonic - never decrease counts/scores)
       const currentProgress = currentPlayer.game_progress || {}
+
+      const currentQuizScore = currentPlayer.quiz_score || 0
+      const currentMemoryScore = currentPlayer.memory_game_score || 0
+      const currentQuestionsAnswered = currentPlayer.questions_answered || 0
+
+      const quizScoreToWrite = quizScore !== undefined ? Math.max(currentQuizScore, quizScore) : currentQuizScore
+      const memoryScoreToWrite = memoryScore !== undefined ? Math.max(currentMemoryScore, memoryScore) : currentMemoryScore
+      const questionsAnsweredToWrite = questionsAnswered !== undefined ? Math.max(currentQuestionsAnswered, questionsAnswered) : currentQuestionsAnswered
+
       const newProgress = {
         ...currentProgress,
-        quiz_score: quizScore !== undefined ? quizScore : currentPlayer.quiz_score || 0,
-        memory_score: memoryScore !== undefined ? memoryScore : currentPlayer.memory_game_score || 0,
-        questions_answered: questionsAnswered !== undefined ? questionsAnswered : currentPlayer.questions_answered || 0,
+        quiz_score: quizScoreToWrite,
+        memory_score: memoryScoreToWrite,
+        questions_answered: questionsAnsweredToWrite,
         updated_at: new Date().toISOString()
       }
 
@@ -501,9 +510,10 @@ class SupabaseRoomManager {
         last_activity: new Date().toISOString()
       }
       
-      if (quizScore !== undefined) updateData.quiz_score = quizScore
-      if (memoryScore !== undefined) updateData.memory_game_score = memoryScore
-      if (questionsAnswered !== undefined) updateData.questions_answered = questionsAnswered
+  // Ensure legacy fields are also monotonic
+  if (quizScore !== undefined) updateData.quiz_score = quizScoreToWrite
+  if (memoryScore !== undefined) updateData.memory_game_score = memoryScoreToWrite
+  if (questionsAnswered !== undefined) updateData.questions_answered = questionsAnsweredToWrite
 
       console.log('[SupabaseRoomManager] 🚀 ATTEMPTING player score update:', {
         playerId,
@@ -546,7 +556,7 @@ class SupabaseRoomManager {
         timestamp: new Date().toISOString()
       })
 
-      // Double-check the update by reading back the data
+  // Double-check the update by reading back the data
       const { data: verifyData, error: verifyError } = await supabase
         .from('players')
         .select('quiz_score, memory_game_score, questions_answered')
@@ -564,9 +574,10 @@ class SupabaseRoomManager {
 
         // Check if the update was actually applied
         const isVerified = (
-          (quizScore === undefined || verifyData.quiz_score === quizScore) &&
-          (memoryScore === undefined || verifyData.memory_game_score === memoryScore) &&
-          (questionsAnswered === undefined || verifyData.questions_answered === questionsAnswered)
+          // Verify using the monotonic values we wrote
+          (quizScore === undefined || verifyData.quiz_score === quizScoreToWrite) &&
+          (memoryScore === undefined || verifyData.memory_game_score === memoryScoreToWrite) &&
+          (questionsAnswered === undefined || verifyData.questions_answered === questionsAnsweredToWrite)
         )
 
         if (!isVerified) {
@@ -838,12 +849,23 @@ class SupabaseRoomManager {
       const currentGameProgress = currentPlayer.game_progress || {}
       const currentMemoryProgress = currentPlayer.memory_game_progress || {}
 
+      // Monotonic updates: never decrease numeric values
+      const existingQuizScore = currentGameProgress.quiz_score || 0
+      const existingQuestionsAnswered = currentGameProgress.questions_answered || 0
+      const existingCorrectAnswers = currentGameProgress.correct_answers || 0
+      const existingCurrentQuestion = currentGameProgress.current_question || 0
+
+      const quizScoreToWrite = progress.quizScore !== undefined ? Math.max(existingQuizScore, progress.quizScore) : existingQuizScore
+      const questionsAnsweredToWrite = progress.questionsAnswered !== undefined ? Math.max(existingQuestionsAnswered, progress.questionsAnswered) : existingQuestionsAnswered
+      const correctAnswersToWrite = progress.correctAnswers !== undefined ? Math.max(existingCorrectAnswers, progress.correctAnswers) : existingCorrectAnswers
+      const currentQuestionToWrite = progress.currentQuestion !== undefined ? Math.max(existingCurrentQuestion, progress.currentQuestion) : existingCurrentQuestion
+
       const newGameProgress = {
         ...currentGameProgress,
-        current_question: progress.currentQuestion !== undefined ? progress.currentQuestion : currentGameProgress.current_question || 0,
-        correct_answers: progress.correctAnswers !== undefined ? progress.correctAnswers : currentGameProgress.correct_answers || 0,
-        quiz_score: progress.quizScore !== undefined ? progress.quizScore : currentGameProgress.quiz_score || 0,
-        questions_answered: progress.questionsAnswered !== undefined ? progress.questionsAnswered : currentGameProgress.questions_answered || 0,
+        current_question: currentQuestionToWrite,
+        correct_answers: correctAnswersToWrite,
+        quiz_score: quizScoreToWrite,
+        questions_answered: questionsAnsweredToWrite,
         updated_at: new Date().toISOString()
       }
 
@@ -860,11 +882,12 @@ class SupabaseRoomManager {
       }
 
       // Also update legacy fields for backward compatibility
-      if (progress.quizScore !== undefined) updateData.quiz_score = progress.quizScore
-      if (progress.memoryScore !== undefined) updateData.memory_game_score = progress.memoryScore
-      if (progress.questionsAnswered !== undefined) updateData.questions_answered = progress.questionsAnswered
-      if (progress.currentQuestion !== undefined) updateData.current_question = progress.currentQuestion
-      if (progress.correctAnswers !== undefined) updateData.correct_answers = progress.correctAnswers
+  // Ensure legacy fields are written with monotonic values
+  if (progress.quizScore !== undefined) updateData.quiz_score = quizScoreToWrite
+  if (progress.memoryScore !== undefined) updateData.memory_game_score = progress.memoryScore
+  if (progress.questionsAnswered !== undefined) updateData.questions_answered = questionsAnsweredToWrite
+  if (progress.currentQuestion !== undefined) updateData.current_question = currentQuestionToWrite
+  if (progress.correctAnswers !== undefined) updateData.correct_answers = correctAnswersToWrite
 
       const { error } = await supabase
         .from('players')

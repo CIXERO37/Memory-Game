@@ -1739,35 +1739,41 @@
   transform: none;
 }
 
-/* Page transition animations */
-@keyframes page-fade-in {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px) scale(0.95);
+/* Page transition wrapper - no animations, just smooth rendering */
+.page-transition-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  contain: layout style paint;
+  isolation: isolate;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Smooth link and button interactions */
+a, button, [role="button"] {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced smooth scrolling for better UX */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0) scale(1);
+  
+  * {
+    scroll-behavior: inherit;
   }
 }
 
-@keyframes page-fade-out {
-  from { 
-    opacity: 1; 
-    transform: translateY(0) scale(1);
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
   }
-  to { 
-    opacity: 0; 
-    transform: translateY(-20px) scale(0.95);
-  }
-}
-
-.page-transition-enter {
-  animation: page-fade-in 0.5s ease-out;
-}
-
-.page-transition-exit {
-  animation: page-fade-out 0.3s ease-in;
 }
 
 /* Loading overlay animations */
