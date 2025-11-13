@@ -476,11 +476,11 @@ function JoinPageContent() {
         {/* Top-right GameForSmart Logo */}
         <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
           <Image
-            src="/images/gameforsmartlogo.png"
+            src="/images/gameforsmartlogo.webp"
             alt="GameForSmart Logo"
             width={240}
             height={72}
-            className="h-10 sm:h-14 md:h-16 w-auto"
+            className="h-12 sm:h-16 md:h-20 w-auto"
             priority
           />
         </div>
@@ -500,7 +500,7 @@ function JoinPageContent() {
               alt="Memory Quiz Logo"
               width={240}
               height={72}
-              className="h-10 sm:h-14 md:h-16 w-auto"
+              className="h-12 sm:h-16 md:h-20 w-auto"
               priority
             />
          

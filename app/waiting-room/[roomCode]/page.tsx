@@ -698,7 +698,7 @@ export default function WaitingRoomPage() {
                 draggable={false}
                 src="/images/memoryquiz.webp" 
                 alt="Memory Quiz" 
-                className="h-6 sm:h-8 md:h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain max-w-[45%] sm:max-w-none"
+                className="h-8 sm:h-10 md:h-12 lg:h-16 xl:h-20 2xl:h-24 w-auto object-contain max-w-[45%] sm:max-w-none"
                 style={{ 
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
                 }}
@@ -710,9 +710,9 @@ export default function WaitingRoomPage() {
           <div className="shrink-0">
             <img 
               draggable={false}
-              src="/images/gameforsmartlogo.png" 
+              src="/images/gameforsmartlogo.webp" 
               alt="GameForSmart Logo" 
-              className="h-6 sm:h-8 md:h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain drop-shadow-lg max-w-[45%] sm:max-w-none"
+              className="h-8 sm:h-10 md:h-12 lg:h-16 xl:h-20 2xl:h-24 w-auto object-contain drop-shadow-lg max-w-[45%] sm:max-w-none"
             />
           </div>
         </div>

@@ -301,15 +301,18 @@ function ResultPageContent() {
             
             {/* MEMORYQUIZ Identity - Top Left Corner */}
             <div className="absolute top-4 left-4 flex items-center p-2">
-              <div className="text-xs font-bold text-white/90 bg-gradient-to-r from-blue-400/20 to-purple-400/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
-                MEMORYQUIZ
-              </div>
+              <img
+                src="/images/memoryquiz.webp"
+                alt="Memory Quiz"
+                className="h-12 w-auto object-contain drop-shadow-lg"
+                draggable={false}
+              />
             </div>
             
             {/* GameForSmart Logo - Top Right Corner */}
             <div className="absolute top-4 right-4 flex items-center w-32 h-12 opacity-80 hover:opacity-100 transition-opacity duration-300">
               <img
-                src="/images/gameforsmartlogo.png"
+                src="/images/gameforsmartlogo.webp"
                 alt="GameForSmart Logo"
                 className="w-full h-full object-contain"
                 draggable={false}
@@ -333,7 +336,7 @@ function ResultPageContent() {
                   alt={`${playerRanking.player.username}'s avatar`}
                   className="w-full h-full object-cover relative z-10"
                   onError={(e) => {
-                    e.currentTarget.src = "/ava1.png"
+                    e.currentTarget.src = "/ava1.webp"
                   }}
                 />
               )}

@@ -423,7 +423,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
           {/* Right side - GameForSmart Logo */}
           <div className="shrink-0">
             <img 
-              src="/images/gameforsmartlogo.png" 
+              src="/images/gameforsmartlogo.webp" 
               alt="GameForSmart Logo" 
               className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
             />
