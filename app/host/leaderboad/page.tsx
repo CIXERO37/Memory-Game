@@ -11,10 +11,9 @@ import { supabase } from "@/lib/supabase"
 
 interface Player {
   id: string
-  username: string
+  nickname: string
   avatar: string
   quizScore?: number
-  memoryScore?: number
   isHost: boolean
 }
 
@@ -34,12 +33,12 @@ interface Room {
   countdownDuration?: number
 }
 
-function formatPlayerName(username: string): string {
-  const words = username.trim().split(/\s+/)
+function formatPlayerName(nickname: string): string {
+  const words = nickname.trim().split(/\s+/)
   if (words.length >= 2) {
     return words.slice(0, 2).join('\n')
   } else {
-    return username
+    return nickname
   }
 }
 
@@ -223,8 +222,8 @@ function LeaderboardHostPageContent() {
   const playersToUse = playersWithCorrectAvatars.length > 0 ? playersWithCorrectAvatars : (room?.players.filter(p => !p.isHost) || [])
   const sortedPlayers = [...playersToUse]
     .sort((a, b) => {
-      const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
-      const bTotal = (b.quizScore || 0) + (b.memoryScore || 0)
+      const aTotal = a.quizScore || 0
+      const bTotal = b.quizScore || 0
       return bTotal - aTotal
     })
 
@@ -356,7 +355,7 @@ function LeaderboardHostPageContent() {
                         {/^https?:\/\//.test(sortedPlayers[1].avatar) ? (
                           <RobustGoogleAvatar
                             avatarUrl={sortedPlayers[1].avatar}
-                            alt={`${sortedPlayers[1].username}'s avatar`}
+                            alt={`${sortedPlayers[1].nickname}'s avatar`}
                             width={96}
                             height={96}
                             className="w-full h-full relative z-10"
@@ -364,7 +363,7 @@ function LeaderboardHostPageContent() {
                         ) : (
                           <img
                             src={sortedPlayers[1].avatar}
-                            alt={`${sortedPlayers[1].username}'s avatar`}
+                            alt={`${sortedPlayers[1].nickname}'s avatar`}
                             className="w-full h-full object-cover relative z-10"
                             onError={(e) => {
                               e.currentTarget.src = "/ava1.webp"
@@ -372,9 +371,9 @@ function LeaderboardHostPageContent() {
                           />
                         )}
                       </div>
-                      <h3 className="text-2xl font-bold text-slate-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[1].username)}</h3>
+                      <h3 className="text-2xl font-bold text-slate-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[1].nickname)}</h3>
                       <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-2xl px-8 py-6 shadow-2xl">
-                        <div className="text-5xl font-bold text-white text-center">{(sortedPlayers[1].quizScore || 0) + (sortedPlayers[1].memoryScore || 0)}</div>
+                        <div className="text-5xl font-bold text-white text-center">{sortedPlayers[1].quizScore || 0}</div>
                         <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
@@ -410,7 +409,7 @@ function LeaderboardHostPageContent() {
                             {/^https?:\/\//.test(champion.avatar) ? (
                               <RobustGoogleAvatar
                                 avatarUrl={champion.avatar}
-                                alt={`${champion.username}'s avatar`}
+                                alt={`${champion.nickname}'s avatar`}
                                 width={128}
                                 height={128}
                                 className="w-full h-full relative z-10"
@@ -418,7 +417,7 @@ function LeaderboardHostPageContent() {
                             ) : (
                               <img
                                 src={champion.avatar}
-                                alt={`${champion.username}'s avatar`}
+                                alt={`${champion.nickname}'s avatar`}
                                 className="w-full h-full object-cover relative z-10"
                                 onError={(e) => {
                                   e.currentTarget.src = "/ava1.webp"
@@ -431,13 +430,13 @@ function LeaderboardHostPageContent() {
                       
                       {/* Player name */}
                       <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center whitespace-pre-line leading-tight">
-                        {formatPlayerName(champion.username)}
+                        {formatPlayerName(champion.nickname)}
                       </h2>
                       
                       {/* Points display box */}
                       <div className="mt-8 bg-gradient-to-br from-amber-600 to-yellow-700 rounded-2xl px-10 py-7 shadow-lg border-2 border-amber-700/40">
                         <div className="text-5xl font-bold text-white text-center mb-1 leading-none">
-                          {(champion.quizScore || 0) + (champion.memoryScore || 0)}
+                          {champion.quizScore || 0}
                         </div>
                         <div className="text-lg text-white text-center font-bold tracking-wide uppercase">
                           {t('lobby.points')}
@@ -469,7 +468,7 @@ function LeaderboardHostPageContent() {
                         {/^https?:\/\//.test(sortedPlayers[2].avatar) ? (
                           <RobustGoogleAvatar
                             avatarUrl={sortedPlayers[2].avatar}
-                            alt={`${sortedPlayers[2].username}'s avatar`}
+                            alt={`${sortedPlayers[2].nickname}'s avatar`}
                             width={96}
                             height={96}
                             className="w-full h-full relative z-10"
@@ -477,7 +476,7 @@ function LeaderboardHostPageContent() {
                         ) : (
                           <img
                             src={sortedPlayers[2].avatar}
-                            alt={`${sortedPlayers[2].username}'s avatar`}
+                            alt={`${sortedPlayers[2].nickname}'s avatar`}
                             className="w-full h-full object-cover relative z-10"
                             onError={(e) => {
                               e.currentTarget.src = "/ava1.webp"
@@ -485,9 +484,9 @@ function LeaderboardHostPageContent() {
                           />
                         )}
                       </div>
-                      <h3 className="text-2xl font-bold text-amber-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[2].username)}</h3>
+                      <h3 className="text-2xl font-bold text-amber-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[2].nickname)}</h3>
                       <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl px-8 py-6 shadow-2xl">
-                        <div className="text-5xl font-bold text-white text-center">{(sortedPlayers[2].quizScore || 0) + (sortedPlayers[2].memoryScore || 0)}</div>
+                        <div className="text-5xl font-bold text-white text-center">{sortedPlayers[2].quizScore || 0}</div>
                         <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
@@ -515,7 +514,7 @@ function LeaderboardHostPageContent() {
               </div>
               <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {sortedPlayers.slice(3).map((player, index) => {
-                  const totalScore = (player.quizScore || 0) + (player.memoryScore || 0)
+                  const totalScore = player.quizScore || 0
                   const rank = index + 4
                   return (
                     <div key={player.id} className="group relative">
@@ -530,7 +529,7 @@ function LeaderboardHostPageContent() {
                             {/^https?:\/\//.test(player.avatar) ? (
                               <RobustGoogleAvatar
                                 avatarUrl={player.avatar}
-                                alt={`${player.username}'s avatar`}
+                                alt={`${player.nickname}'s avatar`}
                                 width={48}
                                 height={48}
                                 className="w-full h-full relative z-10"
@@ -538,7 +537,7 @@ function LeaderboardHostPageContent() {
                             ) : (
                               <img
                                 src={player.avatar}
-                                alt={`${player.username}'s avatar`}
+                                alt={`${player.nickname}'s avatar`}
                                 className="w-full h-full object-cover relative z-10"
                                 onError={(e) => {
                                   e.currentTarget.src = "/ava1.webp"
@@ -547,7 +546,7 @@ function LeaderboardHostPageContent() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-lg text-white group-hover:text-indigo-200 transition-colors duration-300 whitespace-pre-line">{formatPlayerName(player.username)}</h4>
+                            <h4 className="font-bold text-lg text-white group-hover:text-indigo-200 transition-colors duration-300 whitespace-pre-line">{formatPlayerName(player.nickname)}</h4>
                           </div>
                           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-3 py-2 shadow-sm group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
                             <div className="text-center">

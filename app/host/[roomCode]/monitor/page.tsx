@@ -259,8 +259,8 @@ function MonitorPageContent() {
     if (room) {
       const players = room.players.filter((p) => !p.isHost)
       const sortedPlayers = [...players].sort((a, b) => {
-        const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
-        const bTotal = (b.quizScore || 0) + (b.memoryScore || 0)
+        const aTotal = a.quizScore || 0
+        const bTotal = b.quizScore || 0
         return bTotal - aTotal
       })
 
@@ -387,7 +387,7 @@ function MonitorPageContent() {
       console.log("[Monitor] Auto-end check:", {
         totalPlayers: nonHostPlayers.length,
         players: nonHostPlayers.map(p => ({
-          username: p.username,
+          nickname: p.nickname,
           answered: p.questionsAnswered || 0,
           total: totalQuestions
         }))
@@ -432,13 +432,11 @@ function MonitorPageContent() {
             // Update semua player yang belum selesai
             const forceFinishPromises = playersToForceFinish.map(async (player) => {
               const currentScore = player.quizScore || 0
-              const currentMemoryScore = player.memoryScore || 0
-              console.log(`[Monitor] Force finishing player ${player.username} (${player.id})`)
+              console.log(`[Monitor] Force finishing player ${player.nickname} (${player.id})`)
               return roomManager.updatePlayerScore(
                 roomCode!,
                 player.id,
                 currentScore,
-                currentMemoryScore,
                 totalQuestions // Force questionsAnswered ke totalQuestions
               )
             })
@@ -795,8 +793,7 @@ function MonitorPageContent() {
                 {sortedPlayers.map((player, index) => {
                 const rank = index + 1
                 const quizScore = player.quizScore || 0
-                const memoryScore = player.memoryScore || 0
-                const totalScore = quizScore + memoryScore
+                const totalScore = quizScore
                 const questionsAnswered = player.questionsAnswered || 0
                 const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
                 const rankingChange = rankingChanges[player.id]
@@ -817,7 +814,7 @@ function MonitorPageContent() {
                         <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex items-center justify-center overflow-hidden">
                           <RobustGoogleAvatar
                             avatarUrl={player.avatar}
-                            alt={`${player.username} avatar`}
+                            alt={`${player.nickname} avatar`}
                             className="w-full h-full"
                             width={48}
                             height={48}
@@ -825,7 +822,7 @@ function MonitorPageContent() {
                         </div>
                         <div>
                           {(() => {
-                            const { firstWord, secondWord } = splitPlayerName(player.username)
+                            const { firstWord, secondWord } = splitPlayerName(player.nickname)
                             return (
                               <div className="text-center">
                                 <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">

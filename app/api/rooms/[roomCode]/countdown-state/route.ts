@@ -12,14 +12,14 @@ export async function GET(
     const clientTimestamp = request.headers.get('x-client-timestamp')
     const requestStartTime = Date.now()
 
-    // Get room data from Supabase
-    const { data: roomData, error: roomError } = await supabase
-      .from('rooms')
+    // Get game session data from Supabase
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('game_sessions')
       .select('*')
-      .eq('room_code', roomCode)
+      .eq('game_pin', roomCode)
       .single()
 
-    if (roomError || !roomData) {
+    if (sessionError || !sessionData) {
       return NextResponse.json(
         { error: 'Room not found' },
         { status: 404 }
@@ -30,8 +30,10 @@ export async function GET(
     const now = Date.now()
     let countdownState = null
 
-    if (roomData.status === 'countdown' && roomData.countdown_start_time && roomData.countdown_duration) {
-      const countdownStart = new Date(roomData.countdown_start_time).getTime()
+    // Check if countdown is active (status is 'active' and countdown_started_at exists)
+    if (sessionData.status === 'active' && sessionData.countdown_started_at) {
+      const countdownStart = new Date(sessionData.countdown_started_at).getTime()
+      const countdownDuration = 10 // Default 10 seconds
       
       // Calculate latency compensation more accurately
       let latencyCompensation = 0
@@ -44,7 +46,7 @@ export async function GET(
       
       // Server-authoritative countdown calculation
       const compensatedNow = now + latencyCompensation
-      const totalDuration = roomData.countdown_duration * 1000
+      const totalDuration = countdownDuration * 1000
       
       // Calculate remaining time based on server time
       const timeSinceStart = compensatedNow - countdownStart
@@ -54,7 +56,7 @@ export async function GET(
       
       if (timeSinceStart < 0) {
         // Countdown hasn't started yet
-        remainingSeconds = roomData.countdown_duration
+        remainingSeconds = countdownDuration
         isInDelayPeriod = true
       } else if (timeSinceStart >= totalDuration) {
         // Countdown finished
@@ -82,9 +84,16 @@ export async function GET(
       }
     }
 
+    // Map game_sessions status to Room status format
+    let mappedStatus = sessionData.status
+    if (sessionData.status === 'active' && sessionData.countdown_started_at) {
+      // If active and countdown started, treat as countdown
+      mappedStatus = 'countdown'
+    }
+
     return NextResponse.json({
       roomCode,
-      status: roomData.status,
+      status: mappedStatus,
       countdownState,
       serverTime: now,
       // Add precise timestamp for client synchronization

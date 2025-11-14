@@ -7,7 +7,7 @@ import { ArrowLeft, Settings } from "lucide-react"
 import Link from "next/link"
 import { roomManager } from "@/lib/room-manager"
 import { getQuizById } from "@/lib/quiz-data"
-import { quizApi } from "@/lib/supabase"
+import { quizApi, supabase } from "@/lib/supabase"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -19,12 +19,50 @@ function QuizSettingsPageContent() {
   const router = useRouter()
   const { t } = useTranslation()
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null)
-  const [hostId] = useState(() => Math.random().toString(36).substr(2, 9))
+  const [hostId, setHostId] = useState<string | null>(null)
   const [timeLimit, setTimeLimit] = useState("5") // Default 5 menit
   const [questionCount, setQuestionCount] = useState("5") // Default 5 questions
   const [quiz, setQuiz] = useState<any>(null)
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(true)
+
+  // Get authenticated user's XID from profiles table
+  useEffect(() => {
+    const getHostId = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) {
+          console.error("[QuizSettings] Error getting user:", authError)
+          alert("You must be logged in to create a room. Please log in first.")
+          router.push("/login")
+          return
+        }
+        
+        // Get profile XID from profiles table using auth_user_id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .single()
+        
+        if (profileError || !profile) {
+          console.error("[QuizSettings] Error getting profile:", profileError)
+          alert("Profile not found. Please complete your profile first.")
+          router.push("/login")
+          return
+        }
+        
+        // Use XID from profiles table as host_id
+        console.log("[QuizSettings] Host ID (XID):", profile.id)
+        setHostId(profile.id)
+      } catch (error) {
+        console.error("[QuizSettings] Error in getHostId:", error)
+        alert("Error getting user information. Please try again.")
+      }
+    }
+    
+    getHostId()
+  }, [router])
 
   useEffect(() => {
     const quizId = searchParams.get("quizId")
@@ -82,15 +120,21 @@ function QuizSettingsPageContent() {
   }, [searchParams, router])
 
   const handleSettingsComplete = async () => {
-    if (!selectedQuiz || isCreatingRoom) return
+    if (!selectedQuiz || isCreatingRoom || !hostId) {
+      if (!hostId) {
+        alert("Please wait for authentication to complete, or log in first.")
+      }
+      return
+    }
 
     setIsCreatingRoom(true)
 
     try {
       // Get quiz title from quiz data
-      const quizTitle = `Quiz ${selectedQuiz}` // You can enhance this to get actual quiz title
+      const quizTitle = quiz?.title || `Quiz ${selectedQuiz}`
       
       console.log("[QuizSettings] Creating room with settings:", {
+        hostId,
         timeLimit: parseInt(timeLimit),
         questionCount: parseInt(questionCount)
       })
