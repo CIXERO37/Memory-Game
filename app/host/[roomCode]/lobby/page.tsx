@@ -138,7 +138,7 @@ function LobbyPageContent() {
       if (success) {
         toast({
           title: t('lobby.playerKicked'),
-          description: `👢 ${playerToKick.username} ${t('lobby.playerKickedDesc')}`,
+          description: `👢 ${playerToKick.nickname} ${t('lobby.playerKickedDesc')}`,
           duration: 3000,
         })
         
@@ -156,7 +156,7 @@ function LobbyPageContent() {
           broadcastChannel.postMessage({ 
             type: 'player-kicked', 
             playerId: playerToKick.id,
-            username: playerToKick.username,
+            nickname: playerToKick.nickname,
             roomCode: roomCode
           })
           broadcastChannel.close()
@@ -806,7 +806,7 @@ function LobbyPageContent() {
                             <button
                               onClick={() => handleKickPlayer(player)}
                               className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 border border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
-                              title={`Kick ${player.username}`}
+                              title={`Kick ${player.nickname}`}
                             >
                               <X className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white" />
                             </button>
@@ -815,7 +815,7 @@ function LobbyPageContent() {
                             <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center overflow-hidden">
                               <RobustGoogleAvatar
                                 avatarUrl={player.avatar}
-                                alt={`${player.username} avatar`}
+                                alt={`${player.nickname} avatar`}
                                 className="w-full h-full"
                                 width={48}
                                 height={48}
@@ -823,7 +823,7 @@ function LobbyPageContent() {
                             </div>
                             <div className="text-center">
                               <div className="font-bold text-black pixel-font-sm text-xs leading-tight player-username">
-                                {player.username.toUpperCase()}
+                                {player.nickname.toUpperCase()}
                               </div>
                             </div>
                           </div>

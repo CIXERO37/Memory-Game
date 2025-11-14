@@ -28,20 +28,16 @@ class RoomManager {
     return await supabaseRoomManager.getRoom(roomCode)
   }
 
-  async joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost">): Promise<boolean> {
-    return await supabaseRoomManager.joinRoom(roomCode, player)
+  async joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost" | "user_id" | "nickname">, userId?: string): Promise<boolean> {
+    return await supabaseRoomManager.joinRoom(roomCode, player, userId)
   }
 
-  async rejoinRoom(roomCode: string, player: Omit<Player, "joinedAt" | "isReady" | "isHost">): Promise<boolean> {
-    return await supabaseRoomManager.rejoinRoom(roomCode, player)
+  async rejoinRoom(roomCode: string, player: Omit<Player, "joinedAt" | "isReady" | "isHost" | "user_id" | "nickname">, userId?: string): Promise<boolean> {
+    return await supabaseRoomManager.rejoinRoom(roomCode, player, userId)
   }
 
-  async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, memoryScore?: number, questionsAnswered?: number): Promise<boolean> {
-    return await supabaseRoomManager.updatePlayerScore(roomCode, playerId, quizScore, memoryScore, questionsAnswered)
-  }
-
-  updatePlayerMemoryScore(roomCode: string, playerId: string, memoryScore: number): Promise<boolean> {
-    return this.updatePlayerScore(roomCode, playerId, undefined, memoryScore)
+  async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, questionsAnswered?: number): Promise<boolean> {
+    return await supabaseRoomManager.updatePlayerScore(roomCode, playerId, quizScore, questionsAnswered)
   }
 
   async startCountdown(roomCode: string, hostId: string, duration: number = 10): Promise<boolean> {
@@ -73,8 +69,8 @@ class RoomManager {
     return await supabaseRoomManager.subscribe(roomCode, callback)
   }
 
-  async isPlayerKicked(roomCode: string, username: string): Promise<boolean> {
-    return await supabaseRoomManager.isPlayerKicked(roomCode, username)
+  async isPlayerKicked(roomCode: string, nickname: string): Promise<boolean> {
+    return await supabaseRoomManager.isPlayerKicked(roomCode, nickname)
   }
 
   isChannelConnected(): boolean {

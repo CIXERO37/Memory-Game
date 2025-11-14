@@ -22,13 +22,13 @@ export default function WaitingRoomPage() {
   const [forceCountdown, setForceCountdown] = useState(false)
   const [broadcastRoomData, setBroadcastRoomData] = useState<any>(null)
   const [playerInfo, setPlayerInfo] = useState<{
-    username: string
+    nickname: string
     avatar: string
     playerId: string
   } | null>(null)
   // Use ref to avoid stale closure in BroadcastChannel and subscription callbacks
   const playerInfoRef = useRef<{
-    username: string
+    nickname: string
     avatar: string
     playerId: string
   } | null>(null)
@@ -52,7 +52,7 @@ export default function WaitingRoomPage() {
           if (sessionData && sessionData.user_type === 'player' && sessionData.room_code === roomCode) {
             console.log("[WaitingRoom] Valid session found, setting player info")
             const playerData = {
-              username: sessionData.user_data.username,
+              nickname: sessionData.user_data.nickname || sessionData.user_data.username,
               avatar: sessionData.user_data.avatar,
               playerId: sessionData.user_data.id,
             }
@@ -82,7 +82,7 @@ export default function WaitingRoomPage() {
               if (player.roomCode === roomCode) {
                 console.log("[WaitingRoom] Valid localStorage player found, setting player info")
                 const playerData = {
-                  username: player.username,
+                  nickname: player.nickname || player.username,
                   avatar: player.avatar,
                   playerId: player.id,
                 }
@@ -109,7 +109,7 @@ export default function WaitingRoomPage() {
           console.log("[WaitingRoom] Found players in room, using first player as fallback")
           const firstPlayer = room.players[0]
           const playerData = {
-            username: firstPlayer.username,
+            nickname: firstPlayer.nickname,
             avatar: firstPlayer.avatar,
             playerId: firstPlayer.id,
           }
@@ -148,7 +148,7 @@ export default function WaitingRoomPage() {
         const params = new URLSearchParams()
         if (playerInfo) {
           params.append("playerId", playerInfo.playerId)
-          params.append("username", playerInfo.username)
+          params.append("nickname", playerInfo.nickname)
           params.append("avatar", playerInfo.avatar)
         }
         window.location.href = `/game/${roomCode}/quiz?${params.toString()}`
@@ -410,7 +410,7 @@ export default function WaitingRoomPage() {
             if (updatedRoom) {
               // Force re-render by updating room state
               // This will be handled by useRoom hook subscription, but we log it
-              console.log("[WaitingRoom] ✅ Player list updated:", updatedRoom.players.map(p => p.username))
+              console.log("[WaitingRoom] ✅ Player list updated:", updatedRoom.players.map(p => p.nickname))
             }
           }
           
@@ -499,7 +499,7 @@ export default function WaitingRoomPage() {
     const params = new URLSearchParams()
     if (playerInfo) {
       params.append("playerId", playerInfo.playerId)
-      params.append("username", playerInfo.username)
+      params.append("nickname", playerInfo.nickname)
       params.append("avatar", playerInfo.avatar)
     }
     window.location.href = `/game/${roomCode}/quiz?${params.toString()}`
@@ -812,7 +812,7 @@ export default function WaitingRoomPage() {
                         <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
                           <RobustGoogleAvatar
                             avatarUrl={playerInfo.avatar}
-                            alt={`${playerInfo.username} avatar`}
+                            alt={`${playerInfo.nickname} avatar`}
                             className="w-full h-full"
                             width={40}
                             height={40}
@@ -820,7 +820,7 @@ export default function WaitingRoomPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-bold text-black pixel-font-sm text-xs sm:text-sm truncate">
-                            <span className="truncate block">{playerInfo.username.toUpperCase()}</span>
+                            <span className="truncate block">{playerInfo.nickname.toUpperCase()}</span>
                             <span className="text-blue-600 text-[10px] sm:text-xs">(YOU)</span>
                           </div>
                         </div>
@@ -833,7 +833,7 @@ export default function WaitingRoomPage() {
                 <div className="mb-3 sm:mb-4 md:mb-6">
                   <div className="grid gap-2 sm:gap-3">
                     {room.players
-                      .filter(player => player.username !== playerInfo?.username)
+                      .filter(player => player.nickname !== playerInfo?.nickname)
                       .map((player) => {
                         console.log("[WaitingRoom] Rendering other player:", player)
                         return (
@@ -842,7 +842,7 @@ export default function WaitingRoomPage() {
                               <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
                                 <RobustGoogleAvatar
                                   avatarUrl={player.avatar}
-                                  alt={`${player.username} avatar`}
+                                  alt={`${player.nickname} avatar`}
                                   className="w-full h-full"
                                   width={32}
                                   height={32}
@@ -850,7 +850,7 @@ export default function WaitingRoomPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="font-bold text-black pixel-font-sm text-xs sm:text-sm">
-                                  <span className="truncate block">{player.username.toUpperCase()}</span>
+                                  <span className="truncate block">{player.nickname.toUpperCase()}</span>
                                   {player.isHost && <span className="text-orange-600 text-[10px] sm:text-xs">(HOST)</span>}
                                 </div>
                               </div>

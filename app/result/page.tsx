@@ -10,10 +10,9 @@ import { useTranslation } from "react-i18next"
 
 interface Player {
   id: string
-  username: string
+  nickname: string
   avatar: string
   quizScore?: number
-  memoryScore?: number
   isHost: boolean
 }
 
@@ -91,8 +90,8 @@ function ResultPageContent() {
           
           // Sort players by total score
           const sortedPlayers = [...allPlayers].sort((a, b) => {
-            const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
-            const bTotal = (b.quizScore || 0) + (b.memoryScore || 0)
+          const aTotal = a.quizScore || 0
+          const bTotal = b.quizScore || 0
             return bTotal - aTotal
           })
           
@@ -106,7 +105,7 @@ function ResultPageContent() {
             }
             setPlayerRanking({
               rank: playerIndex + 1,
-              totalScore: (playerObj.quizScore || 0) + (playerObj.memoryScore || 0),
+              totalScore: playerObj.quizScore || 0,
               player: playerWithCorrectAvatar
             })
           } else {
@@ -325,7 +324,7 @@ function ResultPageContent() {
               {/^https?:\/\//.test(playerRanking.player.avatar) ? (
                 <RobustGoogleAvatar
                   avatarUrl={playerRanking.player.avatar}
-                  alt={`${playerRanking.player.username}'s avatar`}
+                  alt={`${playerRanking.player.nickname}'s avatar`}
                   width={96}
                   height={96}
                   className="w-full h-full relative z-10"
@@ -333,7 +332,7 @@ function ResultPageContent() {
               ) : (
                 <img
                   src={playerRanking.player.avatar}
-                  alt={`${playerRanking.player.username}'s avatar`}
+                  alt={`${playerRanking.player.nickname}'s avatar`}
                   className="w-full h-full object-cover relative z-10"
                   onError={(e) => {
                     e.currentTarget.src = "/ava1.webp"
@@ -343,7 +342,7 @@ function ResultPageContent() {
             </div>
             
             {/* Player Name */}
-            <h2 className="text-2xl font-bold text-white/95 mb-4 drop-shadow-lg line-clamp-2 leading-tight">{playerRanking.player.username}</h2>
+            <h2 className="text-2xl font-bold text-white/95 mb-4 drop-shadow-lg line-clamp-2 leading-tight">{playerRanking.player.nickname}</h2>
             
             {/* Rank Display */}
             <div className="mb-6">

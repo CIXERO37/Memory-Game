@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
+import { supabase } from "@/lib/supabase"
 import { QRScanner } from "@/components/qr-scanner"
 
 function JoinPageContent() {
@@ -21,17 +22,17 @@ function JoinPageContent() {
   const pathname = usePathname()
   const router = useRouter()
   const { userProfile, isAuthenticated, loading } = useAuth()
-  const [username, setUsername] = useState("")
+  const [nickname, setNickname] = useState("")
   const [roomCode, setRoomCode] = useState("")
   const [selectedAvatar, setSelectedAvatar] = useState("") // Will be set to random avatar
   const [userChangedAvatar, setUserChangedAvatar] = useState(false)
-  const [userChangedUsername, setUserChangedUsername] = useState(false)
+  const [userChangedNickname, setUserChangedNickname] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
   const [roomError, setRoomError] = useState("")
   const [playerId, setPlayerId] = useState<string>("")
   const [sessionId, setSessionId] = useState<string>("")
   const [hasClickedJoin, setHasClickedJoin] = useState(false)
-  const [usernameError, setUsernameError] = useState("")
+  const [nicknameError, setNicknameError] = useState("")
   const [roomCodeError, setRoomCodeError] = useState("")
   const [showScanner, setShowScanner] = useState(false)
 
@@ -58,17 +59,17 @@ function JoinPageContent() {
             if (sessionData && sessionData.user_type === 'player') {
               setPlayerId(sessionData.user_data.id)
               setSessionId(existingSessionId)
-              // Only set username from session if user is NOT authenticated
-              // If user is authenticated, username will be set from userProfile in the next effect
-              if (!isAuthenticated && !username && sessionData.user_data.username) {
-                setUsername(sessionData.user_data.username)
+              // Only set nickname from session if user is NOT authenticated
+              // If user is authenticated, nickname will be set from userProfile in the next effect
+              if (!isAuthenticated && !nickname && sessionData.user_data.nickname) {
+                setNickname(sessionData.user_data.nickname)
               }
               if (!selectedAvatar) {
                 setSelectedAvatar(sessionData.user_data.avatar || "")
               }
               console.log('[Join] Existing session found:', {
                 playerId: sessionData.user_data.id,
-                username: sessionData.user_data.username,
+                nickname: sessionData.user_data.nickname,
                 avatar: sessionData.user_data.avatar,
                 roomCode: sessionData.room_code
               })
@@ -100,33 +101,33 @@ function JoinPageContent() {
     console.log('Loading:', loading)
     console.log('Is Authenticated:', isAuthenticated)
     console.log('User Profile:', userProfile)
-    console.log('User Profile Username:', userProfile?.username)
+    console.log('User Profile Nickname:', userProfile?.fullname || userProfile?.username)
     console.log('User Profile Name:', userProfile?.name)
     console.log('Avatar URL:', userProfile?.avatar_url)
     console.log('User Changed Avatar:', userChangedAvatar)
-    console.log('User Changed Username:', userChangedUsername)
-    console.log('Current Username:', username)
+    console.log('User Changed Nickname:', userChangedNickname)
+    console.log('Current Nickname:', nickname)
     console.log('========================')
     
     if (!loading && isAuthenticated && userProfile) {
-      // Get username from Google - prioritize username field, then name field
-      const authUsername = userProfile.username || userProfile.name || ""
+      // Get nickname from Google - prioritize fullname field, then username, then name field
+      const authNickname = userProfile.fullname || userProfile.username || userProfile.name || ""
       
-      // If user is authenticated, ALWAYS use Google username unless user manually changed it
-      if (authUsername) {
-        if (!userChangedUsername) {
-          // User hasn't manually changed username, so use Google username
-          if (username !== authUsername) {
-            console.log('Setting username from Google auth:', authUsername)
-            setUsername(authUsername)
+      // If user is authenticated, ALWAYS use Google nickname unless user manually changed it
+      if (authNickname) {
+        if (!userChangedNickname) {
+          // User hasn't manually changed nickname, so use Google nickname
+          if (nickname !== authNickname) {
+            console.log('Setting nickname from Google auth:', authNickname)
+            setNickname(authNickname)
           }
         } else {
-          // User has manually changed username, but if current username is empty or from localStorage,
-          // still prefer Google username
-          if (!username || username.trim() === "") {
-            console.log('Username was changed but is empty, restoring from Google auth:', authUsername)
-            setUsername(authUsername)
-            setUserChangedUsername(false) // Reset flag since we're using Google username
+          // User has manually changed nickname, but if current nickname is empty or from localStorage,
+          // still prefer Google nickname
+          if (!nickname || nickname.trim() === "") {
+            console.log('Nickname was changed but is empty, restoring from Google auth:', authNickname)
+            setNickname(authNickname)
+            setUserChangedNickname(false) // Reset flag since we're using Google nickname
           }
         }
       }
@@ -138,61 +139,61 @@ function JoinPageContent() {
       }
     } else if (!loading && !isAuthenticated) {
       // User is not authenticated, load from localStorage as fallback
-      if (typeof window !== 'undefined' && !username && !userChangedUsername) {
-        const savedUsername = localStorage.getItem('lastUsername')
-        if (savedUsername) {
-          console.log('Loading saved username from localStorage (not authenticated):', savedUsername)
-          setUsername(savedUsername)
+      if (typeof window !== 'undefined' && !nickname && !userChangedNickname) {
+        const savedNickname = localStorage.getItem('lastNickname')
+        if (savedNickname) {
+          console.log('Loading saved nickname from localStorage (not authenticated):', savedNickname)
+          setNickname(savedNickname)
         }
       }
     }
-  }, [loading, isAuthenticated, userProfile, userChangedAvatar, userChangedUsername, username])
+  }, [loading, isAuthenticated, userProfile, userChangedAvatar, userChangedNickname, nickname])
 
-  // Additional effect to handle username persistence when auth state changes
+  // Additional effect to handle nickname persistence when auth state changes
   useEffect(() => {
-    // If user becomes authenticated and username is empty or doesn't match Google username, update it
-    if (!loading && isAuthenticated && userProfile && !userChangedUsername) {
-      const authUsername = userProfile.username || userProfile.name || ""
-      if (authUsername) {
-        // If username is empty or different from Google username, update it
-        if (!username || username.trim() === "" || username !== authUsername) {
-          console.log('Updating username to match Google auth:', authUsername)
-          setUsername(authUsername)
+    // If user becomes authenticated and nickname is empty or doesn't match Google nickname, update it
+    if (!loading && isAuthenticated && userProfile && !userChangedNickname) {
+      const authNickname = userProfile.fullname || userProfile.username || userProfile.name || ""
+      if (authNickname) {
+        // If nickname is empty or different from Google nickname, update it
+        if (!nickname || nickname.trim() === "" || nickname !== authNickname) {
+          console.log('Updating nickname to match Google auth:', authNickname)
+          setNickname(authNickname)
         }
       }
     }
-  }, [isAuthenticated, userProfile, loading, userChangedUsername, username])
+  }, [isAuthenticated, userProfile, loading, userChangedNickname, nickname])
 
-  // Emergency fallback: restore username if it becomes empty unexpectedly
+  // Emergency fallback: restore nickname if it becomes empty unexpectedly
   useEffect(() => {
-    if (!loading && !username.trim() && !userChangedUsername) {
+    if (!loading && !nickname.trim() && !userChangedNickname) {
       // Try to restore from auth first (highest priority)
       if (isAuthenticated && userProfile) {
-        const authUsername = userProfile.username || userProfile.name || ""
-        if (authUsername) {
-          console.log('Emergency restore from Google auth:', authUsername)
-          setUsername(authUsername)
+        const authNickname = userProfile.fullname || userProfile.username || userProfile.name || ""
+        if (authNickname) {
+          console.log('Emergency restore from Google auth:', authNickname)
+          setNickname(authNickname)
           return
         }
       }
       
       // Fallback to localStorage only if not authenticated
       if (!isAuthenticated && typeof window !== 'undefined') {
-        const savedUsername = localStorage.getItem('lastUsername')
-        if (savedUsername) {
-          console.log('Emergency restore from localStorage (not authenticated):', savedUsername)
-          setUsername(savedUsername)
+        const savedNickname = localStorage.getItem('lastNickname')
+        if (savedNickname) {
+          console.log('Emergency restore from localStorage (not authenticated):', savedNickname)
+          setNickname(savedNickname)
         }
       }
     }
-  }, [username, loading, isAuthenticated, userProfile, userChangedUsername])
+  }, [nickname, loading, isAuthenticated, userProfile, userChangedNickname])
 
-  // Save username to localStorage whenever it changes
+  // Save nickname to localStorage whenever it changes
   useEffect(() => {
-    if (username && username.trim() && typeof window !== 'undefined') {
-      localStorage.setItem('lastUsername', username.trim())
+    if (nickname && nickname.trim() && typeof window !== 'undefined') {
+      localStorage.setItem('lastNickname', nickname.trim())
     }
-  }, [username])
+  }, [nickname])
 
   // Handle first avatar change from selector
   // Avatar selector akan set avatar random sekali saat pertama kali mount
@@ -254,15 +255,15 @@ function JoinPageContent() {
 
   const handleJoinRoom = async () => {
     // Clear previous validation errors
-    setUsernameError("")
+    setNicknameError("")
     setRoomCodeError("")
     setRoomError("")
     
     // Check for validation errors
     let hasValidationError = false
     
-    if (!username.trim()) {
-      setUsernameError("Username belum diisi")
+    if (!nickname.trim()) {
+      setNicknameError("Nickname belum diisi")
       hasValidationError = true
     }
     
@@ -301,16 +302,16 @@ function JoinPageContent() {
       return
     }
 
-    // Check if player already exists in room by username and avatar (not just playerId)
+    // Check if player already exists in room by nickname and avatar (not just playerId)
     const existingPlayer = room.players.find((p: any) => 
-      p.username === username.trim() && p.avatar === selectedAvatar
+      p.nickname === nickname.trim() && p.avatar === selectedAvatar
     )
     
     console.log("[Join] Checking for existing player:", {
-      username: username.trim(),
+      nickname: nickname.trim(),
       avatar: selectedAvatar,
       existingPlayer,
-      allPlayers: room.players.map(p => ({ username: p.username, avatar: p.avatar, id: p.id })),
+      allPlayers: room.players.map(p => ({ nickname: p.nickname, avatar: p.avatar, id: p.id })),
       currentPlayerId: playerId
     })
     
@@ -326,7 +327,7 @@ function JoinPageContent() {
             'player',
             {
               id: existingPlayer.id,
-              username: username.trim(),
+              nickname: nickname.trim(),
               avatar: selectedAvatar,
               roomCode,
             },
@@ -339,22 +340,26 @@ function JoinPageContent() {
       }
     }
     
+    // Get user ID for joinRoom/rejoinRoom
+    const { data: { user } } = await supabase.auth.getUser()
+    const userId = user?.id
+    
     let success: boolean
     if (existingPlayer) {
       // Player exists, use rejoinRoom with existing player ID
       console.log("[Join] Player exists, rejoining with ID:", existingPlayer.id)
       success = await roomManager.rejoinRoom(roomCode, {
         id: existingPlayer.id,
-        username: username.trim(),
+        nickname: nickname.trim(),
         avatar: selectedAvatar,
-      })
+      }, userId)
     } else {
       // New player, use joinRoom
       console.log("[Join] New player, joining room")
       success = await roomManager.joinRoom(roomCode, {
-        username: username.trim(),
+        nickname: nickname.trim(),
         avatar: selectedAvatar,
-      })
+      }, userId)
     }
 
     console.log("[Join] Join/Rejoin result:", success)
@@ -363,7 +368,7 @@ function JoinPageContent() {
       // Get the actual player ID from the room
       const updatedRoom = await roomManager.getRoom(roomCode)
       const actualPlayer = updatedRoom?.players.find((p: any) => 
-        p.username === username.trim() && p.avatar === selectedAvatar
+        p.nickname === nickname.trim() && p.avatar === selectedAvatar
       )
       const finalPlayerId = actualPlayer?.id || existingPlayer?.id || playerId
       
@@ -378,7 +383,7 @@ function JoinPageContent() {
       try {
         console.log("[Join] Creating/updating session for player:", {
           id: finalPlayerId,
-          username: username.trim(),
+          nickname: nickname.trim(),
           avatar: selectedAvatar,
           roomCode
         })
@@ -389,7 +394,7 @@ function JoinPageContent() {
           'player',
           {
             id: finalPlayerId,
-            username: username.trim(),
+            nickname: nickname.trim(),
             avatar: selectedAvatar,
             roomCode,
           },
@@ -406,7 +411,7 @@ function JoinPageContent() {
             "currentPlayer",
             JSON.stringify({
               id: finalPlayerId,
-              username: username.trim(),
+              nickname: nickname.trim(),
               avatar: selectedAvatar,
               roomCode,
             }),
@@ -421,7 +426,7 @@ function JoinPageContent() {
             "currentPlayer",
             JSON.stringify({
               id: finalPlayerId,
-              username: username.trim(),
+              nickname: nickname.trim(),
               avatar: selectedAvatar,
               roomCode,
             }),
@@ -435,7 +440,7 @@ function JoinPageContent() {
       console.log("[Join] Successfully joined/rejoined, redirecting to waiting room")
       console.log("[Join] Final player data:", {
         id: finalPlayerId,
-        username: username.trim(),
+        nickname: nickname.trim(),
         avatar: selectedAvatar,
         roomCode,
         wasExistingPlayer: !!existingPlayer
@@ -523,24 +528,24 @@ function JoinPageContent() {
                   <div className="space-y-3 sm:space-y-4">
                     <div className="space-y-2">
                       <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                        <Label htmlFor="username" className="text-black font-bold text-xs sm:text-sm">USERNAME</Label>
+                        <Label htmlFor="nickname" className="text-black font-bold text-xs sm:text-sm">NICKNAME</Label>
                       </div>
                         <div className="relative">
                           <Input
-                            id="username"
-                            placeholder="Enter your username"
-                            value={username}
+                            id="nickname"
+                            placeholder="Enter your nickname"
+                            value={nickname}
                             onChange={(e) => {
-                              setUsername(e.target.value)
-                              setUserChangedUsername(true)
-                              if (usernameError) setUsernameError("")
+                              setNickname(e.target.value)
+                              setUserChangedNickname(true)
+                              if (nicknameError) setNicknameError("")
                             }}
                             className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 h-12 sm:h-auto"
                           />
                         </div>
-                        {usernameError && (
+                        {nicknameError && (
                           <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-xs sm:text-sm text-white font-bold">{usernameError}</p>
+                            <p className="text-xs sm:text-sm text-white font-bold">{nicknameError}</p>
                           </div>
                         )}
                     </div>

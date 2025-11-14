@@ -471,7 +471,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       
       if (playerId) {
         console.log("[Quiz] 🎯 Updating final scores before memory redirect")
-        await roomManager.updatePlayerScore(params.roomCode, playerId, newScore, undefined, newQuestionsAnswered)
+        await roomManager.updatePlayerScore(params.roomCode, playerId, newScore, newQuestionsAnswered)
       }
 
       const progressData = {
@@ -522,7 +522,6 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             params.roomCode,
             playerId,
             updateData.quizScore,
-            undefined,
             updateData.questionsAnswered
           )
           
@@ -617,7 +616,6 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
                 params.roomCode,
                 playerId,
                 score,
-                undefined,
                 questionsAnswered
               )
 
