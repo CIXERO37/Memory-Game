@@ -1190,7 +1190,7 @@
   
   /* Card scaling */
   .pixel-quiz-card {
-    width: 240px !important;
+    width: 100% !important;
     height: 160px !important;
     overflow: hidden !important;
   }
@@ -1270,7 +1270,7 @@
   
   /* Card scaling for small screens */
   .pixel-quiz-card {
-    width: 200px !important;
+    width: 100% !important;
     height: 140px !important;
     overflow: hidden !important;
   }

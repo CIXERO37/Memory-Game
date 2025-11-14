@@ -583,7 +583,7 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
             {loading ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
