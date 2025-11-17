@@ -286,5 +286,21 @@ export const quizApi = {
     const publicQuizzes = (data || []).filter(isQuizPublic)
 
     return publicQuizzes
+  },
+
+  // Get quizzes created by a specific user (including private ones)
+  async getQuizzesByCreator(creatorId: string): Promise<Quiz[]> {
+    const { data, error } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('creator_id', creatorId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching quizzes by creator:', error)
+      throw error
+    }
+
+    return data || []
   }
 }

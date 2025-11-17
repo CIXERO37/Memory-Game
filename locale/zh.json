@@ -18,7 +18,7 @@
   "selectQuiz": {
     "title": "选择测验",
     "searchLabel": "搜索",
-    "searchPlaceholder": "按标题或描述搜索...",
+    "searchPlaceholder": "搜索测验",
     "categoriesLabel": "类别",
     "allCategories": "所有类别",
     "categories": {
