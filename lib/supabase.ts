@@ -65,6 +65,28 @@ export interface Quiz {
   updated_at: string
 }
 
+// Helper function to check if quiz is public
+// Support berbagai format: is_public sebagai kolom atau di metadata
+function isQuizPublic(quiz: any): boolean {
+  // Cek is_public sebagai kolom langsung
+  if (quiz.is_public === false || quiz.is_public === 'false') return false
+  if (quiz.is_public === true || quiz.is_public === 'true') return true
+  
+  // Cek di metadata (JSONB)
+  if (quiz.metadata) {
+    // Cek metadata.is_public
+    if (quiz.metadata.is_public === false || quiz.metadata.is_public === 'false') return false
+    if (quiz.metadata.is_public === true || quiz.metadata.is_public === 'true') return true
+    
+    // Cek metadata.public
+    if (quiz.metadata.public === false || quiz.metadata.public === 'false') return false
+    if (quiz.metadata.public === true || quiz.metadata.public === 'true') return true
+  }
+  
+  // Default: jika tidak ada field is_public, anggap public (backward compatibility)
+  return true
+}
+
 // Quiz API functions
 export const quizApi = {
   // Get all quizzes
@@ -85,6 +107,7 @@ export const quizApi = {
       console.log('Supabase URL:', supabaseUrl)
       console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing')
       
+      // Fetch semua quiz, kemudian filter di client side untuk quiz public
       const { data, error } = await supabase
         .from('quizzes')
         .select('*')
@@ -95,8 +118,11 @@ export const quizApi = {
         throw new Error(`Database error: ${error.message}. Please check your Supabase project settings and database permissions.`)
       }
 
-      console.log('Raw data from Supabase:', data)
-      return data || []
+      // Filter hanya quiz yang public
+      const publicQuizzes = (data || []).filter(isQuizPublic)
+
+      console.log('Raw data from Supabase (filtered to public only):', publicQuizzes)
+      return publicQuizzes
     } catch (err) {
       console.error('Error in getQuizzes:', err)
       throw err
@@ -237,7 +263,10 @@ export const quizApi = {
       throw error
     }
 
-    return data || []
+    // Filter hanya quiz yang public
+    const publicQuizzes = (data || []).filter(isQuizPublic)
+
+    return publicQuizzes
   },
 
   // Get quizzes by category
@@ -253,6 +282,9 @@ export const quizApi = {
       throw error
     }
 
-    return data || []
+    // Filter hanya quiz yang public
+    const publicQuizzes = (data || []).filter(isQuizPublic)
+
+    return publicQuizzes
   }
 }
