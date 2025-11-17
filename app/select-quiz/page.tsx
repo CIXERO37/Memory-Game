@@ -4,11 +4,12 @@ import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check, Book, BookOpen, Beaker, Calculator, Clock, Globe, Languages, Laptop, Dumbbell, Film, Briefcase, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check, Book, BookOpen, Beaker, Calculator, Clock, Globe, Languages, Laptop, Dumbbell, Film, Briefcase, ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQuizzes } from "@/hooks/use-quiz"
 import { useTranslation } from "react-i18next"
+import { supabase } from "@/lib/supabase"
 
 // Categories and background images mapping
 const categories = [
@@ -111,6 +112,75 @@ const getCategoryIcon = (category: string) => {
   return categoryData?.icon || categories[1].icon; // Default to General if not found
 };
 
+// Helper function to get category color (matching dropdown filter colors)
+const getCategoryColor = (category: string | undefined): string => {
+  if (!category) return 'bg-blue-500'; // Default to General
+  
+  const categoryLower = category.toLowerCase();
+  
+  // Match colors with dropdown filter
+  switch (categoryLower) {
+    case 'general':
+      return 'bg-blue-500';
+    case 'science':
+      return 'bg-green-500';
+    case 'mathematics':
+    case 'math':
+      return 'bg-red-500';
+    case 'history':
+      return 'bg-yellow-500';
+    case 'geography':
+      return 'bg-teal-500';
+    case 'language':
+      return 'bg-purple-500';
+    case 'technology':
+      return 'bg-blue-500';
+    case 'sports':
+      return 'bg-orange-500';
+    case 'entertainment':
+      return 'bg-pink-500';
+    case 'business':
+      return 'bg-indigo-500'; // Use indigo for Business to match dropdown icon
+    default:
+      return 'bg-gray-500';
+  }
+};
+
+// Helper function to get quiz-specific background image (if provided in Supabase)
+const getQuizBackgroundImage = (quiz: any): string => {
+  if (!quiz) {
+    return getCategoryBgImage('general');
+  }
+
+  // Possible image fields on the quiz object
+  const directImage =
+    quiz.image_url ||
+    quiz.imageUrl ||
+    quiz.cover_image ||
+    quiz.coverImage ||
+    quiz.banner_image ||
+    quiz.bannerImage ||
+    quiz.thumbnail ||
+    quiz.thumbnailUrl;
+
+  // Possible image fields inside metadata
+  const metadataImage =
+    quiz.metadata?.image_url ||
+    quiz.metadata?.imageUrl ||
+    quiz.metadata?.cover_image ||
+    quiz.metadata?.coverImage ||
+    quiz.metadata?.background_image ||
+    quiz.metadata?.backgroundImage ||
+    quiz.metadata?.thumbnail ||
+    quiz.metadata?.thumbnailUrl;
+
+  return (
+    directImage ||
+    metadataImage ||
+    getCategoryBgImage(quiz.category || 'General')
+  );
+};
+
 
 export default function SelectQuizPage() {
   const router = useRouter()
@@ -121,6 +191,8 @@ export default function SelectQuizPage() {
   const [isSelectAllExpanded, setIsSelectAllExpanded] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 6 // 2 rows x 3 columns
+  const [favoriteQuizIds, setFavoriteQuizIds] = useState<string[]>([])
+  const [isFavoriteFilterActive, setIsFavoriteFilterActive] = useState(false)
   
   // Fetch quizzes from Supabase
   const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
@@ -159,15 +231,81 @@ export default function SelectQuizPage() {
     return supabaseQuizzes
   }, [supabaseQuizzes])
 
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchFavoriteQuizzes = async (providedUserId?: string | null) => {
+      try {
+        const targetUserId =
+          providedUserId ??
+          (await supabase.auth.getUser()).data.user?.id
+
+        if (!targetUserId) {
+          if (isMounted) {
+            setFavoriteQuizIds([])
+            setIsFavoriteFilterActive(false)
+          }
+          return
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("favorite_quiz")
+          .eq("auth_user_id", targetUserId)
+          .single()
+
+        if (error) {
+          throw error
+        }
+
+        const favorites = Array.isArray(data?.favorite_quiz?.favorites)
+          ? data.favorite_quiz.favorites.filter(
+              (quizId: unknown): quizId is string => typeof quizId === "string"
+            )
+          : []
+
+        if (isMounted) {
+          setFavoriteQuizIds(favorites)
+          if (favorites.length === 0) {
+            setIsFavoriteFilterActive(false)
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching favorite quizzes:", err)
+        if (isMounted) {
+          setFavoriteQuizIds([])
+          setIsFavoriteFilterActive(false)
+        }
+      }
+    }
+
+    fetchFavoriteQuizzes()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        fetchFavoriteQuizzes(session?.user?.id ?? null)
+      }
+    )
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
   const filteredQuizzes = useMemo(() => {
     return quizzes.filter((quiz) => {
-      const matchesSearch = searchTerm === "" || 
-                           quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (quiz.description && quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      const matchesSearch =
+        searchTerm === "" ||
+        quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (quiz.description &&
+          quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
       const matchesCategory = categoryFilter === "all" || quiz.category === categoryFilter
-      return matchesSearch && matchesCategory
+      const matchesFavorites =
+        !isFavoriteFilterActive || favoriteQuizIds.includes(quiz.id)
+      return matchesSearch && matchesCategory && matchesFavorites
     })
-  }, [quizzes, searchTerm, categoryFilter])
+  }, [quizzes, searchTerm, categoryFilter, isFavoriteFilterActive, favoriteQuizIds])
 
   // Pagination logic
   const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage)
@@ -329,8 +467,44 @@ export default function SelectQuizPage() {
               
               {/* Pixel Category Filter */}
               <div className="sm:w-56">
-                <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
+                <div className="inline-flex items-center bg-white border border-black rounded px-2 py-1 mb-2 gap-2">
                   <label className="text-black font-bold text-xs sm:text-sm">{t('selectQuiz.categoriesLabel')}</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (favoriteQuizIds.length > 0) {
+                        setIsFavoriteFilterActive((prev) => !prev)
+                      }
+                    }}
+                    disabled={favoriteQuizIds.length === 0}
+                    aria-pressed={isFavoriteFilterActive}
+                    aria-label={t('selectQuiz.favoriteFilterToggle', { defaultValue: 'Show favorite quizzes' })}
+                    title={
+                      favoriteQuizIds.length === 0
+                        ? t('selectQuiz.noFavoritesTooltip', { defaultValue: 'No favorite quizzes saved yet' })
+                        : isFavoriteFilterActive
+                          ? t('selectQuiz.showAllQuizzes', { defaultValue: 'Show all quizzes' })
+                          : t('selectQuiz.showFavoritesOnly', { defaultValue: 'Show favorite quizzes only' })
+                    }
+                    className={`inline-flex items-center justify-center rounded border border-black px-1 py-0.5 transition ${
+                      favoriteQuizIds.length === 0
+                        ? "cursor-not-allowed bg-gray-200 text-gray-400"
+                        : isFavoriteFilterActive
+                          ? "bg-pink-100 text-pink-600 hover:bg-pink-200"
+                          : "bg-white text-gray-600 hover:bg-pink-50 hover:text-pink-600"
+                    }`}
+                  >
+                    <Heart
+                      className="h-3.5 w-3.5"
+                      strokeWidth={2.5}
+                      fill={isFavoriteFilterActive ? "currentColor" : "none"}
+                    />
+                    {favoriteQuizIds.length > 0 && (
+                      <span className="ml-1 text-[10px] font-black leading-none">
+                        {favoriteQuizIds.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
                 <div className="relative">
                   <div className="relative">
@@ -704,17 +878,8 @@ export default function SelectQuizPage() {
               </div>
             ) : (
               currentQuizzes.map((quiz) => {
-                const categoryBgImage = getCategoryBgImage(quiz.category || 'General');
-                const categoryColor = quiz.category === 'General' ? 'bg-blue-500' : 
-                                    quiz.category === 'Science' ? 'bg-green-500' :
-                                    quiz.category === 'Mathematics' ? 'bg-red-500' :
-                                    quiz.category === 'History' ? 'bg-yellow-500' :
-                                    quiz.category === 'Geography' ? 'bg-teal-500' :
-                                    quiz.category === 'Language' ? 'bg-purple-500' :
-                                    quiz.category === 'Technology' ? 'bg-blue-500' :
-                                    quiz.category === 'Sports' ? 'bg-orange-500' :
-                                    quiz.category === 'Entertainment' ? 'bg-pink-500' :
-                                    quiz.category === 'Business' ? 'bg-purple-500' : 'bg-gray-500'
+                const quizBgImage = getQuizBackgroundImage(quiz);
+                const categoryColor = getCategoryColor(quiz.category);
                 return (
                   <div
                     key={quiz.id}
@@ -724,7 +889,7 @@ export default function SelectQuizPage() {
                     <div 
                       className="relative pixel-quiz-card bg-cover bg-center bg-no-repeat"
                       style={{
-                        backgroundImage: `url(${categoryBgImage})`,
+                        backgroundImage: `url(${quizBgImage})`,
                       }}
                     >
                       {/* Light overlay for better text readability */}
@@ -746,15 +911,6 @@ export default function SelectQuizPage() {
                                 {translateCategory(quiz.category)}
                               </span>
                             </div>
-                          </div>
-                        </div>
-                        
-                        {/* Description */}
-                        <div className="bg-black/20 border border-white/30 rounded px-1.5 py-0.5 mb-2 flex-1 min-h-0 overflow-hidden">
-                          <div className="mobile-description-scroll">
-                            <p className="text-xs text-white font-medium leading-tight">
-                              {quiz.description?.toUpperCase() || ''}
-                            </p>
                           </div>
                         </div>
                         
@@ -782,11 +938,6 @@ export default function SelectQuizPage() {
                           <h3 className="text-base font-bold text-black">
                             {quiz.title.toUpperCase()}
                           </h3>
-                        </div>
-                        <div className="bg-black/20 border border-white/30 rounded px-2 py-1 mb-3">
-                          <p className="text-xs text-white font-medium leading-relaxed">
-                            {quiz.description?.toUpperCase() || ''}
-                          </p>
                         </div>
                         <div className="bg-blue-500 border-2 border-black rounded px-2 py-1">
                           <div className="text-xs text-white font-bold">
