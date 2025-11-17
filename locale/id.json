@@ -18,7 +18,7 @@
   "selectQuiz": {
     "title": "PILIH KUIS",
     "searchLabel": "CARI",
-    "searchPlaceholder": "Cari berdasarkan judul atau deskripsi...",
+    "searchPlaceholder": "Cari kuis",
     "categoriesLabel": "KATEGORI",
     "allCategories": "SEMUA KATEGORI",
     "categories": {

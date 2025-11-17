@@ -9,7 +9,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQuizzes } from "@/hooks/use-quiz"
 import { useTranslation } from "react-i18next"
-import { supabase } from "@/lib/supabase"
+import { supabase, quizApi } from "@/lib/supabase"
 
 // Categories and background images mapping
 const categories = [
@@ -192,10 +192,35 @@ export default function SelectQuizPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 6 // 2 rows x 3 columns
   const [favoriteQuizIds, setFavoriteQuizIds] = useState<string[]>([])
-  const [isFavoriteFilterActive, setIsFavoriteFilterActive] = useState(false)
+  const [activeTab, setActiveTab] = useState<"quiz" | "my-quiz" | "favorite">("quiz")
+  const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null)
+  const [myQuizzes, setMyQuizzes] = useState<any[]>([])
+  const [loadingMyQuizzes, setLoadingMyQuizzes] = useState(false)
   
   // Fetch quizzes from Supabase
   const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
+
+  // Helper function to normalize category name (for consistent filtering)
+  const normalizeCategory = (category: string | undefined | null): string => {
+    if (!category) return 'General'
+    
+    const categoryLower = category.toLowerCase().trim()
+    const categoryMap: { [key: string]: string } = {
+      'general': 'General',
+      'science': 'Science',
+      'mathematics': 'Mathematics',
+      'math': 'Mathematics',
+      'history': 'History',
+      'geography': 'Geography',
+      'language': 'Language',
+      'technology': 'Technology',
+      'sports': 'Sports',
+      'entertainment': 'Entertainment',
+      'business': 'Business'
+    }
+    
+    return categoryMap[categoryLower] || 'General'
+  }
 
   // Helper function to translate category
   const translateCategory = (category: string | undefined) => {
@@ -234,7 +259,7 @@ export default function SelectQuizPage() {
   useEffect(() => {
     let isMounted = true
 
-    const fetchFavoriteQuizzes = async (providedUserId?: string | null) => {
+    const fetchUserProfileAndFavorites = async (providedUserId?: string | null) => {
       try {
         const targetUserId =
           providedUserId ??
@@ -243,14 +268,15 @@ export default function SelectQuizPage() {
         if (!targetUserId) {
           if (isMounted) {
             setFavoriteQuizIds([])
-            setIsFavoriteFilterActive(false)
+            setCurrentUserProfileId(null)
           }
           return
         }
 
+        // Get profile ID and favorite quizzes
         const { data, error } = await supabase
           .from("profiles")
-          .select("favorite_quiz")
+          .select("id, favorite_quiz")
           .eq("auth_user_id", targetUserId)
           .single()
 
@@ -265,25 +291,23 @@ export default function SelectQuizPage() {
           : []
 
         if (isMounted) {
+          setCurrentUserProfileId(data?.id || null)
           setFavoriteQuizIds(favorites)
-          if (favorites.length === 0) {
-            setIsFavoriteFilterActive(false)
-          }
         }
       } catch (err) {
-        console.error("Error fetching favorite quizzes:", err)
+        console.error("Error fetching user profile and favorites:", err)
         if (isMounted) {
           setFavoriteQuizIds([])
-          setIsFavoriteFilterActive(false)
+          setCurrentUserProfileId(null)
         }
       }
     }
 
-    fetchFavoriteQuizzes()
+    fetchUserProfileAndFavorites()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        fetchFavoriteQuizzes(session?.user?.id ?? null)
+        fetchUserProfileAndFavorites(session?.user?.id ?? null)
       }
     )
 
@@ -293,19 +317,80 @@ export default function SelectQuizPage() {
     }
   }, [])
 
+  // Fetch user's quizzes when profile ID is available
+  useEffect(() => {
+    const fetchMyQuizzes = async () => {
+      if (!currentUserProfileId) {
+        setMyQuizzes([])
+        return
+      }
+
+      try {
+        setLoadingMyQuizzes(true)
+        const userQuizzes = await quizApi.getQuizzesByCreator(currentUserProfileId)
+        setMyQuizzes(userQuizzes)
+      } catch (err) {
+        console.error("Error fetching user's quizzes:", err)
+        setMyQuizzes([])
+      } finally {
+        setLoadingMyQuizzes(false)
+      }
+    }
+
+    // Fetch my quizzes when user profile ID is available (needed for both "My Quiz" and "Favorite" tabs)
+    if (currentUserProfileId) {
+      fetchMyQuizzes()
+    } else {
+      setMyQuizzes([])
+    }
+  }, [currentUserProfileId])
+
   const filteredQuizzes = useMemo(() => {
-    return quizzes.filter((quiz) => {
+    // First filter by tab
+    let tabFilteredQuizzes = quizzes
+    
+    if (activeTab === "my-quiz") {
+      // Use myQuizzes which includes all quizzes created by user (including private)
+      tabFilteredQuizzes = myQuizzes
+    } else if (activeTab === "favorite") {
+      // Filter favorite quizzes from all quizzes (including private ones if user created them)
+      // First get favorite quizzes from public quizzes
+      let favoriteFromPublic = quizzes.filter((quiz) => 
+        favoriteQuizIds.includes(quiz.id)
+      )
+      // Also include favorite quizzes from myQuizzes (in case user favorited their own private quiz)
+      const favoriteFromMy = myQuizzes.filter((quiz) => 
+        favoriteQuizIds.includes(quiz.id)
+      )
+      // Combine and remove duplicates
+      const allFavorites = [...favoriteFromPublic, ...favoriteFromMy]
+      tabFilteredQuizzes = allFavorites.filter((quiz, index, self) =>
+        index === self.findIndex((q) => q.id === quiz.id)
+      )
+    } else {
+      // "quiz" tab - show all public quizzes (default behavior)
+      tabFilteredQuizzes = quizzes
+    }
+    
+    // Then apply search and category filters
+    return tabFilteredQuizzes.filter((quiz) => {
       const matchesSearch =
         searchTerm === "" ||
         quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (quiz.description &&
           quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      const matchesCategory = categoryFilter === "all" || quiz.category === categoryFilter
-      const matchesFavorites =
-        !isFavoriteFilterActive || favoriteQuizIds.includes(quiz.id)
-      return matchesSearch && matchesCategory && matchesFavorites
+      
+      // Category filter - normalize and compare
+      let matchesCategory = true
+      if (categoryFilter !== "all") {
+        const quizCategory = normalizeCategory(quiz.category)
+        const filterCategory = normalizeCategory(categoryFilter)
+        matchesCategory = quizCategory === filterCategory
+      }
+      
+      return matchesSearch && matchesCategory
     })
-  }, [quizzes, searchTerm, categoryFilter, isFavoriteFilterActive, favoriteQuizIds])
+  }, [quizzes, myQuizzes, searchTerm, categoryFilter, activeTab, favoriteQuizIds])
 
   // Pagination logic
   const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage)
@@ -316,7 +401,7 @@ export default function SelectQuizPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, categoryFilter])
+  }, [searchTerm, categoryFilter, activeTab])
 
   const handlePreviousPage = () => {
     setCurrentPage(prev => Math.max(prev - 1, 1))
@@ -374,6 +459,47 @@ export default function SelectQuizPage() {
   const handleQuizSelect = (quizId: string) => {
     // Navigate to settings page with quizId
     router.push(`/quiz-settings?quizId=${quizId}`)
+  }
+
+  const toggleFavorite = async (quizId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    
+    if (!currentUserProfileId) {
+      // User not logged in, redirect to login or show message
+      return
+    }
+
+    try {
+      const isFavorite = favoriteQuizIds.includes(quizId)
+      let updatedFavorites: string[]
+
+      if (isFavorite) {
+        // Remove from favorites
+        updatedFavorites = favoriteQuizIds.filter(id => id !== quizId)
+      } else {
+        // Add to favorites
+        updatedFavorites = [...favoriteQuizIds, quizId]
+      }
+
+      // Update in database
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          favorite_quiz: {
+            favorites: updatedFavorites
+          }
+        })
+        .eq("id", currentUserProfileId)
+
+      if (error) {
+        throw error
+      }
+
+      // Update local state
+      setFavoriteQuizIds(updatedFavorites)
+    } catch (err) {
+      console.error("Error toggling favorite:", err)
+    }
   }
 
   return (
@@ -443,14 +569,48 @@ export default function SelectQuizPage() {
 
         {/* Quiz Selector Content */}
         <div className="max-w-4xl mx-auto">
+          {/* Tabs Section */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex gap-2 sm:gap-3 justify-start flex-wrap">
+              <button
+                onClick={() => setActiveTab("quiz")}
+                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${
+                  activeTab === "quiz"
+                    ? "bg-blue-500 text-white"
+                    : "bg-white text-black hover:bg-gray-100"
+                }`}
+              >
+                {t('selectQuiz.tabs.quiz', { defaultValue: 'Quiz' })}
+              </button>
+              <button
+                onClick={() => setActiveTab("my-quiz")}
+                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${
+                  activeTab === "my-quiz"
+                    ? "bg-green-500 text-white"
+                    : "bg-white text-black hover:bg-gray-100"
+                }`}
+              >
+                {t('selectQuiz.tabs.myQuiz', { defaultValue: 'My Quiz' })}
+              </button>
+              <button
+                onClick={() => setActiveTab("favorite")}
+                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center gap-1 sm:gap-2 shadow-lg ${
+                  activeTab === "favorite"
+                    ? "bg-pink-500 text-white"
+                    : "bg-white text-black hover:bg-gray-100"
+                }`}
+              >
+                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill={activeTab === "favorite" ? "currentColor" : "none"} strokeWidth={2.5} />
+                {t('selectQuiz.tabs.favorite', { defaultValue: 'Favorite' })}
+              </button>
+            </div>
+          </div>
+
           {/* Pixel Search and Filter Section */}
           <div className="mb-6 sm:mb-8 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Pixel Search Input */}
               <div className="relative flex-1">
-                <div className="inline-block bg-white border border-black rounded px-2 py-1 mb-2">
-                  <label className="text-black font-bold text-xs sm:text-sm">{t('selectQuiz.searchLabel')}</label>
-                </div>
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
                     <Search className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
@@ -467,45 +627,6 @@ export default function SelectQuizPage() {
               
               {/* Pixel Category Filter */}
               <div className="sm:w-56">
-                <div className="inline-flex items-center bg-white border border-black rounded px-2 py-1 mb-2 gap-2">
-                  <label className="text-black font-bold text-xs sm:text-sm">{t('selectQuiz.categoriesLabel')}</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (favoriteQuizIds.length > 0) {
-                        setIsFavoriteFilterActive((prev) => !prev)
-                      }
-                    }}
-                    disabled={favoriteQuizIds.length === 0}
-                    aria-pressed={isFavoriteFilterActive}
-                    aria-label={t('selectQuiz.favoriteFilterToggle', { defaultValue: 'Show favorite quizzes' })}
-                    title={
-                      favoriteQuizIds.length === 0
-                        ? t('selectQuiz.noFavoritesTooltip', { defaultValue: 'No favorite quizzes saved yet' })
-                        : isFavoriteFilterActive
-                          ? t('selectQuiz.showAllQuizzes', { defaultValue: 'Show all quizzes' })
-                          : t('selectQuiz.showFavoritesOnly', { defaultValue: 'Show favorite quizzes only' })
-                    }
-                    className={`inline-flex items-center justify-center rounded border border-black px-1 py-0.5 transition ${
-                      favoriteQuizIds.length === 0
-                        ? "cursor-not-allowed bg-gray-200 text-gray-400"
-                        : isFavoriteFilterActive
-                          ? "bg-pink-100 text-pink-600 hover:bg-pink-200"
-                          : "bg-white text-gray-600 hover:bg-pink-50 hover:text-pink-600"
-                    }`}
-                  >
-                    <Heart
-                      className="h-3.5 w-3.5"
-                      strokeWidth={2.5}
-                      fill={isFavoriteFilterActive ? "currentColor" : "none"}
-                    />
-                    {favoriteQuizIds.length > 0 && (
-                      <span className="ml-1 text-[10px] font-black leading-none">
-                        {favoriteQuizIds.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
                 <div className="relative">
                   <div className="relative">
                     <Button
@@ -758,7 +879,7 @@ export default function SelectQuizPage() {
           </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
-            {loading ? (
+            {(loading || (activeTab === "my-quiz" && loadingMyQuizzes)) ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
@@ -897,6 +1018,25 @@ export default function SelectQuizPage() {
                       
                       {/* Mobile Layout - Stacked */}
                       <div className="sm:hidden flex flex-col h-full p-2 overflow-hidden relative z-10">
+                        {/* Favorite Heart Icon - Mobile */}
+                        {currentUserProfileId && (
+                          <button
+                            onClick={(e) => toggleFavorite(quiz.id, e)}
+                            className="absolute top-1 right-1 bg-white border-2 border-black rounded-lg p-2 shadow-lg z-20 hover:scale-110 transition-transform duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            aria-label={favoriteQuizIds.includes(quiz.id) ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Heart
+                              className={`h-5 w-5 ${
+                                favoriteQuizIds.includes(quiz.id)
+                                  ? "text-pink-500 fill-pink-500"
+                                  : "text-gray-400"
+                              }`}
+                              strokeWidth={2.5}
+                              fill={favoriteQuizIds.includes(quiz.id) ? "currentColor" : "none"}
+                            />
+                          </button>
+                        )}
+                        
                         {/* Header with title and category */}
                         <div className="flex items-start justify-between mb-2 gap-1">
                           <div className="bg-white border-2 border-black rounded px-1.5 py-0.5 shadow-lg flex-1 min-w-0 overflow-hidden">
@@ -925,7 +1065,7 @@ export default function SelectQuizPage() {
                       {/* Desktop Layout - Original */}
                       <div className="hidden sm:flex absolute inset-0 flex-col justify-center items-center text-center px-4 z-20">
                         {/* Pixel Category badge */}
-                        <div className={`absolute -top-2 -right-2 ${categoryColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform rotate-3`}>
+                        <div className={`absolute -top-2 -left-2 ${categoryColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform -rotate-3`}>
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                             <span className="text-white font-bold text-xs tracking-wide">
@@ -933,6 +1073,25 @@ export default function SelectQuizPage() {
                             </span>
                           </div>
                         </div>
+                        
+                        {/* Favorite Heart Icon */}
+                        {currentUserProfileId && (
+                          <button
+                            onClick={(e) => toggleFavorite(quiz.id, e)}
+                            className="absolute -top-2 -right-2 bg-white border-2 border-black rounded-lg p-2 shadow-xl z-20 transform rotate-3 hover:scale-110 transition-transform duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            aria-label={favoriteQuizIds.includes(quiz.id) ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Heart
+                              className={`h-6 w-6 ${
+                                favoriteQuizIds.includes(quiz.id)
+                                  ? "text-pink-500 fill-pink-500"
+                                  : "text-gray-400"
+                              }`}
+                              strokeWidth={2.5}
+                              fill={favoriteQuizIds.includes(quiz.id) ? "currentColor" : "none"}
+                            />
+                          </button>
+                        )}
                         
                         <div className="bg-white border-2 border-black rounded px-3 py-1 mb-2 shadow-lg">
                           <h3 className="text-base font-bold text-black">
