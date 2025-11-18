@@ -1035,7 +1035,7 @@
 }
 
 .pixel-quiz-card {
-  border: 4px solid #000;
+  border: 2px solid #000;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   width: 280px;
@@ -1149,6 +1149,19 @@
     font-size: 6rem !important;
     letter-spacing: 0.1em;
   }
+}
+
+
+.desktop-title-ellipsis {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  max-height: calc(1.2em * 3);
+  word-break: break-word;
 }
 
 /* Mobile Responsive Design */
@@ -1952,16 +1965,17 @@ a, button, [role="button"] {
     overflow: hidden !important;
   }
   
-  /* Title ellipsis after 2 lines */
+  /* Title ellipsis after 3 lines */
   .mobile-title-ellipsis {
     display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    line-clamp: 2 !important;
+    -webkit-line-clamp: 3 !important;
+    line-clamp: 3 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     line-height: 1.2 !important;
-    max-height: calc(1.2em * 2) !important;
+    max-height: calc(1.2em * 3) !important;
+    word-break: break-word !important;
   }
   
   /* Description scrollable with indicator */

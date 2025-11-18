@@ -243,7 +243,8 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
   }
 
   const email = user.email || ''
-  const name = user.user_metadata?.full_name || user.user_metadata?.name || ''
+  // Prefer Google metadata name fields initially; will be overridden by DB if available
+  let name = user.user_metadata?.full_name || user.user_metadata?.name || ''
   
   // Start with metadata values (fast fallback)
   let username = ''
@@ -265,7 +266,8 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
       // This prevents blocking if database is slow
       const queryPromise = supabase
         .from('users_profile')
-        .select('username, full_name, avatar_url')
+        // Some schemas use `full_name`, others use `fullname` — request both
+        .select('username, full_name, fullname, avatar_url')
         .eq('id', user.id)
         .single()
       
@@ -282,20 +284,29 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
       const { data: profileData, error } = result
       
       if (!error && profileData) {
-        // Use username from database if available
+        // Prefer database full_name/fullname as authoritative name when present
+        if (profileData.full_name) {
+          name = profileData.full_name
+        } else if ((profileData as any).fullname) {
+          // some deployments use `fullname` column
+          name = (profileData as any).fullname
+        }
+
+        // Use username from database if available (fallback for display names)
         if (profileData.username) {
           username = profileData.username
         }
-        // Use avatar from database if available
+
+        // Use avatar from database if available; otherwise keep Google avatar
         if (profileData.avatar_url) {
           avatar_url = profileData.avatar_url
         }
-        // Use full_name from database if available and name is empty
-        if (!name && profileData.full_name) {
-          const nameFromDb = profileData.full_name
-          if (!username) {
-            username = nameFromDb
-          }
+
+        // If username still empty, try to derive from full_name/fullname
+        if (!username && profileData.full_name) {
+          username = profileData.full_name
+        } else if (!username && (profileData as any).fullname) {
+          username = (profileData as any).fullname
         }
       }
     } catch (error) {
@@ -310,7 +321,7 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
     return {
       id: user.id,
       email,
-      name: name || username, // Use name from metadata or username as fallback
+      name: name || username, // prefer DB full_name or Google metadata name, fallback to username
       avatar_url,
       username
     }

@@ -252,7 +252,7 @@ export default function HomePage() {
         <FallingPixelCards />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 min-h-screen flex flex-col justify-center">
+  <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 min-h-screen flex flex-col justify-center">
         {/* Main Content */}
         <div className="text-center mb-8 sm:mb-16">
           {/* Pixel Title */}
@@ -266,7 +266,8 @@ export default function HomePage() {
                 className="h-auto w-auto object-contain animate-smooth-bounce"
                 style={{ 
                   filter: 'contrast(1.2) brightness(1.1) drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
-                  width: 'min(75vw, 500px)',
+                  // slightly smaller on very small screens to avoid overflow
+                  width: 'min(85vw, 500px)',
                   maxWidth: '500px',
                   imageRendering: 'crisp-edges',
                 }}
@@ -288,11 +289,11 @@ export default function HomePage() {
         </div>
 
         {/* Pixel Action Buttons */}
-        <div className="flex flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
+  <div className="flex flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
           <Link href="/select-quiz" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-linear-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-linear-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-lg sm:text-2xl lg:text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
+      <button className="relative w-full h-14 sm:h-20 lg:h-24 bg-linear-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-base sm:text-2xl lg:text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-3 sm:px-6">
                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black rounded border-2 border-white flex items-center justify-center">
                     <Server className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
@@ -303,10 +304,10 @@ export default function HomePage() {
             </div>
           </Link>
           
-          <Link href="/join" className="flex-1 min-w-0">
+      <Link href="/join" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative w-full h-16 sm:h-20 lg:h-24 bg-linear-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg sm:text-2xl lg:text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-4 sm:px-6">
+        <button className="relative w-full h-14 sm:h-20 lg:h-24 bg-linear-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-base sm:text-2xl lg:text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-3 sm:px-6">
                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded border-2 border-black flex items-center justify-center">
                     <Play className="w-3 h-3 sm:w-5 sm:h-5 text-black" />

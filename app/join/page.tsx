@@ -101,8 +101,8 @@ function JoinPageContent() {
     console.log('Loading:', loading)
     console.log('Is Authenticated:', isAuthenticated)
     console.log('User Profile:', userProfile)
-    console.log('User Profile Nickname:', userProfile?.fullname || userProfile?.username)
-    console.log('User Profile Name:', userProfile?.name)
+  console.log('User Profile Nickname:', userProfile?.name || userProfile?.username)
+  console.log('User Profile Name:', userProfile?.name)
     console.log('Avatar URL:', userProfile?.avatar_url)
     console.log('User Changed Avatar:', userChangedAvatar)
     console.log('User Changed Nickname:', userChangedNickname)
@@ -110,8 +110,8 @@ function JoinPageContent() {
     console.log('========================')
     
     if (!loading && isAuthenticated && userProfile) {
-      // Get nickname from Google - prioritize fullname field, then username, then name field
-      const authNickname = userProfile.fullname || userProfile.username || userProfile.name || ""
+  // Get nickname from Google - prioritize name field, then username
+  const authNickname = userProfile.name || userProfile.username || ""
       
       // If user is authenticated, ALWAYS use Google nickname unless user manually changed it
       if (authNickname) {
@@ -153,7 +153,7 @@ function JoinPageContent() {
   useEffect(() => {
     // If user becomes authenticated and nickname is empty or doesn't match Google nickname, update it
     if (!loading && isAuthenticated && userProfile && !userChangedNickname) {
-      const authNickname = userProfile.fullname || userProfile.username || userProfile.name || ""
+  const authNickname = userProfile.name || userProfile.username || ""
       if (authNickname) {
         // If nickname is empty or different from Google nickname, update it
         if (!nickname || nickname.trim() === "" || nickname !== authNickname) {
@@ -169,7 +169,7 @@ function JoinPageContent() {
     if (!loading && !nickname.trim() && !userChangedNickname) {
       // Try to restore from auth first (highest priority)
       if (isAuthenticated && userProfile) {
-        const authNickname = userProfile.fullname || userProfile.username || userProfile.name || ""
+  const authNickname = userProfile.name || userProfile.username || ""
         if (authNickname) {
           console.log('Emergency restore from Google auth:', authNickname)
           setNickname(authNickname)
@@ -494,7 +494,7 @@ function JoinPageContent() {
         <Link href="/">
               <div className="relative pixel-button-container">
                 <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                <Button variant="outline" size="default" className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-[44px] min-w-[44px]">
+                <Button variant="outline" size="default" className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-11 min-w-11">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </div>
@@ -559,7 +559,7 @@ function JoinPageContent() {
                           <Button
                             type="button"
                             onClick={() => setShowScanner(true)}
-                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-[36px]"
+                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-9"
                           >
                             <Camera className="h-4 w-4" />
                             <span>SCAN</span>
@@ -606,7 +606,7 @@ function JoinPageContent() {
                           <Button
                             type="button"
                             onClick={() => setShowScanner(true)}
-                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-[36px]"
+                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-9"
                           >
                             <Camera className="h-4 w-4" />
                             <span>SCAN</span>
@@ -661,7 +661,7 @@ function JoinPageContent() {
                     {/* Pixel Button */}
                     <div className="pt-3 sm:pt-4">
                       <Button
-                        className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-base sm:text-lg py-3 sm:py-3 transform hover:scale-105 transition-all duration-200 min-h-[44px]"
+                        className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-base sm:text-lg py-3 sm:py-3 transform hover:scale-105 transition-all duration-200 min-h-11"
                         onClick={handleJoinRoom}
                         disabled={isJoining || hasClickedJoin}
                       >
