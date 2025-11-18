@@ -28,11 +28,11 @@ class RoomManager {
     return await supabaseRoomManager.getRoom(roomCode)
   }
 
-  async joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost" | "user_id" | "nickname">, userId?: string): Promise<boolean> {
+  async joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost">, userId?: string): Promise<boolean> {
     return await supabaseRoomManager.joinRoom(roomCode, player, userId)
   }
 
-  async rejoinRoom(roomCode: string, player: Omit<Player, "joinedAt" | "isReady" | "isHost" | "user_id" | "nickname">, userId?: string): Promise<boolean> {
+  async rejoinRoom(roomCode: string, player: Omit<Player, "joinedAt" | "isReady" | "isHost">, userId?: string): Promise<boolean> {
     return await supabaseRoomManager.rejoinRoom(roomCode, player, userId)
   }
 

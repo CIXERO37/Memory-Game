@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check, Book, BookOpen, Beaker, Calculator, Clock, Globe, Languages, Laptop, Dumbbell, Film, Briefcase, ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -245,9 +246,13 @@ export default function SelectQuizPage() {
     return t(`selectQuiz.categories.${mappedCategory}`)
   }
 
+  const executeSearch = () => {
+    setSearchTerm(searchInput)
+  }
+
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      setSearchTerm(searchInput)
+      executeSearch()
     }
   }
 
@@ -519,11 +524,11 @@ export default function SelectQuizPage() {
         <PixelBackgroundElements />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
+  <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Pixel Header */}
-        <div className="relative flex items-center justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
+          <div className="relative flex items-center justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
           {/* Left side - Back Button and Memory Quiz Logo */}
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <Link href="/">
               <div className="relative pixel-button-container">
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
@@ -546,12 +551,13 @@ export default function SelectQuizPage() {
             </div>
           </div>
           
-          {/* Center - Title */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
+          {/* Center - Title (desktop centered). On mobile we'll show a compact inline title to avoid overlap */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 hidden sm:block">
             <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 py-1 sm:py-2 pixel-header-title">
               <h1 className="text-lg sm:text-xl font-bold text-black">{t('selectQuiz.title')}</h1>
             </div>
           </div>
+          {/* Mobile compact title removed to avoid clutter on small screens */}
           
           {/* Right side - GameForSmart Logo with glow effect */}
           <div className="flex-shrink-0">
@@ -568,7 +574,7 @@ export default function SelectQuizPage() {
         </div>
 
         {/* Quiz Selector Content */}
-        <div className="max-w-4xl mx-auto">
+  <div className="max-w-4xl mx-auto">
           {/* Tabs Section */}
           <div className="mb-6 sm:mb-8">
             <div className="flex gap-2 sm:gap-3 justify-start flex-wrap">
@@ -586,7 +592,7 @@ export default function SelectQuizPage() {
                 onClick={() => setActiveTab("my-quiz")}
                 className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${
                   activeTab === "my-quiz"
-                    ? "bg-green-500 text-white"
+                    ? "bg-blue-500 text-white"
                     : "bg-white text-black hover:bg-gray-100"
                 }`}
               >
@@ -596,7 +602,7 @@ export default function SelectQuizPage() {
                 onClick={() => setActiveTab("favorite")}
                 className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center gap-1 sm:gap-2 shadow-lg ${
                   activeTab === "favorite"
-                    ? "bg-pink-500 text-white"
+                    ? "bg-blue-500 text-white"
                     : "bg-white text-black hover:bg-gray-100"
                 }`}
               >
@@ -610,9 +616,9 @@ export default function SelectQuizPage() {
           <div className="mb-6 sm:mb-8 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Pixel Search Input */}
-              <div className="relative flex-1">
+              <div className="relative flex-1 ">
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center z-10">
                     <Search className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                   </div>
                   <Input
@@ -620,8 +626,17 @@ export default function SelectQuizPage() {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleSearch}
-                    className="pl-10 sm:pl-12 h-10 sm:h-10 bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-blue-600"
+                    className="pl-10 sm:pl-12 pr-20 sm:pr-24 h-10 sm:h-10 bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-blue-600 w-full"
                   />
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 sm:p-3">
+                    <Button
+                      onClick={executeSearch}
+                      className="h-7 sm:h-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-0.5 sm:py-1 px-2 sm:px-3 border-2 border-black text-sm sm:text-base"
+                    >
+                      <span className="hidden sm:inline">Enter</span>
+                      <span className="sm:hidden  ">Enter</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
               
@@ -878,7 +893,8 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
+  {/* Grid: on very small screens force single column cards full width */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
             {(loading || (activeTab === "my-quiz" && loadingMyQuizzes)) ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
@@ -1004,17 +1020,17 @@ export default function SelectQuizPage() {
                 return (
                   <div
                     key={quiz.id}
-                    className="relative cursor-pointer transition-all duration-300 hover:-translate-y-1 pixel-quiz-card-container"
+                    className="relative cursor-pointer transition-all duration-300 hover:-translate-y-1 pixel-quiz-card-container w-full sm:w-auto"
                     onClick={() => handleQuizSelect(quiz.id)}
                   >
                     <div 
-                      className="relative pixel-quiz-card bg-cover bg-center bg-no-repeat"
+                      className="relative pixel-quiz-card bg-cover bg-center bg-no-repeat w-full sm:w-[300px]"
                       style={{
                         backgroundImage: `url(${quizBgImage})`,
                       }}
                     >
                       {/* Light overlay for better text readability */}
-                      <div className="absolute inset-0 bg-black/20 z-0"></div>
+                      <div className="absolute inset-0 bg-black/50 z-0"></div>
                       
                       {/* Mobile Layout - Stacked */}
                       <div className="sm:hidden flex flex-col h-full p-2 overflow-hidden relative z-10">
@@ -1022,7 +1038,7 @@ export default function SelectQuizPage() {
                         {currentUserProfileId && (
                           <button
                             onClick={(e) => toggleFavorite(quiz.id, e)}
-                            className="absolute top-1 right-1 bg-white border-2 border-black rounded-lg p-2 shadow-lg z-20 hover:scale-110 transition-transform duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            className="absolute right-2 bottom-2 sm:top-1 sm:right-1 bg-white border-2 border-black rounded-lg p-2 shadow-lg z-20 hover:scale-110 transition-transform duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
                             aria-label={favoriteQuizIds.includes(quiz.id) ? "Remove from favorites" : "Add to favorites"}
                           >
                             <Heart
@@ -1037,27 +1053,29 @@ export default function SelectQuizPage() {
                           </button>
                         )}
                         
-                        {/* Header with title and category */}
+                        {/* Header with title */}
                         <div className="flex items-start justify-between mb-2 gap-1">
-                          <div className="bg-white border-2 border-black rounded px-1.5 py-0.5 shadow-lg flex-1 min-w-0 overflow-hidden">
-                            <h3 className="text-xs font-bold text-black leading-tight overflow-hidden mobile-title-ellipsis">
-                              {quiz.title.toUpperCase()}
-                            </h3>
-                          </div>
-                          <div className={`${categoryColor} border-2 border-black rounded px-1 py-0.5 shadow-xl flex-shrink-0`}>
-                            <div className="flex items-center gap-0.5">
-                              <div className="w-1 h-1 bg-white rounded-full"></div>
-                              <span className="text-white font-bold text-xs">
-                                {translateCategory(quiz.category)}
-                              </span>
+                          <div className="bg-white border-2 border-black rounded px-1 py-0.5 shadow-lg flex-1 min-w-0 overflow-hidden pr-12">
+                              <h3 className="text-[11px] font-bold text-black leading-tight overflow-hidden mobile-title-ellipsis">
+                                {quiz.title.toUpperCase()}
+                              </h3>
                             </div>
-                          </div>
+                          {/* Spacer to keep header balanced on mobile */}
+                          <div className="w-6" />
                         </div>
                         
-                        {/* Question count */}
-                        <div className="bg-blue-500 border-2 border-black rounded px-1.5 py-0.5 overflow-hidden">
-                          <div className="text-xs text-white font-bold break-words overflow-hidden">
-                            {quiz.questions.length} {t('selectQuiz.questions')}
+                        {/* Mobile badges: question count + category aligned bottom-left */}
+                        <div className="absolute left-2 bottom-2 z-20 flex items-center gap-2">
+                          <div className="bg-blue-500 border-2 border-black rounded px-2 py-0.5 overflow-hidden">
+                            <div className="text-[11px] text-white font-bold truncate">
+                              {quiz.questions.length} {t('selectQuiz.questions')}
+                            </div>
+                          </div>
+                          <div className={`${categoryColor} border-2 border-black rounded px-2 py-0.5 shadow-xl`}> 
+                            <div className="flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                              <span className="text-white font-bold text-xs">{translateCategory(quiz.category)}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1094,7 +1112,7 @@ export default function SelectQuizPage() {
                         )}
                         
                         <div className="bg-white border-2 border-black rounded px-3 py-1 mb-2 shadow-lg">
-                          <h3 className="text-base font-bold text-black">
+                          <h3 className="text-base font-bold text-black desktop-title-ellipsis">
                             {quiz.title.toUpperCase()}
                           </h3>
                         </div>

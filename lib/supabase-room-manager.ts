@@ -235,7 +235,7 @@ class SupabaseRoomManager {
     }
   }
 
-  async joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost" | "user_id" | "nickname">, userId?: string): Promise<boolean> {
+  async joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost">, userId?: string): Promise<boolean> {
     try {
       // Get current game session
       const { data: sessionData, error: sessionError } = await supabase
@@ -293,7 +293,7 @@ class SupabaseRoomManager {
     }
   }
 
-  async rejoinRoom(roomCode: string, player: Omit<Player, "joinedAt" | "isReady" | "isHost" | "user_id" | "nickname">, userId?: string): Promise<boolean> {
+  async rejoinRoom(roomCode: string, player: Omit<Player, "joinedAt" | "isReady" | "isHost">, userId?: string): Promise<boolean> {
     try {
       // Get current game session
       const { data: sessionData, error: sessionError } = await supabase
@@ -547,9 +547,10 @@ class SupabaseRoomManager {
 
   async updateGameStatus(roomCode: string, status: Room["status"]): Promise<boolean> {
     try {
-      // Map status to game_sessions status
+      // Map Room.status to game_sessions.status
+      // Room.status can be: 'waiting' | 'countdown' | 'quiz' | 'memory' | 'finished'
       let sessionStatus = 'waiting'
-      if (status === 'active' || status === 'quiz') {
+      if (status === 'countdown' || status === 'quiz' || status === 'memory') {
         sessionStatus = 'active'
       } else if (status === 'finished') {
         sessionStatus = 'finished'
