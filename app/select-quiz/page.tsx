@@ -631,7 +631,7 @@ export default function SelectQuizPage() {
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 sm:p-3">
                     <Button
                       onClick={executeSearch}
-                      className="h-7 sm:h-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-0.5 sm:py-1 px-2 sm:px-3 border-2 border-black text-sm sm:text-base"
+                      className="h-6 sm:h-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-0 sm:py-1 px-1 sm:px-3 border-2 border-black text-sm sm:text-base"
                     >
                       <span className="hidden sm:inline">Enter</span>
                       <span className="sm:hidden  ">Enter</span>
@@ -1055,11 +1055,20 @@ export default function SelectQuizPage() {
                         
                         {/* Header with title */}
                         <div className="flex items-start justify-between mb-2 gap-1">
-                          <div className="bg-white border-2 border-black rounded px-1 py-0.5 shadow-lg flex-1 min-w-0 overflow-hidden pr-12">
-                              <h3 className="text-[11px] font-bold text-black leading-tight overflow-hidden mobile-title-ellipsis">
-                                {quiz.title.toUpperCase()}
-                              </h3>
-                            </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="bg-white border-2 border-black rounded px-1 py-1 shadow-lg flex-1 min-w-0 pr-5 max-w-[210px]">
+                                    <h3 className="text-[11px] font-bold text-black leading-tight whitespace-normal break-words">
+                                      {quiz.title.toUpperCase()}
+                                    </h3>
+                                  </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{quiz.title}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {/* Spacer to keep header balanced on mobile */}
                           <div className="w-6" />
                         </div>
@@ -1112,9 +1121,18 @@ export default function SelectQuizPage() {
                         )}
                         
                         <div className="bg-white border-2 border-black rounded px-3 py-1 mb-2 shadow-lg">
-                          <h3 className="text-base font-bold text-black desktop-title-ellipsis">
-                            {quiz.title.toUpperCase()}
-                          </h3>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <h3 className="text-base font-bold text-black desktop-title-ellipsis">
+                                  {quiz.title.toUpperCase()}
+                                </h3>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{quiz.title}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                         <div className="bg-blue-500 border-2 border-black rounded px-2 py-1">
                           <div className="text-xs text-white font-bold">
