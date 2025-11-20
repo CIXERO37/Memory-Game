@@ -14,7 +14,7 @@ export interface UserProfile {
 
 // Cache key for localStorage
 const PROFILE_CACHE_KEY = 'user_profile_cache'
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_DURATION = 30 * 1000 // 30 seconds (reduced for better sync)
 
 // Request deduplication - prevent multiple simultaneous requests
 const pendingProfileRequests = new Map<string, Promise<UserProfile>>()
@@ -86,51 +86,26 @@ export function useAuth() {
           console.log('Initial session found:', session.user.email)
           setUser(session.user)
           
-          // Create profile from metadata FIRST (instant, non-blocking)
+          // Siapkan quick profile dari OAuth sebagai fallback saja
           const quickProfile = createUserProfile(session.user)
-          setUserProfile(quickProfile)
-          setLoading(false) // Set loading false immediately for fast render
           
-          // Check cache first before making database request
-          const cachedProfile = getCachedProfile(session.user.id)
-          if (cachedProfile) {
-            // Use cached profile if it's different from quick profile
-            if (cachedProfile.username !== quickProfile.username || 
-                cachedProfile.avatar_url !== quickProfile.avatar_url ||
-                cachedProfile.name !== quickProfile.name) {
-              console.log('Using cached profile:', cachedProfile)
-              setUserProfile(cachedProfile)
-            }
-            // Cache is still valid, skip database request
-            return
-          }
-          
-          // Only fetch from database if metadata doesn't have sufficient info
-          // or if cache is missing/expired
-          const needsDatabaseFetch = !quickProfile.avatar_url || !quickProfile.name || !quickProfile.username
-          
-          if (needsDatabaseFetch) {
-            // Then fetch from database in background (non-blocking)
-            createUserProfileWithDatabase(session.user)
-              .then(enhancedProfile => {
-                // Cache the enhanced profile
-                cacheProfile(session.user.id, enhancedProfile)
-                
-                // Only update if different (to avoid unnecessary re-renders)
-                if (enhancedProfile.username !== quickProfile.username || 
-                    enhancedProfile.avatar_url !== quickProfile.avatar_url ||
-                    enhancedProfile.name !== quickProfile.name) {
-                  console.log('Updating profile from database:', enhancedProfile)
-                  setUserProfile(enhancedProfile)
-                }
-              })
-              .catch(() => {
-                // Already have quickProfile, so ignore errors silently
-              })
-          } else {
-            // Metadata has sufficient info, cache it
-            cacheProfile(session.user.id, quickProfile)
-          }
+          // Prioritaskan data dari database (profiles table)
+          createUserProfileWithDatabase(session.user)
+            .then(enhancedProfile => {
+              // Cache dan gunakan profile dari database sebagai sumber utama
+              cacheProfile(session.user.id, enhancedProfile)
+              console.log('Updating profile from database (initial):', enhancedProfile)
+              setUserProfile(enhancedProfile)
+            })
+            .catch(() => {
+              // Jika query database gagal / tidak ada row, baru pakai metadata OAuth
+              console.warn('Database fetch failed on initial load, using metadata profile')
+              cacheProfile(session.user.id, quickProfile)
+              setUserProfile(quickProfile)
+            })
+            .finally(() => {
+              setLoading(false)
+            })
         } else {
           console.log('No initial session found')
           setLoading(false)
@@ -151,43 +126,24 @@ export function useAuth() {
         if (session?.user) {
           setUser(session.user)
           
-          // Use quick profile first, then enhance from database
+          // Siapkan quick profile dari OAuth sebagai fallback
           const quickProfile = createUserProfile(session.user)
-          setUserProfile(quickProfile)
-          setLoading(false) // Set loading false immediately
           
-          // Check cache first
-          const cachedProfile = getCachedProfile(session.user.id)
-          if (cachedProfile) {
-            if (cachedProfile.username !== quickProfile.username || 
-                cachedProfile.avatar_url !== quickProfile.avatar_url ||
-                cachedProfile.name !== quickProfile.name) {
-              setUserProfile(cachedProfile)
-            }
-            return
-          }
-          
-          // Only fetch if needed
-          const needsDatabaseFetch = !quickProfile.avatar_url || !quickProfile.name || !quickProfile.username
-          
-          if (needsDatabaseFetch) {
-            // Enhance from database in background (non-blocking)
-            createUserProfileWithDatabase(session.user)
-              .then(enhancedProfile => {
-                cacheProfile(session.user.id, enhancedProfile)
-                if (enhancedProfile.username !== quickProfile.username || 
-                    enhancedProfile.avatar_url !== quickProfile.avatar_url ||
-                    enhancedProfile.name !== quickProfile.name) {
-                  console.log('Updating profile from database:', enhancedProfile)
-                  setUserProfile(enhancedProfile)
-                }
-              })
-              .catch(() => {
-                // Ignore errors, already have quickProfile
-              })
-          } else {
-            cacheProfile(session.user.id, quickProfile)
-          }
+          // Selalu coba ambil dari database dulu
+          createUserProfileWithDatabase(session.user)
+            .then(enhancedProfile => {
+              cacheProfile(session.user.id, enhancedProfile)
+              console.log('Updating profile from database (auth change):', enhancedProfile)
+              setUserProfile(enhancedProfile)
+            })
+            .catch(() => {
+              console.warn('Database fetch failed on auth change, using metadata profile')
+              cacheProfile(session.user.id, quickProfile)
+              setUserProfile(prev => prev ?? quickProfile)
+            })
+            .finally(() => {
+              setLoading(false)
+            })
         } else {
           setUser(null)
           setUserProfile(null)
@@ -262,44 +218,85 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
   // Create the request promise
   const requestPromise = (async () => {
     try {
-      // Try to fetch from users_profile table with timeout
+      // Try to fetch from profiles table with timeout
       // This prevents blocking if database is slow
-      const queryPromise = supabase
-        .from('users_profile')
-        // Some schemas use `full_name`, others use `fullname` — request both
-        .select('username, full_name, fullname, avatar_url')
-        .eq('id', user.id)
-        .single()
+      // Note: profiles table structure may vary - try both id and auth_user_id
+      let profileData = null
+      let error = null
       
-      // Add timeout to prevent blocking (reduced to 1.5s for faster failure)
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database query timeout')), 1500)
-      )
+      // First try with id (direct reference to auth.users(id) - from migration script)
+      try {
+        const queryPromise1 = supabase
+          .from('profiles')
+          // Select all columns so we don't break on schema differences (full_name vs fullname, etc.)
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database query timeout')), 1500)
+        )
+        
+        const result1 = await Promise.race([
+          queryPromise1,
+          timeoutPromise
+        ]) as Awaited<typeof queryPromise1>
+        
+        if (!result1.error && result1.data) {
+          profileData = result1.data
+          console.log('[useAuth] Profile found using id:', profileData)
+        } else {
+          error = result1.error
+          console.log('[useAuth] Query with id failed, trying auth_user_id:', result1.error)
+          
+          // Fallback: try with auth_user_id (if table structure uses separate column)
+          const queryPromise2 = supabase
+            .from('profiles')
+            .select('*')
+            .eq('auth_user_id', user.id)
+            .maybeSingle()
+          
+          const result2 = await Promise.race([
+            queryPromise2,
+            timeoutPromise
+          ]) as Awaited<typeof queryPromise2>
+          
+          if (!result2.error && result2.data) {
+            profileData = result2.data
+            console.log('[useAuth] Profile found using auth_user_id:', profileData)
+          } else {
+            error = result2.error
+            console.log('[useAuth] Both queries failed:', { idError: result1.error, authUserIdError: result2.error })
+          }
+        }
+      } catch (err) {
+        console.warn('[useAuth] Query exception:', err)
+        error = err as any
+      }
       
-      const result = await Promise.race([
-        queryPromise,
-        timeoutPromise
-      ]) as Awaited<typeof queryPromise>
-      
-      const { data: profileData, error } = result
+      console.log('[useAuth] Final profile query result:', { profileData, error, userId: user.id })
       
       if (!error && profileData) {
         // Prefer database full_name/fullname as authoritative name when present
         if (profileData.full_name) {
           name = profileData.full_name
+          console.log('[useAuth] Using full_name from DB:', name)
         } else if ((profileData as any).fullname) {
           // some deployments use `fullname` column
           name = (profileData as any).fullname
+          console.log('[useAuth] Using fullname from DB:', name)
         }
 
         // Use username from database if available (fallback for display names)
         if (profileData.username) {
           username = profileData.username
+          console.log('[useAuth] Using username from DB:', username)
         }
 
         // Use avatar from database if available; otherwise keep Google avatar
         if (profileData.avatar_url) {
           avatar_url = profileData.avatar_url
+          console.log('[useAuth] Using avatar_url from DB:', avatar_url)
         }
 
         // If username still empty, try to derive from full_name/fullname
@@ -308,6 +305,10 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
         } else if (!username && (profileData as any).fullname) {
           username = (profileData as any).fullname
         }
+      } else if (error) {
+        console.warn('[useAuth] Error fetching profile from database:', error)
+      } else {
+        console.warn('[useAuth] No profile data found in database for user:', user.id)
       }
     } catch (error) {
       // Silently fail - we already have username from metadata

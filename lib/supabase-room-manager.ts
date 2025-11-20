@@ -81,7 +81,9 @@ class SupabaseRoomManager {
       // Fetch dari profiles table - query berdasarkan auth_user_id (UUID)
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id, username, fullname, avatar_url')
+        // Gunakan kolom yang pasti ada di schema: username, full_name (atau fullname di beberapa deployment), avatar_url
+        // Di sini kita select username, full_name, avatar_url lalu handle kedua kemungkinan nama kolom di bawah
+        .select('id, username, full_name, avatar_url')
         .eq('auth_user_id', userId)
         .single()
 
@@ -93,7 +95,7 @@ class SupabaseRoomManager {
         }
       }
 
-      const nickname = profile.fullname || profile.username || 'User'
+      const nickname = (profile.full_name as string | null) || profile.username || 'User'
       const avatar = profile.avatar_url || '/avatars/default.webp'
 
       return {
