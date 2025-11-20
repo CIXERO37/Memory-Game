@@ -120,6 +120,8 @@
     "failedToStartGame": "Failed to Start Game",
     "couldNotStartCountdown": "Could not start the countdown. Please try again.",
     "errorStartingGame": "An error occurred while starting the game.",
+    "failedToCopy": "Failed to Copy",
+    "failedToCopyDesc": "Could not copy the link to your clipboard.",
     "playerJoined": "Player Joined!",
     "gameReady": "Game Ready!",
     "firstPlayerJoined": "🚀 First player joined - game is ready to start!",

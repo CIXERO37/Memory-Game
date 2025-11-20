@@ -389,27 +389,90 @@ function LobbyPageContent() {
     }
   }, [showQRModal])
 
-  const copyRoomCode = () => {
-    if (!roomCode) return
-    navigator.clipboard.writeText(shareUrl || `${window.location.origin}/join/${roomCode}`)
-    toast({
-      title: t('lobby.shareLinkCopied'),
-      description: "Send this link to your friends",
-    })
-    setCopiedCode(true)
-    setTimeout(() => setCopiedCode(false), 1500)
-  }
+  const copyRoomCode = async () => {
+    if (!roomCode) return;
+    const textToCopy = shareUrl || `${window.location.origin}/join/${roomCode}`;
 
-  const copyShareLink = () => {
-    if (!shareUrl) return
-    navigator.clipboard.writeText(shareUrl)
-    toast({
-      title: t('lobby.shareLinkCopied'),
-      description: "Send this link to your friends",
-    })
-    setCopiedLink(true)
-    setTimeout(() => setCopiedLink(false), 1500)
-  }
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast({
+        title: t('lobby.shareLinkCopied'),
+        description: "Send this link to your friends",
+      });
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 1500);
+    } catch (err) {
+      console.error("Failed to copy with navigator.clipboard: ", err);
+      // Fallback to execCommand
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        textArea.style.position = "fixed"; // Prevent scrolling to bottom of page in MS Edge.
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        
+        toast({
+          title: t('lobby.shareLinkCopied'),
+          description: "Send this link to your friends",
+        });
+        setCopiedCode(true);
+        setTimeout(() => setCopiedCode(false), 1500);
+      } catch (execErr) {
+        console.error("Failed to copy with execCommand: ", execErr);
+        toast({
+          title: t('lobby.failedToCopy'),
+          description: t('lobby.failedToCopyDesc'),
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!shareUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: t('lobby.shareLinkCopied'),
+        description: "Send this link to your friends",
+      });
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 1500);
+    } catch (err) {
+      console.error("Failed to copy with navigator.clipboard: ", err);
+      // Fallback to execCommand
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+
+        toast({
+          title: t('lobby.shareLinkCopied'),
+          description: "Send this link to your friends",
+        });
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 1500);
+      } catch (execErr) {
+        console.error("Failed to copy with execCommand: ", execErr);
+        toast({
+          title: t('lobby.failedToCopy'),
+          description: t('lobby.failedToCopyDesc'),
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const startGame = async () => {
     if (gameStarted || !currentRoom || !roomCode || !hostId) {
@@ -632,7 +695,7 @@ function LobbyPageContent() {
             <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
               <div className="p-4 sm:p-6 space-y-2">
                
-                <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-4">
+                <div className="flex flex-row sm:flex-row justify-center gap-2 sm:gap-4 mb-4">
                   <div className="bg-blue-100 border border-blue-300 rounded-full px-3 sm:px-4 py-2 flex items-center gap-2 shadow-sm">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">⏱️</span>
@@ -656,7 +719,7 @@ function LobbyPageContent() {
                   <button
                     onClick={copyRoomCode}
                     aria-label="Copy room code"
-                    className={`absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded border-2 border-black flex items-center justify-center ${copiedCode ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+                    className={`absolute bottom-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded border-2 border-black flex items-center justify-center ${copiedCode ? "bg-green-500 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
                   >
                     {copiedCode ? <span className="font-bold text-xs sm:text-sm md:text-lg">✓</span> : <Copy className="h-3 w-3 sm:h-4 sm:w-4 md:h-6 md:w-6" />}
                   </button>
@@ -674,7 +737,7 @@ function LobbyPageContent() {
                       <div className="bg-white text-black rounded-lg py-2 sm:py-3 px-3 sm:px-4 w-full flex flex-col justify-center items-center relative">
                         <button
                           onClick={() => setShowQRModal(true)}
-                          className="absolute top-1 right-1 p-1.5 hover:bg-gray-100 rounded transition-colors z-10 border-2 border-black"
+                          className="hidden sm:block absolute top-1 right-1 p-1.5 hover:bg-gray-100 rounded transition-colors z-10 border-2 border-black"
                           title="Click to enlarge QR code"
                         >
                           <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
@@ -694,7 +757,7 @@ function LobbyPageContent() {
                             <span className="text-xs sm:text-sm font-mono break-all flex-1 text-gray-900">{joinUrl}</span>
                             <button
                               onClick={copyShareLink}
-                              className="p-2 hover:bg-gray-200 rounded transition-colors shrink-0 border border-black"
+                              className="p-2 hover:bg-gray-200 rounded transition-colors shrink-0 border border-black flex items-center justify-center"
                               title="Copy join link"
                             >
                               {copiedLink ? (
@@ -805,10 +868,10 @@ function LobbyPageContent() {
                           {hostId && (
                             <button
                               onClick={() => handleKickPlayer(player)}
-                              className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 border border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                              className="absolute -top-1 -right-1 w-1.5 h-1.5 sm:w-5 sm:h-5 bg-red-500 border border-black rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
                               title={`Kick ${player.nickname}`}
                             >
-                              <X className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-white" />
+                              <X className="h-3 w-3 sm:h-2.5 sm:w-2.5 text-white" />
                             </button>
                           )}
                           <div className="flex flex-col items-center gap-1 sm:gap-2">
@@ -916,8 +979,8 @@ function LobbyPageContent() {
       <Dialog open={showKickDialog} onOpenChange={setShowKickDialog}>
         <DialogContent className="max-w-md bg-transparent border-none p-0 z-50">
           <div className="relative pixel-dialog-container">
-            <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-            <div className="relative bg-linear-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-600 rounded-lg border-4 border-black shadow-2xl p-6">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                   <X className="h-8 w-8 text-red-600" />
