@@ -120,6 +120,8 @@
     "failedToStartGame": "Gagal Memulai Permainan",
     "couldNotStartCountdown": "Tidak dapat memulai hitung mundur. Silakan coba lagi.",
     "errorStartingGame": "Terjadi kesalahan saat memulai permainan.",
+    "failedToCopy": "Gagal Menyalin",
+    "failedToCopyDesc": "Tidak dapat menyalin tautan ke clipboard Anda.",
     "playerJoined": "Pemain Bergabung!",
     "gameReady": "Permainan Siap!",
     "firstPlayerJoined": "🚀 Pemain pertama bergabung - permainan siap dimulai!",

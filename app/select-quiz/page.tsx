@@ -618,23 +618,21 @@ export default function SelectQuizPage() {
               {/* Pixel Search Input */}
               <div className="relative flex-1 ">
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center z-10">
-                    <Search className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                  </div>
+                 
                   <Input
                     placeholder={t('selectQuiz.searchPlaceholder')}
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={handleSearch}
-                    className="pl-10 sm:pl-12 pr-20 sm:pr-24 h-10 sm:h-10 bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-blue-600 w-full"
+                    className="pl-10 sm:pl-12 px-2 sm:px-2 pr-20 sm:pr-24 lg:h-10 h-13 bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-blue-600 w-full"
                   />
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 sm:p-3">
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 p-0.5 sm:p-3">
                     <Button
                       onClick={executeSearch}
-                      className="h-6 sm:h-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-0 sm:py-1 px-1 sm:px-3 border-2 border-black text-sm sm:text-base"
+                      className=" lg:h-8  bg-blue-500 hover:bg-blue-600 text-white font-bold py-0 sm:py-1  sm:px-3 border-2 border-black  "
                     >
                       <span className="hidden sm:inline">Enter</span>
-                      <span className="sm:hidden  ">Enter</span>
+                       <Search className="sm:hidden h-3 w-3 sm:h-4 sm:w-4 text-white" />
                     </Button>
                   </div>
                 </div>
