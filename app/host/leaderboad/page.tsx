@@ -79,7 +79,7 @@ function LeaderboardHostPageContent() {
             }
           }
         }
-      } catch {}
+      } catch { }
       try {
         const hostData = localStorage.getItem("currentHost")
         if (hostData) {
@@ -90,7 +90,7 @@ function LeaderboardHostPageContent() {
             return
           }
         }
-      } catch {}
+      } catch { }
       setResolvingCode(false)
     }
     loadFromSession()
@@ -118,7 +118,7 @@ function LeaderboardHostPageContent() {
               setQuizId(roomDbData.quiz_id)
               setQuizTitle(roomDbData.quiz_title)
             }
-          } catch (error) {}
+          } catch (error) { }
           const playersWithAvatars = await Promise.all(
             roomData.players.filter(p => !p.isHost).map(async (player) => {
               try {
@@ -264,12 +264,12 @@ function LeaderboardHostPageContent() {
           },
           newRoom.code
         )
-      } catch {}
+      } catch { }
       try {
         localStorage.setItem('hostId', hostId)
         localStorage.setItem('roomCode', newRoom.code)
         localStorage.setItem('quizId', quizId)
-      } catch {}
+      } catch { }
       router.push(`/host/${newRoom.code}`)
     } catch (error) {
       setIsRestarting(false)
@@ -302,23 +302,23 @@ function LeaderboardHostPageContent() {
 
       {/* Top-left Memory Quiz Logo */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 z-20">
-        <img 
+        <img
           draggable={false}
-          src="/images/memoryquiz.webp" 
-          alt="Memory Quiz" 
+          src="/images/memoryquiz.webp"
+          alt="Memory Quiz"
           className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
         />
       </div>
       {/* Top-right GameForSmart Logo */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 md:top-8 md:right-8 z-20">
-        <img 
-          src="/images/gameforsmartlogo.webp" 
-          alt="GameForSmart Logo" 
+        <img
+          src="/images/gameforsmartlogo.webp"
+          alt="GameForSmart Logo"
           className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
         />
       </div>
       <div className="relative z-10 container mx-auto px-4 py-8 mt-16 sm:mt-20 md:mt-24 lg:mt-28">
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 hidden md:block">
           <div className="relative inline-block mb-4">
             <div className="flex items-center justify-center gap-6">
               <div className="relative">
@@ -339,7 +339,84 @@ function LeaderboardHostPageContent() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto mb-16">
+        {/* Mobile Leaderboard View */}
+        <div className="md:hidden w-full max-w-md mx-auto pb-24 relative z-0">
+          <div className="text-center mb-6">
+            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 drop-shadow-2xl">
+              {t('lobby.champions')}
+            </h1>
+          </div>
+          <div className="space-y-3 relative z-10">
+            {sortedPlayers.map((player, index) => {
+              const rank = index + 1
+              let rankColor = "text-white"
+              if (rank === 1) rankColor = "text-yellow-400"
+              if (rank === 2) rankColor = "text-gray-300"
+              if (rank === 3) rankColor = "text-orange-400"
+
+              return (
+                <div key={player.id} className="flex items-center justify-between bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-sm border border-slate-600/50 rounded-lg px-4 py-3 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xl font-black ${rankColor} drop-shadow-md w-8`}>#{rank}</span>
+                    <span className="text-white font-bold text-lg truncate max-w-[150px] tracking-wide" style={{ textShadow: '1px 1px 0 #000' }}>
+                      {player.nickname}
+                    </span>
+                  </div>
+                  <span className="text-cyan-400 font-black text-xl drop-shadow-md">{player.quizScore || 0}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Mobile Bottom Buttons */}
+          <div className="fixed bottom-6 left-0 right-0 px-6 flex gap-4 justify-center z-50">
+            <button
+              onClick={() => router.push("/")}
+              className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95"
+              style={{
+                background: '#533483',
+                border: '3px solid #3d2562',
+                borderRadius: '4px',
+                boxShadow: `
+                  inset -2px -2px 0px #6b4a9e,
+                  inset 2px 2px 0px #3d2562,
+                  0 0 0 2px #2a1a3d,
+                  4px 4px 0px rgba(0, 0, 0, 0.3)
+                `,
+                imageRendering: 'pixelated',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Home className="w-5 h-5 text-white" />
+                <span className="text-white font-bold uppercase tracking-wider text-sm">Home</span>
+              </div>
+            </button>
+            <button
+              onClick={handleRestart}
+              disabled={isRestarting || !room || !hostId || !quizId || !quizTitle}
+              className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95 disabled:opacity-50 disabled:grayscale"
+              style={{
+                background: '#4a90e2',
+                border: '3px solid #2c5f8d',
+                borderRadius: '4px',
+                boxShadow: `
+                  inset -2px -2px 0px #6ba3e8,
+                  inset 2px 2px 0px #2c5f8d,
+                  0 0 0 2px #1a3d5f,
+                  4px 4px 0px rgba(0, 0, 0, 0.3)
+                `,
+                imageRendering: 'pixelated',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <RotateCw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-300" />
+                <span className="text-white font-bold uppercase tracking-wider text-sm">Restart</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto mb-16 hidden md:block">
           <div className="relative">
             <div className="flex justify-center items-center gap-6 sm:gap-12 relative">
               {sortedPlayers[1] && (
@@ -386,14 +463,14 @@ function LeaderboardHostPageContent() {
                   <div className="relative transform group-hover:scale-[1.02] transition-all duration-300">
                     {/* Subtle glow effect */}
                     <div className="absolute -inset-4 bg-gradient-to-br from-yellow-400/30 via-amber-400/20 to-yellow-500/30 rounded-3xl blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-                    
+
                     {/* Main card */}
                     <div className="relative bg-gradient-to-b from-yellow-300 via-yellow-200 to-yellow-400 rounded-3xl p-12 shadow-[0_25px_70px_rgba(251,191,36,0.5)] min-w-[360px] border-4 border-yellow-100/70">
                       {/* Top-left sparkle decoration */}
                       <div className="absolute top-6 left-6 opacity-60">
                         <Sparkles className="w-5 h-5 text-yellow-600" />
                       </div>
-                      
+
                       {/* Rank badge with star */}
                       <div className="absolute top-6 right-6 flex items-start justify-center gap-0">
                         <Star className="w-5 h-5 text-yellow-600 -mt-1.5 -mr-1 z-10" fill="currentColor" />
@@ -401,7 +478,7 @@ function LeaderboardHostPageContent() {
                           <span className="text-2xl font-bold text-white">1</span>
                         </div>
                       </div>
-                      
+
                       {/* Profile picture */}
                       <div className="relative w-36 h-36 mx-auto mb-6">
                         <div className="w-full h-full rounded-full bg-white p-2 shadow-2xl border-4 border-yellow-100">
@@ -427,12 +504,12 @@ function LeaderboardHostPageContent() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Player name */}
                       <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center whitespace-pre-line leading-tight">
                         {formatPlayerName(champion.nickname)}
                       </h2>
-                      
+
                       {/* Points display box */}
                       <div className="mt-8 bg-gradient-to-br from-amber-600 to-yellow-700 rounded-2xl px-10 py-7 shadow-lg border-2 border-amber-700/40">
                         <div className="text-5xl font-bold text-white text-center mb-1 leading-none">
@@ -442,7 +519,7 @@ function LeaderboardHostPageContent() {
                           {t('lobby.points')}
                         </div>
                       </div>
-                      
+
                       {/* Bottom decorations */}
                       <div className="absolute bottom-6 left-6 opacity-50">
                         <Zap className="w-5 h-5 text-yellow-700" />
@@ -499,7 +576,7 @@ function LeaderboardHostPageContent() {
         </div>
 
         {sortedPlayers.length > 3 && (
-          <div className="max-w-6xl mx-auto mb-16">
+          <div className="max-w-6xl mx-auto mb-16 hidden md:block">
             <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border-4 border-indigo-400/40 rounded-3xl p-8 backdrop-blur-sm relative overflow-hidden shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-3xl blur-xl"></div>
               <div className="relative z-10 text-center mb-6">
@@ -570,7 +647,7 @@ function LeaderboardHostPageContent() {
           </div>
         )}
 
-        <div className="fixed left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-50">
+        <div className="fixed left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-50 hidden md:block">
           <button
             className="relative transform hover:scale-110 transition-all duration-200 group"
             onClick={() => {
@@ -580,7 +657,7 @@ function LeaderboardHostPageContent() {
               imageRendering: 'pixelated',
             }}
           >
-            <div 
+            <div
               className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
               style={{
                 background: '#533483',
@@ -600,7 +677,7 @@ function LeaderboardHostPageContent() {
           </button>
         </div>
 
-        <div className="fixed right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-50">
+        <div className="fixed right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-50 hidden md:block">
           <button
             className="relative transform hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             onClick={handleRestart}
@@ -609,7 +686,7 @@ function LeaderboardHostPageContent() {
               imageRendering: 'pixelated',
             }}
           >
-            <div 
+            <div
               className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
               style={{
                 background: '#4a90e2',
