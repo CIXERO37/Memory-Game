@@ -2,10 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Users, Trophy, Clock, Target, TrendingUp, TrendingDown } from "lucide-react"
+import { Users, Trophy, Clock, TrendingUp, TrendingDown } from "lucide-react"
 import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
 import { getTimerDisplayText } from "@/lib/timer-utils"
@@ -13,6 +10,17 @@ import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
 import { useTranslation } from "react-i18next"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function MonitorPageContent() {
   const params = useParams()
@@ -29,7 +37,7 @@ function MonitorPageContent() {
   const [isHostDetected, setIsHostDetected] = useState(false)
   const [lastVerifiedCompletion, setLastVerifiedCompletion] = useState(false)
   const { room, loading } = useRoom(roomCode || "")
-  
+
   // 🚀 CRITICAL: Timing constants
   const HOST_COMPLETION_DELAY = 5000
   const AGGRESSIVE_POLLING_INTERVAL = 500
@@ -95,22 +103,22 @@ function MonitorPageContent() {
     timeLimit: 30,
     questionCount: 10,
   }
-  
+
   const handleTimeUp = async () => {
-    if (timeUpHandled) return
+    if (timeUpHandled || !roomCode) return
     setTimeUpHandled(true)
-    
+
     console.log("[Monitor] Timer expired! Ending game automatically...")
-    
+
     try {
-      await roomManager.updateGameStatus(roomCode!, "finished")
-      
+      await roomManager.updateGameStatus(roomCode, "finished")
+
       let broadcastChannel: BroadcastChannel | null = null
       try {
         if (typeof window !== 'undefined') {
           broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
-          broadcastChannel.postMessage({ 
-            type: 'game-ended', 
+          broadcastChannel.postMessage({
+            type: 'game-ended',
             roomCode: roomCode,
             timestamp: Date.now()
           })
@@ -121,16 +129,16 @@ function MonitorPageContent() {
           broadcastChannel.close()
         }
       }
-      
+
       window.location.href = `/host/leaderboad?roomCode=${roomCode}`
     } catch (error) {
       console.error("[Monitor] Error ending game due to timer expiration:", error)
       window.location.href = `/host/leaderboad?roomCode=${roomCode}`
     }
   }
-  
+
   const timerState = useSynchronizedTimer(room, quizSettings.timeLimit, handleTimeUp)
-  
+
   useEffect(() => {
     if (timerState.remainingTime <= 60 && timerState.remainingTime > 0) {
       setShowTimeWarning(true)
@@ -138,7 +146,7 @@ function MonitorPageContent() {
       setShowTimeWarning(false)
     }
   }, [timerState.remainingTime])
-  
+
   useEffect(() => {
     if (timerState.remainingTime <= 0 && !timeUpHandled) {
       setShowTimeWarning(true)
@@ -169,7 +177,7 @@ function MonitorPageContent() {
         } catch (error) {
           console.warn("Error accessing session manager:", error)
         }
-        
+
         const hostData = localStorage.getItem("currentHost")
         if (hostData) {
           const { roomCode: storedRoomCode, isHost } = JSON.parse(hostData)
@@ -180,7 +188,7 @@ function MonitorPageContent() {
           router.push("/select-quiz")
         }
       }
-      
+
       loadHostData()
     }
   }, [params, router])
@@ -190,26 +198,26 @@ function MonitorPageContent() {
     if (roomCode) {
       const broadcastChannel = new BroadcastChannel(`progress-update-${roomCode}`)
       let lastUpdateTime = 0
-      
+
       broadcastChannel.onmessage = (event) => {
         if (event.data.type === 'progress-update') {
           const now = Date.now()
           if (now - lastUpdateTime < 1000) return
           lastUpdateTime = now
-          
+
           console.log("[Monitor] Received progress broadcast:", event.data)
-          
+
           if (redirecting) {
             console.log("[Monitor] Skipping refresh - already redirecting")
             return
           }
-          
+
           roomManager.getRoom(roomCode).then((updatedRoom) => {
             if (updatedRoom?.status === 'finished') {
               console.log("[Monitor] Game already finished, skipping refresh")
               return
             }
-            
+
             if (updatedRoom) {
               setForceRefresh(prev => prev + 1)
             }
@@ -231,18 +239,18 @@ function MonitorPageContent() {
           console.log("[Monitor] Skipping poll - redirecting")
           return
         }
-        
+
         try {
           const latestRoom = await roomManager.getRoom(roomCode)
-          
+
           if (latestRoom?.status === 'finished') {
             console.log("[Monitor] Game finished, stopping poll")
             clearInterval(aggressivePolling)
             return
           }
-          
+
           const hasChanges = JSON.stringify(latestRoom?.players) !== JSON.stringify(room?.players)
-          
+
           if (hasChanges && latestRoom) {
             setForceRefresh(prev => prev + 1)
           }
@@ -250,7 +258,7 @@ function MonitorPageContent() {
           console.error("[Monitor] Error in aggressive polling:", error)
         }
       }, AGGRESSIVE_POLLING_INTERVAL)
-      
+
       return () => clearInterval(aggressivePolling)
     }
   }, [roomCode, room, redirecting])
@@ -304,7 +312,7 @@ function MonitorPageContent() {
     if (room && isHost && isHostDetected && room.status === "finished" && !redirecting) {
       console.log("[Monitor] 🎯 Game status is finished, redirecting host to leaderboard...")
       setRedirecting(true)
-      
+
       // Redirect host ke leaderboard dengan multiple fallback - IMMEDIATE
       const redirectToLeaderboard = () => {
         console.log("[Monitor] 🚀 Executing redirect to leaderboard...", { roomCode })
@@ -322,7 +330,7 @@ function MonitorPageContent() {
           }
         }
       }
-      
+
       // Redirect immediately, no delay
       redirectToLeaderboard()
     } else if (room && room.status === "finished") {
@@ -346,11 +354,11 @@ function MonitorPageContent() {
             console.log("[Monitor] 🎯 Game finished detected via polling - redirecting immediately...")
             clearInterval(statusPolling)
             setRedirecting(true)
-            
+
             // Redirect immediately with multiple attempts
             const redirectUrl = `/host/leaderboad?roomCode=${roomCode}`
             console.log("[Monitor] Polling redirect to:", redirectUrl)
-            
+
             // Force redirect with multiple methods
             setTimeout(() => {
               try {
@@ -404,6 +412,7 @@ function MonitorPageContent() {
 
         // 🚀 IMPROVED: Multiple verification attempts with increasing delays
         const verifyAndForceFinish = async (attempt = 1, maxAttempts = 3) => {
+          if (!roomCode) return
           try {
             console.log(`[Monitor] Force finish attempt ${attempt}/${maxAttempts}`)
 
@@ -452,7 +461,7 @@ function MonitorPageContent() {
             // Verifikasi lagi setelah force finish
             await new Promise(resolve => setTimeout(resolve, 1000))
             const finalRoom = await roomManager.getRoom(roomCode!)
-            
+
             if (!finalRoom) {
               console.error("[Monitor] Could not verify final room state")
               if (attempt < maxAttempts) {
@@ -499,7 +508,7 @@ function MonitorPageContent() {
 
             // Redirect host ke leaderboard IMMEDIATELY - tidak perlu tunggu
             console.log("[Monitor] 🚀 Redirecting host to leaderboard IMMEDIATELY...")
-            
+
             // Use setTimeout with 0 delay to ensure redirect happens after state updates
             setTimeout(() => {
               try {
@@ -548,7 +557,7 @@ function MonitorPageContent() {
         if (redirecting) return
         setForceRefresh(prev => prev + 1)
       }, 2000)
-      
+
       return () => clearInterval(forceRefreshInterval)
     }
   }, [room, isHost, redirecting])
@@ -560,7 +569,7 @@ function MonitorPageContent() {
         const nonHostPlayers = room.players.filter(p => !p.isHost)
         const totalQuestions = room.settings.questionCount || 10
         const completedCount = nonHostPlayers.filter(p => (p.questionsAnswered || 0) >= totalQuestions).length
-        
+
         console.log("[Monitor] Monitoring status:", {
           total: nonHostPlayers.length,
           completed: completedCount,
@@ -582,21 +591,21 @@ function MonitorPageContent() {
           }, 100)
         }
       }, 3000)
-      
+
       return () => clearInterval(checkCompletion)
     }
   }, [room, isHost, redirecting, lastVerifiedCompletion, roomCode])
 
   const endGame = async () => {
     if (!roomCode) return
-    
+
     try {
       const success = await roomManager.updateGameStatus(roomCode, "finished")
       if (success) {
         const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
         broadcastChannel.postMessage({ type: 'game-ended', roomCode, timestamp: Date.now() })
         broadcastChannel.close()
-        
+
         router.push(`/host/leaderboad?roomCode=${roomCode}`)
         setTimeout(() => {
           if (window.location.pathname !== `/host/leaderboad`) {
@@ -643,26 +652,26 @@ function MonitorPageContent() {
 
   const splitPlayerName = (name: string) => {
     const words = name.split(' ')
-    
+
     if (words.length === 1 || name.length <= 8) {
       return { firstWord: name, secondWord: '' }
     }
-    
+
     if (words.length === 2) {
       return { firstWord: words[0], secondWord: words[1] }
     }
-    
+
     if (words.length > 2) {
       return { firstWord: words[0], secondWord: words[1] }
     }
-    
+
     return { firstWord: name, secondWord: '' }
   }
 
   const players = room.players.filter((p) => !p.isHost)
   const sortedPlayers = [...players].sort((a, b) => {
-    const aTotal = (a.quizScore || 0) + (a.memoryScore || 0)
-    const bTotal = (b.quizScore || 0) + (b.memoryScore || 0)
+    const aTotal = (a.quizScore || 0)
+    const bTotal = (b.quizScore || 0)
     return bTotal - aTotal
   })
 
@@ -688,11 +697,11 @@ function MonitorPageContent() {
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
       </div>
-      
+
       <div className="absolute inset-0 overflow-hidden">
         <PixelBackgroundElements />
         <div className="absolute top-20 left-10 w-32 h-32 opacity-20 animate-float">
@@ -717,15 +726,15 @@ function MonitorPageContent() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div>
                 <div className="flex flex-row sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                  <img 
-                    src="/images/memoryquiz.webp" 
-                    alt="MEMORY QUIZ" 
+                  <img
+                    src="/images/memoryquiz.webp"
+                    alt="MEMORY QUIZ"
                     className="h-12 w-auto sm:h-16 md:h-20 object-contain"
                     draggable={false}
                   />
-                  <img 
-                    src="/images/gameforsmartlogo.webp" 
-                    alt="GameForSmart Logo" 
+                  <img
+                    src="/images/gameforsmartlogo.webp"
+                    alt="GameForSmart Logo"
                     className="h-12 w-auto sm:h-16 md:h-20 object-contain"
                   />
                   <div className="flex flex-row sm:flex-row gap-2">
@@ -744,20 +753,35 @@ function MonitorPageContent() {
             </div>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <button 
-              onClick={endGame} 
-              className="relative pixel-button-container w-full sm:w-auto"
-            >
-              <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <button className="relative bg-linear-to-br from-blue-500 to-cyan-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-sm sm:text-base lg:text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto min-h-[44px]">
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 bg-black rounded border-2 border-white flex items-center justify-center">
-                    <span className="text-white font-bold text-xs sm:text-sm">✕</span>
+            <AlertDialog>
+              <AlertDialogTrigger className="relative pixel-button-container w-full sm:w-auto">
+                <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                <div className="relative bg-linear-to-br from-blue-500 to-cyan-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-sm sm:text-base lg:text-lg pixel-button-host transform hover:scale-105 transition-all duration-300 px-4 sm:px-6 py-2 sm:py-3 w-full sm:w-auto min-h-[44px] flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 bg-black rounded border-2 border-white flex items-center justify-center">
+                      <span className="text-white font-bold text-xs sm:text-sm">✕</span>
+                    </div>
+                    <span className="text-sm sm:text-base lg:text-lg font-bold">{t('monitor.endGame')}</span>
                   </div>
-                  <span className="text-sm sm:text-base lg:text-lg font-bold">{t('monitor.endGame')}</span>
                 </div>
-              </button>
-            </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-slate-900 border-2 border-white/20 text-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Akhiri Game?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-slate-300">
+                    Apakah Anda yakin ingin mengakhiri game ini? Semua pemain akan diarahkan ke leaderboard.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-slate-800 text-white border-slate-600 hover:bg-slate-700 hover:text-white">
+                    Batal
+                  </AlertDialogCancel>
+                  <AlertDialogAction onClick={endGame} className="bg-red-600 hover:bg-red-700 text-white border-none">
+                    Ya, Akhiri
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
@@ -771,7 +795,7 @@ function MonitorPageContent() {
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
             </div>
             <p className="text-red-300 text-center text-xs sm:text-sm mt-1">
-              {timerState.remainingTime <= 0 
+              {timerState.remainingTime <= 0
                 ? t('monitor.gameWillEnd')
                 : t('monitor.gameWillEndWhenTimeUp')
               }
@@ -791,97 +815,95 @@ function MonitorPageContent() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {sortedPlayers.map((player, index) => {
-                const rank = index + 1
-                const quizScore = player.quizScore || 0
-                const totalScore = quizScore
-                const questionsAnswered = player.questionsAnswered || 0
-                const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
-                const rankingChange = rankingChanges[player.id]
+                  const rank = index + 1
+                  const quizScore = player.quizScore || 0
+                  const totalScore = quizScore
+                  const questionsAnswered = player.questionsAnswered || 0
+                  const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
+                  const rankingChange = rankingChanges[player.id]
 
-                return (
-                  <div key={player.id} className="relative bg-linear-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-2 sm:mb-3">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <div
-                            className={`text-sm sm:text-base lg:text-lg font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
-                          >
-                            #{rank}
+                  return (
+                    <div key={player.id} className="relative bg-linear-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <div
+                              className={`text-sm sm:text-base lg:text-lg font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
+                            >
+                              #{rank}
+                            </div>
+                            {rankingChange === "up" && <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                            {rankingChange === "down" && <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />}
                           </div>
-                          {rankingChange === "up" && <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
-                          {rankingChange === "down" && <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />}
-                        </div>
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex items-center justify-center overflow-hidden">
-                          <RobustGoogleAvatar
-                            avatarUrl={player.avatar}
-                            alt={`${player.nickname} avatar`}
-                            className="w-full h-full"
-                            width={48}
-                            height={48}
-                          />
-                        </div>
-                        <div>
-                          {(() => {
-                            const { firstWord, secondWord } = splitPlayerName(player.nickname)
-                            return (
-                              <div className="text-center">
-                                <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
-                                  {firstWord}
-                                </h3>
-                                {secondWord && (
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex items-center justify-center overflow-hidden">
+                            <RobustGoogleAvatar
+                              avatarUrl={player.avatar}
+                              alt={`${player.nickname} avatar`}
+                              className="w-full h-full"
+                              width={48}
+                              height={48}
+                            />
+                          </div>
+                          <div>
+                            {(() => {
+                              const { firstWord, secondWord } = splitPlayerName(player.nickname)
+                              return (
+                                <div className="text-center">
                                   <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
-                                    {secondWord}
+                                    {firstWord}
                                   </h3>
-                                )}
-                              </div>
-                            )
-                          })()}
+                                  {secondWord && (
+                                    <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
+                                      {secondWord}
+                                    </h3>
+                                  )}
+                                </div>
+                              )
+                            })()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
+                            <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} {t('monitor.points')}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
-                          <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} {t('monitor.points')}</span>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div className="space-y-2 sm:space-y-3">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold text-slate-300">QUIZ PROGRESS</span>
-                          <span className={`text-xs sm:text-sm font-bold ${
-                            questionsAnswered >= quizSettings.questionCount 
-                              ? 'text-green-300' 
-                              : questionsAnswered > 0 
-                                ? 'text-blue-300' 
+                      <div className="space-y-2 sm:space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-bold text-slate-300">QUIZ PROGRESS</span>
+                            <span className={`text-xs sm:text-sm font-bold ${questionsAnswered >= quizSettings.questionCount
+                              ? 'text-green-300'
+                              : questionsAnswered > 0
+                                ? 'text-blue-300'
                                 : 'text-gray-400'
-                          }`}>
-                            {questionsAnswered}/{quizSettings.questionCount}
-                          </span>
-                        </div>
-                        <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3 sm:h-4 relative overflow-hidden">
-                          <div 
-                            className={`h-full rounded-lg transition-all duration-500 ${
-                              questionsAnswered >= quizSettings.questionCount
+                              }`}>
+                              {questionsAnswered}/{quizSettings.questionCount}
+                            </span>
+                          </div>
+                          <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3 sm:h-4 relative overflow-hidden">
+                            <div
+                              className={`h-full rounded-lg transition-all duration-500 ${questionsAnswered >= quizSettings.questionCount
                                 ? 'bg-linear-to-r from-green-400 to-emerald-400'
                                 : questionsAnswered > 0
                                   ? 'bg-linear-to-r from-blue-400 to-purple-400'
                                   : 'bg-linear-to-r from-gray-400 to-gray-500'
-                            }`}
-                            style={{ width: `${Math.max(quizProgress, 2)}%` }}
-                          />
-                          {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
-                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                          )}
-                          {questionsAnswered >= quizSettings.questionCount && (
-                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-green-300/30 to-transparent animate-ping"></div>
-                          )}
+                                }`}
+                              style={{ width: `${Math.max(quizProgress, 2)}%` }}
+                            />
+                            {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
+                              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                            )}
+                            {questionsAnswered >= quizSettings.questionCount && (
+                              <div className="absolute inset-0 bg-linear-to-r from-transparent via-green-300/30 to-transparent animate-ping"></div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -920,7 +942,7 @@ function PixelBackgroundElements() {
           }}
         />
       ))}
-      
+
       <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>

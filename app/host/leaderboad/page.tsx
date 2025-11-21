@@ -31,6 +31,8 @@ interface Room {
   gameStarted: boolean
   countdownStartTime?: string
   countdownDuration?: number
+  quizId?: string
+  quizTitle?: string
 }
 
 function formatPlayerName(nickname: string): string {
@@ -47,8 +49,6 @@ function LeaderboardHostPageContent() {
   const [room, setRoom] = useState<Room | null>(null)
   const [loading, setLoading] = useState(true)
   const [playersWithCorrectAvatars, setPlayersWithCorrectAvatars] = useState<Player[]>([])
-  const [quizId, setQuizId] = useState<string | null>(null)
-  const [quizTitle, setQuizTitle] = useState<string | null>(null)
   const [hostId, setHostId] = useState<string | null>(null)
   const [isRestarting, setIsRestarting] = useState(false)
   const searchParams = useSearchParams()
@@ -108,17 +108,7 @@ function LeaderboardHostPageContent() {
         if (roomData) {
           setRoom(roomData)
           setHostId(roomData.hostId)
-          try {
-            const { data: roomDbData, error } = await supabase
-              .from('rooms')
-              .select('quiz_id, quiz_title')
-              .eq('room_code', roomCode)
-              .single()
-            if (!error && roomDbData) {
-              setQuizId(roomDbData.quiz_id)
-              setQuizTitle(roomDbData.quiz_title)
-            }
-          } catch (error) { }
+
           const playersWithAvatars = await Promise.all(
             roomData.players.filter(p => !p.isHost).map(async (player) => {
               try {
@@ -230,7 +220,7 @@ function LeaderboardHostPageContent() {
   const champion = sortedPlayers[0]
 
   const handleRestart = async () => {
-    if (!room || !hostId || !quizId || !quizTitle || isRestarting) {
+    if (!room || !hostId || !room.quizId || !room.quizTitle || isRestarting) {
       return
     }
     setIsRestarting(true)
@@ -241,8 +231,8 @@ function LeaderboardHostPageContent() {
           questionCount: room.settings.questionCount,
           totalTimeLimit: room.settings.totalTimeLimit,
         },
-        quizId,
-        quizTitle
+        room.quizId,
+        room.quizTitle
       )
       if (!newRoom) {
         setIsRestarting(false)
@@ -260,7 +250,7 @@ function LeaderboardHostPageContent() {
           {
             id: hostId,
             roomCode: newRoom.code,
-            quizId: quizId,
+            quizId: room.quizId,
           },
           newRoom.code
         )
@@ -268,7 +258,7 @@ function LeaderboardHostPageContent() {
       try {
         localStorage.setItem('hostId', hostId)
         localStorage.setItem('roomCode', newRoom.code)
-        localStorage.setItem('quizId', quizId)
+        localStorage.setItem('quizId', room.quizId)
       } catch { }
       router.push(`/host/${newRoom.code}`)
     } catch (error) {
@@ -393,7 +383,7 @@ function LeaderboardHostPageContent() {
             </button>
             <button
               onClick={handleRestart}
-              disabled={isRestarting || !room || !hostId || !quizId || !quizTitle}
+              disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
               className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95 disabled:opacity-50 disabled:grayscale"
               style={{
                 background: '#4a90e2',
@@ -681,7 +671,7 @@ function LeaderboardHostPageContent() {
           <button
             className="relative transform hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             onClick={handleRestart}
-            disabled={isRestarting || !room || !hostId || !quizId || !quizTitle}
+            disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
             style={{
               imageRendering: 'pixelated',
             }}

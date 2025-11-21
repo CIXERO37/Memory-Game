@@ -37,11 +37,21 @@ export function calculateTimerState(room: Room): TimerState {
   }
 
   const now = Date.now() // Use timestamp for better performance
-  
+
+  // If status is waiting, return full time
+  if (room.status === 'waiting') {
+    const totalTimeLimitSeconds = room.settings.totalTimeLimit * 60
+    return {
+      duration: 0,
+      countdown: null,
+      remainingTime: totalTimeLimitSeconds
+    }
+  }
+
   // Use startedAt for more accurate timing, fallback to createdAt
   const gameStartTime = room.startedAt ? new Date(room.startedAt).getTime() : new Date(room.createdAt).getTime()
   const elapsedSeconds = Math.floor((now - gameStartTime) / 1000)
-  
+
   // Add small buffer to prevent timing discrepancies between host and players
   const syncBuffer = 0.5 // 500ms buffer for network latency
 

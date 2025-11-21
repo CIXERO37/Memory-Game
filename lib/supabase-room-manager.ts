@@ -26,6 +26,8 @@ export interface Room {
   gameStarted: boolean
   countdownStartTime?: string
   countdownDuration?: number
+  quizId?: string
+  quizTitle?: string
 }
 
 class SupabaseRoomManager {
@@ -45,13 +47,17 @@ class SupabaseRoomManager {
   }
 
   // Map game_sessions status to Room status
-  private mapSessionStatusToRoomStatus(sessionStatus: string, countdownStartedAt?: string | null): Room["status"] {
-    if (sessionStatus === 'active' && countdownStartedAt) {
-      // If active and countdown started, it's in countdown phase
-      return 'countdown'
-    }
+  private mapSessionStatusToRoomStatus(sessionStatus: string, countdownStartedAt?: string | null, startedAt?: string | null): Room["status"] {
     if (sessionStatus === 'active') {
-      // Active but no countdown yet, treat as quiz
+      // If startedAt is present, the game has officially started (post-countdown)
+      if (startedAt) {
+        return 'quiz'
+      }
+      // If only countdownStartedAt is present, it's in countdown phase
+      if (countdownStartedAt) {
+        return 'countdown'
+      }
+      // Active but no countdown and no start time (shouldn't happen normally, but treat as quiz)
       return 'quiz'
     }
     if (sessionStatus === 'finished') {
@@ -119,7 +125,7 @@ class SupabaseRoomManager {
       }
 
       const roomCode = this.generateRoomCode()
-      
+
       // Get quiz detail for quiz_detail JSONB
       const { data: quizData } = await supabase
         .from('quizzes')
@@ -165,7 +171,9 @@ class SupabaseRoomManager {
         status: 'waiting',
         createdAt: sessionData.created_at,
         startedAt: sessionData.started_at,
-        gameStarted: false
+        gameStarted: false,
+        quizId: quizId,
+        quizTitle: quizTitle
       }
 
       return room
@@ -195,7 +203,7 @@ class SupabaseRoomManager {
 
       // Parse participants from JSONB
       const participants = Array.isArray(sessionData.participants) ? sessionData.participants : []
-      
+
       const players: Player[] = participants.map((p: any) => ({
         id: p.id || '',
         user_id: p.user_id || null,
@@ -220,12 +228,14 @@ class SupabaseRoomManager {
           questionCount,
           totalTimeLimit: sessionData.total_time_minutes || 60
         },
-        status: this.mapSessionStatusToRoomStatus(sessionData.status, sessionData.countdown_started_at),
+        status: this.mapSessionStatusToRoomStatus(sessionData.status, sessionData.countdown_started_at, sessionData.started_at),
         createdAt: sessionData.created_at,
         startedAt: sessionData.started_at,
         gameStarted: sessionData.status !== 'waiting' && sessionData.status !== null,
         countdownStartTime: sessionData.countdown_started_at,
-        countdownDuration: 10
+        countdownDuration: 10,
+        quizId: sessionData.quiz_id,
+        quizTitle: quizTitle
       }
 
       return room
@@ -256,10 +266,10 @@ class SupabaseRoomManager {
 
       // Get user info
       const userInfo = await this.getUserInfo(userId)
-      
+
       // Generate player session ID
       const playerId = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      
+
       // Add player to participants array
       const participants = Array.isArray(sessionData.participants) ? sessionData.participants : []
       const newParticipant = {
@@ -272,7 +282,7 @@ class SupabaseRoomManager {
         joined_at: new Date().toISOString(),
         last_active: new Date().toISOString()
       }
-      
+
       participants.push(newParticipant)
 
       // Update game session with new participant
@@ -314,15 +324,15 @@ class SupabaseRoomManager {
 
       // Get user info
       const userInfo = await this.getUserInfo(userId)
-      
+
       const participants = Array.isArray(sessionData.participants) ? [...sessionData.participants] : []
-      
+
       // Check if player exists by user_id (preferred) or by id
       let playerIndex = -1
       if (userInfo.user_id) {
         playerIndex = participants.findIndex((p: any) => p.user_id === userInfo.user_id)
       }
-      
+
       // Fallback: check by id if user_id not found
       if (playerIndex === -1 && player.id) {
         playerIndex = participants.findIndex((p: any) => p.id === player.id)
@@ -332,7 +342,7 @@ class SupabaseRoomManager {
         // Player exists, update last_active dan preserve user_id/nickname
         const existingPlayer = participants[playerIndex]
         existingPlayer.last_active = new Date().toISOString()
-        
+
         // Update user_id dan nickname jika belum ada atau berbeda
         if (userInfo.user_id && !existingPlayer.user_id) {
           existingPlayer.user_id = userInfo.user_id
@@ -340,7 +350,7 @@ class SupabaseRoomManager {
         if (userInfo.nickname && !existingPlayer.nickname) {
           existingPlayer.nickname = userInfo.nickname
         }
-        
+
         participants[playerIndex] = existingPlayer
       } else {
         // Player doesn't exist, create new one
@@ -590,7 +600,7 @@ class SupabaseRoomManager {
       // Update participant in array
       const participants = Array.isArray(sessionData.participants) ? [...sessionData.participants] : []
       const playerIndex = participants.findIndex((p: any) => p.id === playerId)
-      
+
       if (playerIndex === -1) {
         console.error('[SupabaseRoomManager] Player not found:', playerId)
         return false
@@ -642,18 +652,18 @@ class SupabaseRoomManager {
     }
 
     const DEBOUNCE_DELAY = 100
-    
+
     const debouncedCallback = (updatedRoom: Room | null, immediate: boolean = false) => {
       if (immediate) {
         const lastRoom = this.lastRoomData.get(roomCode)
-        const hasChanged = !lastRoom || 
+        const hasChanged = !lastRoom ||
           lastRoom.status !== updatedRoom?.status ||
           lastRoom.players?.length !== updatedRoom?.players?.length ||
           lastRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
           JSON.stringify(lastRoom.players?.map(p => p.id).sort()) !== JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
-          JSON.stringify(lastRoom.players?.map(p => ({ id: p.id, quizScore: p.quizScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id))) !== 
+          JSON.stringify(lastRoom.players?.map(p => ({ id: p.id, quizScore: p.quizScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id))) !==
           JSON.stringify(updatedRoom?.players?.map(p => ({ id: p.id, quizScore: p.quizScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id)))
-        
+
         if (hasChanged && updatedRoom) {
           this.lastRoomData.set(roomCode, updatedRoom)
           callback(updatedRoom)
@@ -665,38 +675,38 @@ class SupabaseRoomManager {
       if (existingTimer) {
         clearTimeout(existingTimer)
       }
-      
+
       const timer = setTimeout(() => {
         const lastRoom = this.lastRoomData.get(roomCode)
-        const hasChanged = !lastRoom || 
+        const hasChanged = !lastRoom ||
           lastRoom.status !== updatedRoom?.status ||
           lastRoom.players?.length !== updatedRoom?.players?.length ||
           lastRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
           JSON.stringify(lastRoom.players?.map(p => p.id).sort()) !== JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
-          JSON.stringify(lastRoom.players?.map(p => ({ id: p.id, quizScore: p.quizScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id))) !== 
+          JSON.stringify(lastRoom.players?.map(p => ({ id: p.id, quizScore: p.quizScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id))) !==
           JSON.stringify(updatedRoom?.players?.map(p => ({ id: p.id, quizScore: p.quizScore, questionsAnswered: p.questionsAnswered })).sort((a, b) => a.id.localeCompare(b.id)))
-        
+
         if (hasChanged && updatedRoom) {
           this.lastRoomData.set(roomCode, updatedRoom)
           callback(updatedRoom)
         }
-        
+
         this.debounceTimers.delete(roomCode)
       }, DEBOUNCE_DELAY)
-      
+
       this.debounceTimers.set(roomCode, timer)
     }
 
     // Subscribe to game_sessions changes
     const roomSubscription = supabase
       .channel(`room-${roomCode}`)
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
           table: 'game_sessions',
           filter: `game_pin=eq.${roomCode}`
-        }, 
+        },
         async (payload) => {
           const updatedRoom = await this.getRoom(roomCode)
           if (updatedRoom) {
@@ -726,9 +736,9 @@ class SupabaseRoomManager {
         clearTimeout(timer)
         this.debounceTimers.delete(roomCode)
       }
-      
+
       this.lastRoomData.delete(roomCode)
-      
+
       console.log('[SupabaseRoomManager] Unsubscribing from room:', roomCode)
       roomSubscription.unsubscribe()
       this.subscriptions.delete(roomCode)
@@ -746,10 +756,10 @@ class SupabaseRoomManager {
       clearTimeout(timer)
     })
     this.debounceTimers.clear()
-    
+
     // Clear cached room data
     this.lastRoomData.clear()
-    
+
     // Unsubscribe from all channels
     this.subscriptions.forEach(subscription => {
       subscription.unsubscribe()
@@ -760,8 +770,8 @@ class SupabaseRoomManager {
 
   // Update detailed game progress
   async updateGameProgress(
-    roomCode: string, 
-    playerId: string, 
+    roomCode: string,
+    playerId: string,
     progress: {
       currentQuestion?: number
       correctAnswers?: number
@@ -785,7 +795,7 @@ class SupabaseRoomManager {
       // Update participant in array
       const participants = Array.isArray(sessionData.participants) ? [...sessionData.participants] : []
       const playerIndex = participants.findIndex((p: any) => p.id === playerId)
-      
+
       if (playerIndex === -1) {
         console.error('[SupabaseRoomManager] Player not found:', playerId)
         return false
