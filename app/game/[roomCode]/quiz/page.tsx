@@ -343,19 +343,119 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             console.log("[Quiz] 📚 Supabase quiz data loaded:", supabaseQuiz.title)
             title = supabaseQuiz.title
 
+            // Collect all potential answers for distractors (Pass 1)
+            const allPotentialAnswers = new Set<string>()
+            supabaseQuiz.questions.forEach((q: any) => {
+              const ans = q.correct_answer || q.correct || q.answer
+              if (ans) allPotentialAnswers.add(String(ans))
+
+              const opts = q.options || q.choices || q.answers
+              if (Array.isArray(opts)) {
+                opts.forEach((o: any) => {
+                  if (typeof o === 'object' && o !== null) {
+                    // Handle object structure like { answer: "..." }
+                    const val = o.answer || o.text || o.value || o.label
+                    if (val) allPotentialAnswers.add(String(val))
+                  } else {
+                    allPotentialAnswers.add(String(o))
+                  }
+                })
+              }
+            })
+            const distractorPool = Array.from(allPotentialAnswers)
+
             // Map Supabase questions to local format
-            const mappedQuestions: Question[] = supabaseQuiz.questions.map((q, index) => {
-              // Find correct index
-              let correctIndex = 0
-              if (q.options && q.correct_answer) {
-                correctIndex = q.options.findIndex(opt => opt === q.correct_answer)
-                if (correctIndex === -1) correctIndex = 0 // Fallback
+            const mappedQuestions: Question[] = supabaseQuiz.questions.map((q: any, index) => {
+              // 1. Robust Option Extraction
+              let rawOptions = q.options || q.choices || q.answers || []
+              let options: string[] = []
+
+              if (Array.isArray(rawOptions)) {
+                options = rawOptions.map((opt: any) => {
+                  if (typeof opt === 'object' && opt !== null) {
+                    // Handle { id: "0", answer: "13" } format from Supabase JSONB
+                    return String(opt.answer || opt.text || opt.value || opt.label || "")
+                  }
+                  return String(opt)
+                }).filter(opt => opt !== "")
+              }
+
+              // Handle True/False without explicit options
+              if (options.length === 0 && (q.type === 'true_false' || q.question.toLowerCase().includes('true') || q.question.toLowerCase().includes('false'))) {
+                options = ["True", "False"]
+              }
+
+              // 2. Robust Correct Answer Extraction
+              // The correct_answer field might be the answer text itself (e.g. "13") or an index
+              const rawCorrectAnswer = q.correct_answer || q.correct || q.answer
+
+              // 3. Ensure Correct Answer is in options
+              let correctIndex = -1
+
+              if (rawCorrectAnswer !== undefined && rawCorrectAnswer !== null) {
+                const correctStr = String(rawCorrectAnswer).trim()
+
+                // First, try to find matching option text
+                correctIndex = options.findIndex(opt => opt.trim() === correctStr)
+
+                // If not found, try case-insensitive
+                if (correctIndex === -1) {
+                  correctIndex = options.findIndex(opt => opt.toLowerCase().trim() === correctStr.toLowerCase())
+                }
+
+                // If still not found, check if rawCorrectAnswer is actually a valid index (0-3)
+                // BUT only if it looks like a number and is within range
+                if (correctIndex === -1 && !isNaN(Number(rawCorrectAnswer))) {
+                  const idx = Number(rawCorrectAnswer)
+                  if (idx >= 0 && idx < options.length) {
+                    correctIndex = idx
+                  }
+                }
+
+                // If STILL not found, add it as a new option
+                if (correctIndex === -1) {
+                  options.push(correctStr)
+                  correctIndex = options.length - 1
+                }
+              } else {
+                // No correct answer specified? Default to 0 if options exist
+                if (options.length > 0) correctIndex = 0
+              }
+
+              // 4. Fill missing options from Distractor Pool
+              if (options.length < 4 && distractorPool.length > 0) {
+                let attempts = 0
+                while (options.length < 4 && attempts < 50) {
+                  const randomDistractor = distractorPool[Math.floor(Math.random() * distractorPool.length)]
+                  if (randomDistractor && !options.includes(randomDistractor)) {
+                    options.push(randomDistractor)
+                  }
+                  attempts++
+                }
+              }
+
+              // 4b. Numeric Distractor Generation (if pool failed or empty)
+              if (options.length < 4 && rawCorrectAnswer && !isNaN(Number(rawCorrectAnswer))) {
+                const num = Number(rawCorrectAnswer)
+                const offsets = [-1, 1, -2, 2, -3, 3]
+                for (const offset of offsets) {
+                  if (options.length >= 4) break
+                  const dist = String(num + offset)
+                  if (!options.includes(dist)) options.push(dist)
+                }
+              }
+
+              // 5. FINAL FALLBACK: If options are STILL empty, add placeholders
+              if (options.length === 0) {
+                console.warn(`[Quiz] ⚠️ Question ${index + 1} has NO options and NO correct answer. Adding placeholders.`)
+                options = ["Option A", "Option B", "Option C", "Option D"]
+                correctIndex = 0
               }
 
               return {
-                id: index + 1, // Use index as ID since local expects number
+                id: index + 1,
                 question: q.question,
-                options: q.options || [],
+                options: options,
                 correct: correctIndex,
                 explanation: q.explanation
               }
