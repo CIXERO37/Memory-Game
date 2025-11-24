@@ -6,26 +6,27 @@ import { RobustGoogleAvatar } from './robust-google-avatar'
 
 interface UserProfileProps {
   userProfile: UserProfile
+  onClick?: () => void
 }
 
-export function UserProfileComponent({ userProfile }: UserProfileProps) {
+export function UserProfileComponent({ userProfile, onClick }: UserProfileProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
   const [retryCount, setRetryCount] = useState(0)
-  
+
   // Debug logging
   console.log('=== USER PROFILE COMPONENT ===')
   console.log('UserProfile:', userProfile)
   console.log('Avatar URL:', userProfile.avatar_url)
   console.log('=============================')
-  
+
   // Reset error state when avatar URL changes
   React.useEffect(() => {
     setImageError(false)
     setImageLoading(true)
     setRetryCount(0)
   }, [userProfile.avatar_url])
-  
+
   const handleImageError = () => {
     console.log('Avatar image failed to load, retry count:', retryCount)
     if (retryCount < 2) {
@@ -40,15 +41,18 @@ export function UserProfileComponent({ userProfile }: UserProfileProps) {
       setImageLoading(false)
     }
   }
-  
+
   const handleImageLoad = () => {
     console.log('Avatar image loaded successfully')
     setImageError(false)
     setImageLoading(false)
   }
-  
+
   return (
-    <div className="flex items-center gap-3 bg-purple-800/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg px-3 py-2 shadow-xl">
+    <div
+      onClick={onClick}
+      className="flex items-center gap-3 bg-purple-900/90 backdrop-blur-md border-2 border-purple-500/60 rounded-xl px-3 py-2 shadow-xl cursor-pointer hover:bg-purple-800/95 transition-all duration-300"
+    >
       {/* Avatar */}
       <div className="relative">
         {userProfile.avatar_url ? (
@@ -67,7 +71,7 @@ export function UserProfileComponent({ userProfile }: UserProfileProps) {
           </div>
         )}
       </div>
-      
+
       {/* Name */}
       <div className="flex flex-col">
         <span className="text-white font-bold text-sm leading-tight">

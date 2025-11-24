@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Users, Play, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X, Maximize2, Minimize2 } from "lucide-react"
+import { Users, Play, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X, Maximize2, Minimize2, UserPen } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
@@ -10,12 +10,14 @@ import { UserProfileComponent } from "@/components/user-profile"
 import { LogoutConfirmationDialog } from "@/components/logout-confirmation-dialog"
 import { useTranslation } from "react-i18next"
 import { LanguageSelector } from "@/components/language-selector"
+import { EditProfileDialog } from "@/components/edit-profile-dialog"
 
 export default function HomePage() {
   const dragCardRef = useRef<HTMLDivElement | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation } = useAuth()
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation, refreshProfile } = useAuth()
   const { t } = useTranslation()
 
   // Close dropdown when clicking outside
@@ -52,7 +54,7 @@ export default function HomePage() {
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
     document.addEventListener('mozfullscreenchange', handleFullscreenChange)
     document.addEventListener('MSFullscreenChange', handleFullscreenChange)
-    
+
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
@@ -106,18 +108,18 @@ export default function HomePage() {
 
       {/* Logo GameForSmart - Top Left */}
       <div className="absolute top-4 left-4 z-50">
-       
-          <Image
+
+        <Image
           draggable={false}
-            src="/images/gameforsmartlogo.webp"
-            alt="GameForSmart Logo"
-            width={150}
-            height={60}
-            className="h-auto w-auto max-w-[150px] sm:max-w-[200px] hover:opacity-80 transition-opacity duration-300"
-            priority
-            
-          />
-      
+          src="/images/gameforsmartlogo.webp"
+          alt="GameForSmart Logo"
+          width={150}
+          height={60}
+          className="h-auto w-auto max-w-[150px] sm:max-w-[200px] hover:opacity-80 transition-opacity duration-300"
+          priority
+
+        />
+
       </div>
 
       {/* Top Right Menu */}
@@ -125,15 +127,16 @@ export default function HomePage() {
         <div className="relative flex items-center gap-2">
           {/* User Profile (when logged in) */}
           {isAuthenticated && userProfile && (
-            <UserProfileComponent 
+            <UserProfileComponent
               userProfile={userProfile}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
             />
           )}
-          
+
           {/* Hamburger Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-12 h-12 bg-purple-800/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg flex items-center justify-center hover:bg-purple-700/90 transition-all duration-300 shadow-xl"
+            className="cursor-pointer w-12 h-12 bg-purple-900/90 backdrop-blur-md border-2 border-purple-500/60 rounded-xl flex items-center justify-center hover:bg-purple-800/95 transition-all duration-300 shadow-xl"
           >
             {isMenuOpen ? (
               <X className="w-6 h-6 text-white" />
@@ -142,24 +145,24 @@ export default function HomePage() {
             )}
           </button>
         </div>
-        
+
         {/* Dropdown Menu */}
         {isMenuOpen && (
-          <div className="absolute top-14 right-0 bg-purple-800/95 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-2xl min-w-48 overflow-hidden">
+          <div className="cursor-pointer absolute top-14 right-0 bg-purple-900/95 backdrop-blur-md border-2 border-purple-500/60 rounded-2xl shadow-2xl min-w-48 overflow-hidden">
             <div className="py-2">
               {/* Language Selection */}
               <LanguageSelector onClose={() => setIsMenuOpen(false)} />
-              
+
               {/* Divider */}
-              <div className="border-t border-purple-300/50 my-1"></div>
-              
+              <div className="border-t border-purple-500/40 my-1"></div>
+
               {/* Fullscreen Toggle */}
               <button
                 onClick={() => {
                   toggleFullscreen()
                   setIsMenuOpen(false)
                 }}
-                className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3"
+                className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3"
               >
                 {isFullscreen ? (
                   <Minimize2 className="w-5 h-5 text-white" />
@@ -170,20 +173,39 @@ export default function HomePage() {
                   {isFullscreen ? t('Exit Fullscreen') || 'Exit Fullscreen' : t('Fullscreen') || 'Fullscreen'}
                 </span>
               </button>
-              
+
+              {/* Edit Profile - Only show when authenticated */}
+              {isAuthenticated && (
+                <>
+                  {/* Divider */}
+                  <div className="border-t border-purple-500/40 my-1"></div>
+
+                  <button
+                    onClick={() => {
+                      setIsEditProfileOpen(true)
+                      setIsMenuOpen(false)
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3"
+                  >
+                    <UserPen className="w-5 h-5 text-white" />
+                    <span className="text-white font-medium">Edit Profile</span>
+                  </button>
+                </>
+              )}
+
               {/* Divider */}
-              <div className="border-t border-purple-300/50 my-1"></div>
-              
+              <div className="border-t border-purple-500/40 my-1"></div>
+
               {isAuthenticated ? (
                 <button
                   onClick={showLogoutDialog}
-                  className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3"
+                  className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3"
                 >
                   <LogIn className="w-5 h-5 text-white" />
                   <span className="text-white font-medium">{t('menu.logout')}</span>
                 </button>
               ) : (
-                <Link href="/login" className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3">
+                <Link href="/login" className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3">
                   <LogIn className="w-5 h-5 text-white" />
                   <span className="text-white font-medium">{t('menu.login')}</span>
                 </Link>
@@ -197,12 +219,12 @@ export default function HomePage() {
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       {/* Retro Scanlines */}
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
       </div>
-      
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Pixel Elements */}
@@ -252,7 +274,7 @@ export default function HomePage() {
         <FallingPixelCards />
       </div>
 
-  <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 min-h-screen flex flex-col justify-center">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 min-h-screen flex flex-col justify-center">
         {/* Main Content */}
         <div className="text-center mb-8 sm:mb-16">
           {/* Pixel Title */}
@@ -264,7 +286,7 @@ export default function HomePage() {
                 width={500}
                 height={200}
                 className="h-auto w-auto object-contain animate-smooth-bounce"
-                style={{ 
+                style={{
                   filter: 'contrast(1.2) brightness(1.1) drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
                   // slightly smaller on very small screens to avoid overflow
                   width: 'min(85vw, 500px)',
@@ -277,7 +299,7 @@ export default function HomePage() {
               />
             </div>
           </div>
-          
+
           {/* Pixel Description */}
           <div className="max-w-2xl mx-auto mb-6 sm:mb-12">
             <div className="bg-black/20 border-2 border-white/30 rounded-lg px-4 sm:px-6 py-3 sm:py-4 pixel-description">
@@ -289,11 +311,11 @@ export default function HomePage() {
         </div>
 
         {/* Pixel Action Buttons */}
-  <div className="flex flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
+        <div className="flex flex-row gap-4 sm:gap-8 max-w-6xl mx-auto pixel-buttons-container px-4">
           <Link href="/select-quiz" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-linear-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-      <button className="relative w-full h-14 sm:h-20 lg:h-24 bg-linear-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-base sm:text-2xl lg:text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-3 sm:px-6">
+              <button className="relative w-full h-14 sm:h-20 lg:h-24 bg-linear-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-base sm:text-2xl lg:text-3xl pixel-button-host transform hover:scale-105 transition-all duration-300 px-3 sm:px-6">
                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-black rounded border-2 border-white flex items-center justify-center">
                     <Server className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
@@ -303,11 +325,11 @@ export default function HomePage() {
               </button>
             </div>
           </Link>
-          
-      <Link href="/join" className="flex-1 min-w-0">
+
+          <Link href="/join" className="flex-1 min-w-0">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-        <button className="relative w-full h-14 sm:h-20 lg:h-24 bg-linear-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-base sm:text-2xl lg:text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-3 sm:px-6">
+              <button className="relative w-full h-14 sm:h-20 lg:h-24 bg-linear-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-base sm:text-2xl lg:text-3xl pixel-button-join transform hover:scale-105 transition-all duration-300 px-3 sm:px-6">
                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded border-2 border-black flex items-center justify-center">
                     <Play className="w-3 h-3 sm:w-5 sm:h-5 text-black" />
@@ -327,6 +349,16 @@ export default function HomePage() {
         onCancel={cancelLogout}
         userName={userProfile?.name || userProfile?.username}
       />
+
+      {/* Edit Profile Dialog */}
+      {isAuthenticated && userProfile && (
+        <EditProfileDialog
+          isOpen={isEditProfileOpen}
+          onClose={() => setIsEditProfileOpen(false)}
+          userProfile={userProfile}
+          onProfileUpdate={refreshProfile}
+        />
+      )}
 
     </div>
   )
@@ -360,7 +392,7 @@ function PixelBackgroundElements() {
           }}
         />
       ))}
-      
+
       {/* Floating Pixel Blocks */}
       <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
@@ -413,7 +445,7 @@ function FallingPixelCards() {
         origX = rect.left - (container.getBoundingClientRect().left)
         origY = rect.top - (container.getBoundingClientRect().top)
         el.style.transition = 'none'
-        ;(el as HTMLElement).style.zIndex = '20'
+          ; (el as HTMLElement).style.zIndex = '20'
         // stop falling when grabbed
         el.classList.remove('falling')
         el.style.animation = 'none'
@@ -426,9 +458,9 @@ function FallingPixelCards() {
         el.style.top = origY + dy + 'px'
       }
       const onPointerUp = (e: PointerEvent) => {
-        try { el.releasePointerCapture(e.pointerId) } catch {}
+        try { el.releasePointerCapture(e.pointerId) } catch { }
         el.style.transition = ''
-        ;(el as HTMLElement).style.zIndex = '10'
+          ; (el as HTMLElement).style.zIndex = '10'
       }
       el.addEventListener('pointerdown', onPointerDown)
       el.addEventListener('pointermove', onPointerMove)
@@ -452,10 +484,10 @@ function FallingPixelCards() {
           style={{ ['--x' as any]: c.x, ['--delay' as any]: c.delay, ['--dur' as any]: c.dur, ['--rot' as any]: c.rot, ['--w' as any]: c.w ?? '88px', ['--h' as any]: c.h ?? '124px' }}
         >
           <div className={`w-full h-full ${c.color} border-4 border-black rounded-lg shadow-lg flex items-center justify-center p-2`}>
-            <Image 
-              src={c.image} 
-              alt="Memory card" 
-              width={60} 
+            <Image
+              src={c.image}
+              alt="Memory card"
+              width={60}
               height={60}
               className="object-contain"
             />
