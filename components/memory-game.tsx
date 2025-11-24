@@ -21,6 +21,7 @@ interface MemoryCard {
   image: { name: string; src: string }
   isFlipped: boolean
   isMatched: boolean
+  isHidden: boolean
 }
 
 interface MemoryGameProps {
@@ -44,6 +45,7 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
       image,
       isFlipped: false,
       isMatched: false,
+      isHidden: false,
     }))
     setCards(initialCards)
 
@@ -61,7 +63,7 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
     if (!canClick || disabled || flippedCards.length >= 2) return
 
     const card = cards.find((c) => c.id === cardId)
-    if (!card || card.isFlipped || card.isMatched) return
+    if (!card || card.isFlipped || card.isMatched || card.isHidden) return
 
     const newFlippedCards = [...flippedCards, cardId]
     setFlippedCards(newFlippedCards)
@@ -83,6 +85,11 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
           setFlippedCards([])
           console.log("[MemoryGame] Calling onCorrectMatch callback")
           onCorrectMatch()
+          
+          // Setelah 1.5 detik, mulai animasi hide kartu yang sudah matched
+          setTimeout(() => {
+            setCards((prev) => prev.map((c) => (c.id === firstId || c.id === secondId ? { ...c, isHidden: true } : c)))
+          }, 1500)
         }, 500)
       } else {
         // No match - flip back after delay
@@ -109,23 +116,26 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
           <div
             key={card.id}
             className={cn(
-              "aspect-square cursor-pointer transition-all duration-300 hover:scale-105",
+              "aspect-square cursor-pointer transition-all duration-500 ease-in-out",
               "flex items-center justify-center",
               "border-2 bg-gradient-to-br from-white/20 to-white/10 rounded-lg",
               "min-h-[60px] min-w-[60px] sm:min-h-[80px] sm:min-w-[80px]", // More reasonable size
-              card.isMatched && "border-green-400 bg-green-500/20 scale-95",
-              (card.isFlipped || card.isMatched || showAll) && "border-blue-400 bg-blue-500/20",
+              !card.isHidden && "hover:scale-105",
+              card.isMatched && !card.isHidden && "border-green-400 bg-green-500/20 scale-95",
+              (card.isFlipped || (card.isMatched && !card.isHidden) || showAll) && "border-blue-400 bg-blue-500/20",
               disabled && "cursor-not-allowed opacity-50",
+              // Animasi hilang yang smooth: fade out + scale down + rotate
+              card.isHidden && "opacity-0 scale-0 rotate-12 pointer-events-none origin-center",
             )}
             onClick={() => handleCardClick(card.id)}
           >
             <div
               className={cn(
-                "transition-all duration-300 w-full h-full flex items-center justify-center",
-                card.isFlipped || card.isMatched || showAll ? "scale-100 opacity-100" : "scale-0 opacity-0",
+                "transition-all duration-500 ease-in-out w-full h-full flex items-center justify-center",
+                (card.isFlipped || (card.isMatched && !card.isHidden) || showAll) && !card.isHidden ? "scale-100 opacity-100" : "scale-0 opacity-0",
               )}
             >
-              {card.isFlipped || card.isMatched || showAll ? (
+              {(card.isFlipped || (card.isMatched && !card.isHidden) || showAll) && !card.isHidden ? (
                 <img
                   src={card.image.src}
                   alt={card.image.name}
@@ -147,7 +157,9 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
         ))}
       </div>
 
-      <div className="text-center mt-3 text-xs text-blue-200">Click cards to find matching pairs</div>
+      <div className="text-center mt-3 text-xs text-blue-200">
+        Click cards to find matching pairs and complete this mini game to continue.
+      </div>
     </div>
   )
 }

@@ -402,24 +402,15 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header with responsive layout */}
         <div className="flex items-center justify-between gap-2 mb-6">
-          {/* Left side - Title and Description */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="relative shrink-0">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-linear-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain">
-                <Target className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-              </div>
-            </div>
-            <div className="min-w-0 flex-1">
-              {/* Simple and Clean MEMORY GAME Title */}
-              <div className="bg-white border-2 border-black rounded-lg px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 shadow-lg inline-block">
-                <h1 className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-bold text-black tracking-wide whitespace-nowrap">
-                  {t('lobby.memoryGame')}
-                </h1>
-              </div>
-              <p className="text-xs sm:text-sm text-blue-200 mt-1">{t('lobby.findAllMatchingPairs')}</p>
-            </div>
+          {/* Left side - Memory Quiz Image */}
+          <div className="shrink-0">
+            <img
+              src="/images/memoryquiz.webp"
+              alt="Memory Quiz"
+              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+            />
           </div>
-          
+
           {/* Right side - GameForSmart Logo */}
           <div className="shrink-0">
             <img 

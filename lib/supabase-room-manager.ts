@@ -779,6 +779,10 @@ class SupabaseRoomManager {
       correctAnswers?: number
       quizScore?: number
       questionsAnswered?: number
+      memoryProgress?: {
+        correct_matches: number
+        last_updated: string
+      }
     }
   ): Promise<boolean> {
     try {
@@ -810,6 +814,9 @@ class SupabaseRoomManager {
       }
       if (progress.questionsAnswered !== undefined) {
         currentPlayer.questions_answered = Math.max(currentPlayer.questions_answered || 0, progress.questionsAnswered)
+      }
+      if (progress.memoryProgress !== undefined) {
+        currentPlayer.memory_progress = progress.memoryProgress
       }
       currentPlayer.last_active = new Date().toISOString()
 
