@@ -31,14 +31,14 @@ function getCachedProfile(userId: string): UserProfile | null {
   try {
     const cached = localStorage.getItem(PROFILE_CACHE_KEY)
     if (!cached) return null
-    
+
     const { profile, timestamp, userId: cachedUserId }: CachedProfile = JSON.parse(cached)
-    
+
     // Check if cache is for same user and still valid
     if (cachedUserId === userId && Date.now() - timestamp < CACHE_DURATION) {
       return profile
     }
-    
+
     // Cache expired or different user, clear it
     localStorage.removeItem(PROFILE_CACHE_KEY)
     return null
@@ -78,17 +78,17 @@ export function useAuth() {
       try {
         console.log('Getting initial session...')
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           console.error('Error getting initial session:', error)
           setLoading(false)
         } else if (session?.user) {
           console.log('Initial session found:', session.user.email)
           setUser(session.user)
-          
+
           // Siapkan quick profile dari OAuth sebagai fallback saja
           const quickProfile = createUserProfile(session.user)
-          
+
           // Prioritaskan data dari database (profiles table)
           createUserProfileWithDatabase(session.user)
             .then(enhancedProfile => {
@@ -122,13 +122,13 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.email)
-        
+
         if (session?.user) {
           setUser(session.user)
-          
+
           // Siapkan quick profile dari OAuth sebagai fallback
           const quickProfile = createUserProfile(session.user)
-          
+
           // Selalu coba ambil dari database dulu
           createUserProfileWithDatabase(session.user)
             .then(enhancedProfile => {
@@ -177,6 +177,24 @@ export function useAuth() {
     setShowLogoutConfirmation(false)
   }
 
+  const refreshProfile = async () => {
+    if (!user) return
+
+    try {
+      console.log('Refreshing user profile...')
+      // Clear cache to force fresh data
+      localStorage.removeItem(PROFILE_CACHE_KEY)
+
+      // Fetch fresh profile from database
+      const enhancedProfile = await createUserProfileWithDatabase(user)
+      cacheProfile(user.id, enhancedProfile)
+      setUserProfile(enhancedProfile)
+      console.log('Profile refreshed:', enhancedProfile)
+    } catch (error) {
+      console.error('Error refreshing profile:', error)
+    }
+  }
+
   return {
     user,
     userProfile,
@@ -185,6 +203,7 @@ export function useAuth() {
     showLogoutDialog,
     cancelLogout,
     showLogoutConfirmation,
+    refreshProfile,
     isAuthenticated: !!user
   }
 }
@@ -201,11 +220,11 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
   const email = user.email || ''
   // Prefer Google metadata name fields initially; will be overridden by DB if available
   let name = user.user_metadata?.full_name || user.user_metadata?.name || ''
-  
+
   // Start with metadata values (fast fallback)
   let username = ''
   let avatar_url = user.user_metadata?.avatar_url
-  
+
   // Extract username from metadata first (as fallback)
   if (name && name.trim()) {
     username = name.trim()
@@ -214,7 +233,7 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
   } else {
     username = email.split('@')[0]
   }
-  
+
   // Create the request promise
   const requestPromise = (async () => {
     try {
@@ -223,7 +242,7 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
       // Note: profiles table structure may vary - try both id and auth_user_id
       let profileData = null
       let error = null
-      
+
       // First try with id (direct reference to auth.users(id) - from migration script)
       try {
         const queryPromise1 = supabase
@@ -232,35 +251,35 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
           .select('*')
           .eq('id', user.id)
           .maybeSingle()
-        
-        const timeoutPromise = new Promise((_, reject) => 
+
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Database query timeout')), 1500)
         )
-        
+
         const result1 = await Promise.race([
           queryPromise1,
           timeoutPromise
         ]) as Awaited<typeof queryPromise1>
-        
+
         if (!result1.error && result1.data) {
           profileData = result1.data
           console.log('[useAuth] Profile found using id:', profileData)
         } else {
           error = result1.error
           console.log('[useAuth] Query with id failed, trying auth_user_id:', result1.error)
-          
+
           // Fallback: try with auth_user_id (if table structure uses separate column)
           const queryPromise2 = supabase
             .from('profiles')
             .select('*')
             .eq('auth_user_id', user.id)
             .maybeSingle()
-          
+
           const result2 = await Promise.race([
             queryPromise2,
             timeoutPromise
           ]) as Awaited<typeof queryPromise2>
-          
+
           if (!result2.error && result2.data) {
             profileData = result2.data
             console.log('[useAuth] Profile found using auth_user_id:', profileData)
@@ -273,9 +292,9 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
         console.warn('[useAuth] Query exception:', err)
         error = err as any
       }
-      
+
       console.log('[useAuth] Final profile query result:', { profileData, error, userId: user.id })
-      
+
       if (!error && profileData) {
         // Prefer database full_name/fullname as authoritative name when present
         if (profileData.full_name) {
@@ -330,7 +349,7 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
 
   // Store the pending request
   pendingProfileRequests.set(user.id, requestPromise)
-  
+
   return requestPromise
 }
 
@@ -338,7 +357,7 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
 function createUserProfile(user: User): UserProfile {
   const email = user.email || ''
   const name = user.user_metadata?.full_name || user.user_metadata?.name || ''
-  
+
   // Extract username - prioritize Google display name over email
   let username = ''
   if (name && name.trim()) {

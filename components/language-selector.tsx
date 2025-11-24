@@ -48,12 +48,12 @@ export function LanguageSelector({ onClose }: LanguageSelectorProps) {
       {!showLanguages ? (
         <button
           onClick={() => setShowLanguages(true)}
-          className="w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3"
+          className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3"
         >
           <div className="w-8 h-8 relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/20 shadow-lg">
-            <Image 
-              src={getCurrentFlag()} 
-              alt="Current language flag" 
+            <Image
+              src={getCurrentFlag()}
+              alt="Current language flag"
               width={32}
               height={32}
               className="object-cover object-center w-full h-full"
@@ -66,13 +66,13 @@ export function LanguageSelector({ onClose }: LanguageSelectorProps) {
           {/* Back Button */}
           <button
             onClick={() => setShowLanguages(false)}
-            className="w-full px-4 py-2 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center gap-3 mb-1"
+            className="w-full px-4 py-2 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3 mb-1"
           >
             <span className="text-white text-xl">←</span>
             <div className="w-6 h-6 relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/20 shadow-md">
-              <Image 
-                src={getCurrentFlag()} 
-                alt="Current language flag" 
+              <Image
+                src={getCurrentFlag()}
+                alt="Current language flag"
                 width={24}
                 height={24}
                 className="object-cover object-center w-full h-full"
@@ -82,21 +82,20 @@ export function LanguageSelector({ onClose }: LanguageSelectorProps) {
           </button>
 
           {/* Divider */}
-          <div className="border-t border-purple-300/50 my-1"></div>
+          <div className="border-t border-purple-500/40 my-1"></div>
 
           {/* Language Options */}
           {languages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => changeLanguage(lang.code)}
-              className={`w-full px-4 py-3 text-left hover:bg-purple-700/60 transition-colors duration-200 flex items-center justify-between gap-3 ${
-                currentLanguage === lang.code ? 'bg-purple-700/40' : ''
-              }`}
+              className={`w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center justify-between gap-3 ${currentLanguage === lang.code ? 'bg-purple-800/50' : ''
+                }`}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 relative flex-shrink-0 rounded-full overflow-hidden border-2 border-white/30 shadow-lg">
-                  <Image 
-                    src={lang.flag} 
+                  <Image
+                    src={lang.flag}
                     alt={`${lang.name} flag`}
                     width={40}
                     height={40}
@@ -115,4 +114,3 @@ export function LanguageSelector({ onClose }: LanguageSelectorProps) {
     </div>
   )
 }
-
