@@ -1,24 +1,25 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Users, Play, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X, Maximize2, Minimize2, UserPen } from "lucide-react"
+import { Users, Play, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X, Maximize2, Minimize2, Download } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { UserProfileComponent } from "@/components/user-profile"
 import { LogoutConfirmationDialog } from "@/components/logout-confirmation-dialog"
 import { useTranslation } from "react-i18next"
 import { LanguageSelector } from "@/components/language-selector"
-import { EditProfileDialog } from "@/components/edit-profile-dialog"
+import { usePwaInstall } from "@/hooks/use-pwa-install"
 
 export default function HomePage() {
   const dragCardRef = useRef<HTMLDivElement | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
-  const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation, refreshProfile } = useAuth()
+  const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation } = useAuth()
   const { t } = useTranslation()
+  const pathname = usePathname()
+  const { canInstall, hasInstallEvent, showPrompt, triggerInstall, dismissPrompt } = usePwaInstall()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -156,6 +157,24 @@ export default function HomePage() {
               {/* Divider */}
               <div className="border-t border-purple-500/40 my-1"></div>
 
+              {/* Install App */}
+              {canInstall && (
+                <>
+                  <button
+                    onClick={() => {
+                      triggerInstall()
+                      setIsMenuOpen(false)
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3"
+                  >
+                    <Download className="w-5 h-5 text-white" />
+                    <span className="text-white font-medium">Install App</span>
+                  </button>
+
+                  <div className="border-t border-purple-500/40 my-1"></div>
+                </>
+              )}
+
               {/* Fullscreen Toggle */}
               <button
                 onClick={() => {
@@ -173,25 +192,6 @@ export default function HomePage() {
                   {isFullscreen ? t('Exit Fullscreen') || 'Exit Fullscreen' : t('Fullscreen') || 'Fullscreen'}
                 </span>
               </button>
-
-              {/* Edit Profile - Only show when authenticated */}
-              {isAuthenticated && (
-                <>
-                  {/* Divider */}
-                  <div className="border-t border-purple-500/40 my-1"></div>
-
-                  <button
-                    onClick={() => {
-                      setIsEditProfileOpen(true)
-                      setIsMenuOpen(false)
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3"
-                  >
-                    <UserPen className="w-5 h-5 text-white" />
-                    <span className="text-white font-medium">Edit Profile</span>
-                  </button>
-                </>
-              )}
 
               {/* Divider */}
               <div className="border-t border-purple-500/40 my-1"></div>
@@ -350,14 +350,37 @@ export default function HomePage() {
         userName={userProfile?.name || userProfile?.username}
       />
 
-      {/* Edit Profile Dialog */}
-      {isAuthenticated && userProfile && (
-        <EditProfileDialog
-          isOpen={isEditProfileOpen}
-          onClose={() => setIsEditProfileOpen(false)}
-          userProfile={userProfile}
-          onProfileUpdate={refreshProfile}
-        />
+      {showPrompt && pathname === "/" && (
+        <div className="fixed bottom-4 right-4 z-50 w-full max-w-xs rounded-2xl border border-purple-400/40 bg-purple-900/90 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.35)] backdrop-blur">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-white font-bold text-base leading-tight">Install MemoryQuiz now!</p>
+              <p className="text-sm text-purple-100/80 mt-1">Get faster access and better experience.</p>
+            </div>
+            <button
+              onClick={dismissPrompt}
+              className="text-white/70 transition hover:text-white"
+              aria-label="Close install notification"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={triggerInstall}
+              disabled={!hasInstallEvent}
+              className="flex-1 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 px-3 py-2 text-sm font-semibold text-black shadow-inner transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Install
+            </button>
+            <button
+              onClick={dismissPrompt}
+              className="flex-1 rounded-xl border border-purple-300/60 px-3 py-2 text-sm font-semibold text-white/90 transition hover:bg-purple-800/70"
+            >
+              Later
+            </button>
+          </div>
+        </div>
       )}
 
     </div>
