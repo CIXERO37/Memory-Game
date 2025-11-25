@@ -13,6 +13,29 @@ export const metadata: Metadata = {
   generator: 'v0.app',
   manifest: '/site.webmanifest',
   themeColor: '#1a1a2e',
+  metadataBase: new URL('https://memorygame-quiz.vercel.app'),
+  openGraph: {
+    title: 'Memory Quiz',
+    description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
+    url: 'https://memorygame-quiz.vercel.app',
+    siteName: 'Memory Quiz',
+    images: [
+      {
+        url: '/images/memoryquiz.webp',
+        width: 1200,
+        height: 630,
+        alt: 'Memory Quiz',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Memory Quiz',
+    description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
+    images: ['/images/memoryquiz.webp'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
