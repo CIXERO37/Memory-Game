@@ -664,7 +664,7 @@ function LobbyPageContent() {
                 </Button>
               </div>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0 -mt-2">
               <img 
                 draggable={false}
                 src="/images/memoryquiz.webp" 
@@ -677,7 +677,7 @@ function LobbyPageContent() {
             </div>
           </div>
           
-          <div className="shrink-0">
+          <div className="shrink-0 -mt-2 sm:-mt-12">
             <img 
               draggable={false}
               src="/images/gameforsmartlogo.webp" 

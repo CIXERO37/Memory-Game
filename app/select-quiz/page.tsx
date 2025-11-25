@@ -96,8 +96,8 @@ const categories = [
 // Helper function to get background image for category
 const getCategoryBgImage = (category: string) => {
   const categoryLower = category?.toLowerCase() || 'general';
-  const categoryData = categories.find(cat => 
-    cat.value === categoryLower || 
+  const categoryData = categories.find(cat =>
+    cat.value === categoryLower ||
     cat.label.toLowerCase() === categoryLower
   );
   return categoryData?.bgImage || categories[1].bgImage; // Default to General if not found
@@ -106,8 +106,8 @@ const getCategoryBgImage = (category: string) => {
 // Helper function to get category icon
 const getCategoryIcon = (category: string) => {
   const categoryLower = category?.toLowerCase() || 'general';
-  const categoryData = categories.find(cat => 
-    cat.value === categoryLower || 
+  const categoryData = categories.find(cat =>
+    cat.value === categoryLower ||
     cat.label.toLowerCase() === categoryLower
   );
   return categoryData?.icon || categories[1].icon; // Default to General if not found
@@ -116,9 +116,9 @@ const getCategoryIcon = (category: string) => {
 // Helper function to get category color (matching dropdown filter colors)
 const getCategoryColor = (category: string | undefined): string => {
   if (!category) return 'bg-blue-500'; // Default to General
-  
+
   const categoryLower = category.toLowerCase();
-  
+
   // Match colors with dropdown filter
   switch (categoryLower) {
     case 'general':
@@ -197,14 +197,14 @@ export default function SelectQuizPage() {
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null)
   const [myQuizzes, setMyQuizzes] = useState<any[]>([])
   const [loadingMyQuizzes, setLoadingMyQuizzes] = useState(false)
-  
+
   // Fetch quizzes from Supabase
   const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
 
   // Helper function to normalize category name (for consistent filtering)
   const normalizeCategory = (category: string | undefined | null): string => {
     if (!category) return 'General'
-    
+
     const categoryLower = category.toLowerCase().trim()
     const categoryMap: { [key: string]: string } = {
       'general': 'General',
@@ -219,14 +219,14 @@ export default function SelectQuizPage() {
       'entertainment': 'Entertainment',
       'business': 'Business'
     }
-    
+
     return categoryMap[categoryLower] || 'General'
   }
 
   // Helper function to translate category
   const translateCategory = (category: string | undefined) => {
     if (!category) return t('selectQuiz.categories.general')
-    
+
     const categoryLower = category.toLowerCase()
     const categoryMap: { [key: string]: string } = {
       'general': 'general',
@@ -241,7 +241,7 @@ export default function SelectQuizPage() {
       'entertainment': 'entertainment',
       'business': 'business'
     }
-    
+
     const mappedCategory = categoryMap[categoryLower] || 'general'
     return t(`selectQuiz.categories.${mappedCategory}`)
   }
@@ -291,8 +291,8 @@ export default function SelectQuizPage() {
 
         const favorites = Array.isArray(data?.favorite_quiz?.favorites)
           ? data.favorite_quiz.favorites.filter(
-              (quizId: unknown): quizId is string => typeof quizId === "string"
-            )
+            (quizId: unknown): quizId is string => typeof quizId === "string"
+          )
           : []
 
         if (isMounted) {
@@ -353,18 +353,18 @@ export default function SelectQuizPage() {
   const filteredQuizzes = useMemo(() => {
     // First filter by tab
     let tabFilteredQuizzes = quizzes
-    
+
     if (activeTab === "my-quiz") {
       // Use myQuizzes which includes all quizzes created by user (including private)
       tabFilteredQuizzes = myQuizzes
     } else if (activeTab === "favorite") {
       // Filter favorite quizzes from all quizzes (including private ones if user created them)
       // First get favorite quizzes from public quizzes
-      let favoriteFromPublic = quizzes.filter((quiz) => 
+      let favoriteFromPublic = quizzes.filter((quiz) =>
         favoriteQuizIds.includes(quiz.id)
       )
       // Also include favorite quizzes from myQuizzes (in case user favorited their own private quiz)
-      const favoriteFromMy = myQuizzes.filter((quiz) => 
+      const favoriteFromMy = myQuizzes.filter((quiz) =>
         favoriteQuizIds.includes(quiz.id)
       )
       // Combine and remove duplicates
@@ -376,7 +376,7 @@ export default function SelectQuizPage() {
       // "quiz" tab - show all public quizzes (default behavior)
       tabFilteredQuizzes = quizzes
     }
-    
+
     // Then apply search and category filters
     return tabFilteredQuizzes.filter((quiz) => {
       const matchesSearch =
@@ -384,7 +384,7 @@ export default function SelectQuizPage() {
         quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (quiz.description &&
           quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      
+
       // Category filter - normalize and compare
       let matchesCategory = true
       if (categoryFilter !== "all") {
@@ -392,7 +392,7 @@ export default function SelectQuizPage() {
         const filterCategory = normalizeCategory(categoryFilter)
         matchesCategory = quizCategory === filterCategory
       }
-      
+
       return matchesSearch && matchesCategory
     })
   }, [quizzes, myQuizzes, searchTerm, categoryFilter, activeTab, favoriteQuizIds])
@@ -424,7 +424,7 @@ export default function SelectQuizPage() {
   const generatePageNumbers = () => {
     const pages = []
     const maxVisiblePages = 5
-    
+
     if (totalPages <= maxVisiblePages) {
       // Show all pages if total is small
       for (let i = 1; i <= totalPages; i++) {
@@ -433,31 +433,31 @@ export default function SelectQuizPage() {
     } else {
       // Show first page
       pages.push(1)
-      
+
       if (currentPage > 3) {
         pages.push('...')
       }
-      
+
       // Show pages around current page
       const start = Math.max(2, currentPage - 1)
       const end = Math.min(totalPages - 1, currentPage + 1)
-      
+
       for (let i = start; i <= end; i++) {
         if (!pages.includes(i)) {
           pages.push(i)
         }
       }
-      
+
       if (currentPage < totalPages - 2) {
         pages.push('...')
       }
-      
+
       // Show last page
       if (totalPages > 1) {
         pages.push(totalPages)
       }
     }
-    
+
     return pages
   }
 
@@ -468,7 +468,7 @@ export default function SelectQuizPage() {
 
   const toggleFavorite = async (quizId: string, e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click
-    
+
     if (!currentUserProfileId) {
       // User not logged in, redirect to login or show message
       return
@@ -513,20 +513,20 @@ export default function SelectQuizPage() {
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       {/* Retro Scanlines */}
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
       </div>
-      
+
       {/* Floating Pixel Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <PixelBackgroundElements />
       </div>
 
-  <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Pixel Header */}
-          <div className="relative flex items-center justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
+        <div className="relative flex items-center justify-between gap-2 sm:gap-4 mb-6 sm:mb-8">
           {/* Left side - Back Button and Memory Quiz Logo */}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <Link href="/">
@@ -538,35 +538,30 @@ export default function SelectQuizPage() {
               </div>
             </Link>
             {/* Memory Quiz Logo with glow effect */}
-            <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-              <img 
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0 ">
+              <img
                 draggable={false}
-                src="/images/memoryquiz.webp" 
-                alt="Memory Quiz" 
-                className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
-                style={{ 
+                src="/images/memoryquiz.webp"
+                alt="Memory Quiz"
+                className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain -mt-5"
+                style={{
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
                 }}
               />
             </div>
           </div>
+
           
-          {/* Center - Title (desktop centered). On mobile we'll show a compact inline title to avoid overlap */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 hidden sm:block">
-            <div className="inline-block bg-white border-2 border-black rounded px-2 sm:px-3 py-1 sm:py-2 pixel-header-title">
-              <h1 className="text-lg sm:text-xl font-bold text-black">{t('selectQuiz.title')}</h1>
-            </div>
-          </div>
-          {/* Mobile compact title removed to avoid clutter on small screens */}
-          
+         
+
           {/* Right side - GameForSmart Logo with glow effect */}
-          <div className="flex-shrink-0">
-            <img 
+          <div className="flex-shrink-0 -mt-2 sm:-mt-12">
+            <img
               draggable={false}
-              src="/images/gameforsmartlogo.webp" 
-              alt="GameForSmart Logo" 
-              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
-              style={{ 
+              src="/images/gameforsmartlogo.webp"
+              alt="GameForSmart Logo"
+              className="h-10 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain "
+              style={{
                 filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6)) drop-shadow(0 0 16px rgba(255,165,0,0.4))',
               }}
             />
@@ -574,39 +569,36 @@ export default function SelectQuizPage() {
         </div>
 
         {/* Quiz Selector Content */}
-  <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {/* Tabs Section */}
           <div className="mb-6 sm:mb-8">
             <div className="flex gap-2 sm:gap-3 justify-start flex-wrap">
               <button
                 onClick={() => setActiveTab("quiz")}
-                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${
-                  activeTab === "quiz"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-black hover:bg-gray-100"
-                }`}
+                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${activeTab === "quiz"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-black hover:bg-gray-100"
+                  }`}
               >
                 {t('selectQuiz.tabs.quiz', { defaultValue: 'Quiz' })}
               </button>
               <button
                 onClick={() => setActiveTab("my-quiz")}
-                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${
-                  activeTab === "my-quiz"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-black hover:bg-gray-100"
-                }`}
+                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${activeTab === "my-quiz"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-black hover:bg-gray-100"
+                  }`}
               >
                 {t('selectQuiz.tabs.myQuiz', { defaultValue: 'My Quiz' })}
               </button>
               <button
                 onClick={() => setActiveTab("favorite")}
-                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center gap-1 sm:gap-2 shadow-lg ${
-                  activeTab === "favorite"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white text-black hover:bg-gray-100"
-                }`}
+                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center gap-1 sm:gap-2 shadow-lg ${activeTab === "favorite"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-black hover:bg-gray-100"
+                  }`}
               >
-                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill={activeTab === "favorite" ? "currentColor" : "none"} strokeWidth={2.5} />
+                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-pink-500" fill={activeTab === "favorite" ? "currentColor" : "none"} strokeWidth={2.5} />
                 {t('selectQuiz.tabs.favorite', { defaultValue: 'Favorite' })}
               </button>
             </div>
@@ -618,7 +610,7 @@ export default function SelectQuizPage() {
               {/* Pixel Search Input */}
               <div className="relative flex-1 ">
                 <div className="relative">
-                 
+
                   <Input
                     placeholder={t('selectQuiz.searchPlaceholder')}
                     value={searchInput}
@@ -631,13 +623,13 @@ export default function SelectQuizPage() {
                       onClick={executeSearch}
                       className=" lg:h-8  bg-blue-500 hover:bg-blue-600 text-white font-bold py-0 sm:py-1  sm:px-3 border-2 border-black  "
                     >
-                      <span className="hidden sm:inline">Enter</span>
-                       <Search className="sm:hidden h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                      <span className="hidden sm:inline">Search</span>
+                      <Search className="sm:hidden h-3 w-3 sm:h-4 sm:w-4 text-white" />
                     </Button>
                   </div>
                 </div>
               </div>
-              
+
               {/* Pixel Category Filter */}
               <div className="sm:w-56">
                 <div className="relative">
@@ -651,17 +643,17 @@ export default function SelectQuizPage() {
                           {getCategoryIcon(categoryFilter === "all" ? "all" : categoryFilter)}
                         </div>
                         <span className="font-bold text-xs sm:text-sm">
-                          {categoryFilter === "all" ? t('selectQuiz.allCategories') : 
-                           categoryFilter === "General" ? t('selectQuiz.categories.general') :
-                           categoryFilter === "Science" ? t('selectQuiz.categories.science') :
-                           categoryFilter === "Mathematics" ? t('selectQuiz.categories.mathematics') :
-                           categoryFilter === "History" ? t('selectQuiz.categories.history') :
-                           categoryFilter === "Geography" ? t('selectQuiz.categories.geography') :
-                           categoryFilter === "Language" ? t('selectQuiz.categories.language') :
-                           categoryFilter === "Technology" ? t('selectQuiz.categories.technology') :
-                           categoryFilter === "Sports" ? t('selectQuiz.categories.sports') :
-                           categoryFilter === "Entertainment" ? t('selectQuiz.categories.entertainment') :
-                           categoryFilter === "Business" ? t('selectQuiz.categories.business') : categoryFilter.toUpperCase()}
+                          {categoryFilter === "all" ? t('selectQuiz.allCategories') :
+                            categoryFilter === "General" ? t('selectQuiz.categories.general') :
+                              categoryFilter === "Science" ? t('selectQuiz.categories.science') :
+                                categoryFilter === "Mathematics" ? t('selectQuiz.categories.mathematics') :
+                                  categoryFilter === "History" ? t('selectQuiz.categories.history') :
+                                    categoryFilter === "Geography" ? t('selectQuiz.categories.geography') :
+                                      categoryFilter === "Language" ? t('selectQuiz.categories.language') :
+                                        categoryFilter === "Technology" ? t('selectQuiz.categories.technology') :
+                                          categoryFilter === "Sports" ? t('selectQuiz.categories.sports') :
+                                            categoryFilter === "Entertainment" ? t('selectQuiz.categories.entertainment') :
+                                              categoryFilter === "Business" ? t('selectQuiz.categories.business') : categoryFilter.toUpperCase()}
                         </span>
                       </div>
                       {isSelectAllExpanded ? (
@@ -670,7 +662,7 @@ export default function SelectQuizPage() {
                         <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" />
                       )}
                     </Button>
-                    
+
                     {/* Custom Dropdown Menu */}
                     {isSelectAllExpanded && (
                       <div className="absolute top-full left-0 right-0 z-50 bg-white border-2 border-black shadow-lg mt-1 max-h-[220px] overflow-y-auto">
@@ -679,9 +671,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("all")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-gray-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "all" ? "bg-gray-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-gray-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "all" ? "bg-gray-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-blue-500">
@@ -698,9 +689,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("General")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-blue-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "General" ? "bg-blue-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-blue-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "General" ? "bg-blue-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-black">
@@ -717,9 +707,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Science")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-green-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Science" ? "bg-green-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-green-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Science" ? "bg-green-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-green-500">
@@ -736,9 +725,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Mathematics")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-red-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Mathematics" ? "bg-red-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-red-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Mathematics" ? "bg-red-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-red-500">
@@ -755,9 +743,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("History")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-yellow-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "History" ? "bg-yellow-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-yellow-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "History" ? "bg-yellow-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-yellow-500">
@@ -774,9 +761,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Geography")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-teal-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Geography" ? "bg-teal-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-teal-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Geography" ? "bg-teal-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-teal-500">
@@ -793,9 +779,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Language")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-purple-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Language" ? "bg-purple-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-purple-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Language" ? "bg-purple-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-purple-500">
@@ -812,9 +797,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Technology")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-blue-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Technology" ? "bg-blue-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-blue-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Technology" ? "bg-blue-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-blue-500">
@@ -831,9 +815,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Sports")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-orange-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Sports" ? "bg-orange-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-orange-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Sports" ? "bg-orange-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-orange-500">
@@ -850,9 +833,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Entertainment")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-pink-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Entertainment" ? "bg-pink-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-pink-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Entertainment" ? "bg-pink-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-pink-500">
@@ -869,9 +851,8 @@ export default function SelectQuizPage() {
                             setCategoryFilter("Business")
                             setIsSelectAllExpanded(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-purple-200 flex items-center justify-between min-h-[44px] ${
-                            categoryFilter === "Business" ? "bg-purple-200" : "text-black"
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm sm:text-base hover:bg-purple-200 flex items-center justify-between min-h-[44px] ${categoryFilter === "Business" ? "bg-purple-200" : "text-black"
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="w-4 h-4 mr-2 text-indigo-500">
@@ -891,8 +872,8 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-  {/* Grid: on very small screens force single column cards full width */}
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 justify-items-center">
+          {/* Grid: on very small screens force single column cards full width */}
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
             {(loading || (activeTab === "my-quiz" && loadingMyQuizzes)) ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
@@ -924,14 +905,14 @@ export default function SelectQuizPage() {
                       <p>{t('selectQuiz.errorStep4')}</p>
                     </div>
                     <div className="flex gap-2">
-                      <button 
-                        onClick={() => window.location.reload()} 
+                      <button
+                        onClick={() => window.location.reload()}
                         className="bg-white text-red-600 px-4 py-2 rounded font-bold hover:bg-gray-100 transition-colors"
                       >
                         {t('selectQuiz.retry')}
                       </button>
-                      <button 
-                        onClick={() => window.open('https://supabase.com/dashboard', '_blank')} 
+                      <button
+                        onClick={() => window.open('https://supabase.com/dashboard', '_blank')}
                         className="bg-blue-500 text-white px-4 py-2 rounded font-bold hover:bg-blue-600 transition-colors"
                       >
                         {t('selectQuiz.supabaseDashboard')}
@@ -947,27 +928,27 @@ export default function SelectQuizPage() {
                   {/* Multiple layered shadows for depth */}
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl transform rotate-1 pixel-button-shadow"></div>
                   <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-pink-500 rounded-2xl transform rotate-2 opacity-50 pixel-button-shadow"></div>
-                  
+
                   {/* Main card with morphing background */}
                   <div className="relative bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl border-4 border-white/20 shadow-2xl p-8 overflow-hidden morphing-card">
                     {/* Animated background pattern */}
                     <div className="absolute inset-0 opacity-20">
                       <div className="floating-pattern"></div>
                     </div>
-                    
+
                     {/* Holographic shimmer effect */}
                     <div className="absolute inset-0 holographic-shimmer"></div>
-                    
+
                     {/* Glitch effect overlay */}
                     <div className="absolute inset-0 glitch-overlay"></div>
-                    
+
                     {/* Interactive search icon with unique animations */}
                     <div className="relative z-10">
                       <div className="w-20 h-20 mx-auto mb-6 relative">
                         {/* Pulsing rings around the icon */}
                         <div className="absolute inset-0 rounded-full border-4 border-white/30 animate-pulse-ring"></div>
                         <div className="absolute inset-0 rounded-full border-2 border-white/50 animate-pulse-ring-delayed"></div>
-                        
+
                         {/* Main icon container with liquid morphing */}
                         <div className="relative w-full h-full bg-white/90 border-3 border-white rounded-2xl flex items-center justify-center liquid-morph">
                           {/* Floating particles inside icon */}
@@ -977,12 +958,12 @@ export default function SelectQuizPage() {
                             <div className="absolute bottom-3 left-3 w-1 h-1 bg-pink-500 rounded-full animate-float-particle-slow"></div>
                             <div className="absolute bottom-2 right-2 w-1 h-1 bg-cyan-500 rounded-full animate-float-particle-slower"></div>
                           </div>
-                          
+
                           {/* Search icon with breathing animation */}
                           <Search className="h-10 w-10 text-black animate-breathe relative z-10" />
                         </div>
                       </div>
-                      
+
                       {/* Enhanced text with staggered animations */}
                       <div className="space-y-4">
                         <h3 className="text-2xl font-bold text-white mb-3 animate-text-reveal">
@@ -992,14 +973,14 @@ export default function SelectQuizPage() {
                             </span>
                           ))}
                         </h3>
-                        
+
                         <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-6 py-4 animate-text-slide-up">
                           <p className="text-white/90 text-base font-medium leading-relaxed">
                             {t('selectQuiz.noQuizzesDescription')}
                           </p>
                         </div>
                       </div>
-                      
+
                       {/* Interactive floating elements */}
                       <div className="absolute inset-0 pointer-events-none">
                         <div className="absolute top-4 left-4 w-2 h-2 bg-yellow-400 rounded-full animate-orbit-slow"></div>
@@ -1018,123 +999,70 @@ export default function SelectQuizPage() {
                 return (
                   <div
                     key={quiz.id}
-                    className="relative cursor-pointer transition-all duration-300 hover:-translate-y-1 pixel-quiz-card-container w-full sm:w-auto"
+                    className="relative cursor-pointer group w-full sm:w-[260px] h-[270px] rounded-xl overflow-hidden shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-blue-500/20"
                     onClick={() => handleQuizSelect(quiz.id)}
                   >
-                    <div 
-                      className="relative pixel-quiz-card bg-cover bg-center bg-no-repeat w-full sm:w-[300px]"
+                    {/* Background Image with Zoom Effect */}
+                    <div
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                       style={{
                         backgroundImage: `url(${quizBgImage})`,
                       }}
-                    >
-                      {/* Light overlay for better text readability */}
-                      <div className="absolute inset-0 bg-black/50 z-0"></div>
-                      
-                      {/* Mobile Layout - Stacked */}
-                      <div className="sm:hidden flex flex-col h-full p-2 overflow-hidden relative z-10">
-                        {/* Favorite Heart Icon - Mobile */}
+                    />
+
+                    {/* Cinematic Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+
+                    {/* Content Container */}
+                    <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
+
+                      {/* Top Section */}
+                      <div className="flex justify-between items-start">
+                        {/* Category Badge - Pill Shape */}
+                        <div className={`${categoryColor} text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-lg flex items-center gap-1.5 backdrop-blur-sm bg-opacity-90`}>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                          <span className="tracking-wide uppercase">{translateCategory(quiz.category)}</span>
+                        </div>
+
+                        {/* Favorite Button - Ghost Style */}
                         {currentUserProfileId && (
                           <button
                             onClick={(e) => toggleFavorite(quiz.id, e)}
-                            className="absolute right-2 bottom-2 sm:top-1 sm:right-1 bg-white border-2 border-black rounded-lg p-2 shadow-lg z-20 hover:scale-110 transition-transform duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            className="text-white/70 hover:text-white hover:scale-110 transition-all duration-200 p-1.5 rounded-full hover:bg-white/10"
                             aria-label={favoriteQuizIds.includes(quiz.id) ? "Remove from favorites" : "Add to favorites"}
                           >
                             <Heart
-                              className={`h-5 w-5 ${
-                                favoriteQuizIds.includes(quiz.id)
-                                  ? "text-pink-500 fill-pink-500"
-                                  : "text-gray-400"
-                              }`}
-                              strokeWidth={2.5}
-                              fill={favoriteQuizIds.includes(quiz.id) ? "currentColor" : "none"}
+                              className={`h-5 w-5 ${favoriteQuizIds.includes(quiz.id)
+                                ? "fill-pink-500 text-pink-500"
+                                : "text-white"
+                                }`}
+                              strokeWidth={2}
                             />
                           </button>
                         )}
-                        
-                        {/* Header with title */}
-                        <div className="flex items-start justify-between mb-2 gap-1">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="bg-white border-2 border-black rounded px-1 py-1 shadow-lg flex-1 min-w-0 pr-5 max-w-[210px]">
-                                    <h3 className="text-[11px] font-bold text-black leading-tight whitespace-normal break-words">
-                                      {quiz.title.toUpperCase()}
-                                    </h3>
-                                  </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{quiz.title}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          {/* Spacer to keep header balanced on mobile */}
-                          <div className="w-6" />
-                        </div>
-                        
-                        {/* Mobile badges: question count + category aligned bottom-left */}
-                        <div className="absolute left-2 bottom-2 z-20 flex items-center gap-2">
-                          <div className="bg-blue-500 border-2 border-black rounded px-2 py-0.5 overflow-hidden">
-                            <div className="text-[11px] text-white font-bold truncate">
-                              {quiz.questions.length} {t('selectQuiz.questions')}
-                            </div>
-                          </div>
-                          <div className={`${categoryColor} border-2 border-black rounded px-2 py-0.5 shadow-xl`}> 
-                            <div className="flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                              <span className="text-white font-bold text-xs">{translateCategory(quiz.category)}</span>
-                            </div>
-                          </div>
-                        </div>
                       </div>
 
-                      {/* Desktop Layout - Original */}
-                      <div className="hidden sm:flex absolute inset-0 flex-col justify-center items-center text-center px-4 z-20">
-                        {/* Pixel Category badge */}
-                        <div className={`absolute -top-2 -left-2 ${categoryColor} border-2 border-black rounded-lg px-2 py-1 shadow-xl z-20 transform -rotate-3`}>
-                          <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                            <span className="text-white font-bold text-xs tracking-wide">
-                              {translateCategory(quiz.category)}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Favorite Heart Icon */}
-                        {currentUserProfileId && (
-                          <button
-                            onClick={(e) => toggleFavorite(quiz.id, e)}
-                            className="absolute -top-2 -right-2 bg-white border-2 border-black rounded-lg p-2 shadow-xl z-20 transform rotate-3 hover:scale-110 transition-transform duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                            aria-label={favoriteQuizIds.includes(quiz.id) ? "Remove from favorites" : "Add to favorites"}
-                          >
-                            <Heart
-                              className={`h-6 w-6 ${
-                                favoriteQuizIds.includes(quiz.id)
-                                  ? "text-pink-500 fill-pink-500"
-                                  : "text-gray-400"
-                              }`}
-                              strokeWidth={2.5}
-                              fill={favoriteQuizIds.includes(quiz.id) ? "currentColor" : "none"}
-                            />
-                          </button>
-                        )}
-                        
-                        <div className="bg-white border-2 border-black rounded px-3 py-1 mb-2 shadow-lg">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <h3 className="text-base font-bold text-black desktop-title-ellipsis">
-                                  {quiz.title.toUpperCase()}
-                                </h3>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{quiz.title}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        <div className="bg-blue-500 border-2 border-black rounded px-2 py-1">
-                          <div className="text-xs text-white font-bold">
-                            {quiz.questions.length} {t('selectQuiz.questions')}
+                      {/* Bottom Section */}
+                      <div className="space-y-2 transform transition-transform duration-300 group-hover:translate-y-0 translate-y-1">
+                        {/* Title */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <h3 className="text-white text-lg font-bold leading-tight line-clamp-2 drop-shadow-lg">
+                                {quiz.title}
+                              </h3>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>{quiz.title}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Question Count */}
+                        <div className="flex items-center gap-2 text-gray-300 text-[11px] font-medium">
+                          <div className="flex items-center gap-1.5 bg-white/10 px-2 py-1 rounded-md backdrop-blur-sm">
+                            <BookOpen className="w-3 h-3" />
+                            <span>{quiz.questions.length} {t('selectQuiz.questions')}</span>
                           </div>
                         </div>
                       </div>
@@ -1156,11 +1084,10 @@ export default function SelectQuizPage() {
                     <button
                       onClick={handlePreviousPage}
                       disabled={currentPage === 1}
-                      className={`flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 border-2 border-black ${
-                        currentPage === 1
-                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                          : 'bg-green-500 text-white hover:bg-green-400 hover:scale-105'
-                      }`}
+                      className={`flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 border-2 border-black ${currentPage === 1
+                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        : 'bg-green-500 text-white hover:bg-green-400 hover:scale-105'
+                        }`}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -1174,11 +1101,10 @@ export default function SelectQuizPage() {
                           ) : (
                             <button
                               onClick={() => handlePageClick(page as number)}
-                              className={`flex items-center justify-center w-8 h-8 rounded-md text-sm font-bold transition-all duration-200 border-2 border-black ${
-                                currentPage === page
-                                  ? 'bg-purple-400 text-black shadow-lg scale-110'
-                                  : 'bg-white text-black hover:bg-gray-200 hover:scale-105'
-                              }`}
+                              className={`flex items-center justify-center w-8 h-8 rounded-md text-sm font-bold transition-all duration-200 border-2 border-black ${currentPage === page
+                                ? 'bg-purple-400 text-black shadow-lg scale-110'
+                                : 'bg-white text-black hover:bg-gray-200 hover:scale-105'
+                                }`}
                             >
                               {page}
                             </button>
@@ -1191,11 +1117,10 @@ export default function SelectQuizPage() {
                     <button
                       onClick={handleNextPage}
                       disabled={currentPage === totalPages}
-                      className={`flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 border-2 border-black ${
-                        currentPage === totalPages
-                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                          : 'bg-green-500 text-white hover:bg-green-400 hover:scale-105'
-                      }`}
+                      className={`flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 border-2 border-black ${currentPage === totalPages
+                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        : 'bg-green-500 text-white hover:bg-green-400 hover:scale-105'
+                        }`}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -1238,7 +1163,7 @@ function PixelBackgroundElements() {
           }}
         />
       ))}
-      
+
       {/* Floating Pixel Blocks */}
       <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>

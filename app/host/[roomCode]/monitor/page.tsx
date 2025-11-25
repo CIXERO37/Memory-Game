@@ -769,7 +769,7 @@ function MonitorPageContent() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Akhiri Game?</AlertDialogTitle>
                   <AlertDialogDescription className="text-slate-300">
-                    Apakah Anda yakin ingin mengakhiri game ini? Semua pemain akan diarahkan ke leaderboard.
+                    Apakah Anda yakin ingin mengakhiri game ini?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
