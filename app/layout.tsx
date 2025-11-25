@@ -8,8 +8,8 @@ import { I18nInitializer } from '../components/i18n-initializer'
 import { PageTransition } from '../components/page-transition'
 
 export const metadata: Metadata = {
-  title: 'quiz-MemoryCard',
-  description: 'Created with v0',
+  title: 'Memory Quiz',
+  description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
   generator: 'v0.app',
   manifest: '/site.webmanifest',
   themeColor: '#1a1a2e',
