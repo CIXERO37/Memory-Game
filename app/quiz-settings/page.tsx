@@ -37,21 +37,21 @@ function QuizSettingsPageContent() {
           router.push("/login")
           return
         }
-        
+
         // Get profile XID from profiles table using auth_user_id
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id')
           .eq('auth_user_id', user.id)
           .single()
-        
+
         if (profileError || !profile) {
           console.error("[QuizSettings] Error getting profile:", profileError)
           alert("Profile not found. Please complete your profile first.")
           router.push("/login")
           return
         }
-        
+
         // Use XID from profiles table as host_id
         console.log("[QuizSettings] Host ID (XID):", profile.id)
         setHostId(profile.id)
@@ -60,7 +60,7 @@ function QuizSettingsPageContent() {
         alert("Error getting user information. Please try again.")
       }
     }
-    
+
     getHostId()
   }, [router])
 
@@ -68,7 +68,7 @@ function QuizSettingsPageContent() {
     const quizId = searchParams.get("quizId")
     if (quizId) {
       setSelectedQuiz(quizId)
-      
+
       // Try to get quiz data from Supabase first (for UUIDs)
       const fetchQuizData = async () => {
         setIsLoadingQuiz(true)
@@ -76,7 +76,7 @@ function QuizSettingsPageContent() {
           console.log("[QuizSettings] Fetching quiz from Supabase with ID:", quizId)
           const quizData = await quizApi.getQuizById(quizId)
           console.log("[QuizSettings] Supabase Quiz Data:", quizData)
-          
+
           if (quizData) {
             setQuiz(quizData)
             setQuestionCount("5") // Default to 5 questions
@@ -86,11 +86,11 @@ function QuizSettingsPageContent() {
         } catch (error) {
           console.log("[QuizSettings] Supabase fetch failed, trying local data:", error)
         }
-        
+
         // Fallback to local data (for short IDs like "math-basic")
         const localQuizData = getQuizById(quizId)
         console.log("[QuizSettings] Local Quiz Data:", localQuizData)
-        
+
         if (localQuizData) {
           setQuiz(localQuizData)
           setQuestionCount("5") // Default to 5 questions
@@ -111,7 +111,7 @@ function QuizSettingsPageContent() {
         }
         setIsLoadingQuiz(false)
       }
-      
+
       fetchQuizData()
     } else {
       // Redirect to select quiz if no quizId
@@ -132,13 +132,13 @@ function QuizSettingsPageContent() {
     try {
       // Get quiz title from quiz data
       const quizTitle = quiz?.title || `Quiz ${selectedQuiz}`
-      
+
       console.log("[QuizSettings] Creating room with settings:", {
         hostId,
         timeLimit: parseInt(timeLimit),
         questionCount: parseInt(questionCount)
       })
-      
+
       const room = await roomManager.createRoom(hostId, {
         questionCount: parseInt(questionCount),
         totalTimeLimit: parseInt(timeLimit),
@@ -209,7 +209,7 @@ function QuizSettingsPageContent() {
       setTimeout(() => {
         router.push(`/lobby?roomCode=${room.code}`)
       }, 100)
-      
+
     } catch (error) {
       console.error("[QuizSettings] Error creating room:", error)
       alert("An error occurred while creating the room. Please try again.")
@@ -224,12 +224,12 @@ function QuizSettingsPageContent() {
         <div className="absolute inset-0 opacity-20">
           <div className="pixel-grid"></div>
         </div>
-        
+
         {/* Retro Scanlines */}
         <div className="absolute inset-0 opacity-10">
           <div className="scanlines"></div>
         </div>
-        
+
         {/* Floating Pixel Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <PixelBackgroundElements />
@@ -257,12 +257,12 @@ function QuizSettingsPageContent() {
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       {/* Retro Scanlines */}
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
       </div>
-      
+
       {/* Floating Pixel Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <PixelBackgroundElements />
@@ -271,19 +271,32 @@ function QuizSettingsPageContent() {
       <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Pixel Header */}
         <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
-          <Link href="/select-quiz">
-            <div className="relative pixel-button-container">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-              <Button variant="outline" size="sm" className="relative bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 min-h-[44px] min-w-[44px]">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </div>
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="inline-block bg-white border-2 border-black rounded px-3 sm:px-4 py-1 sm:py-2 pixel-header-title">
-              <h1 className="text-lg sm:text-xl font-bold text-black pixel-font">{t('quizSettings.title')}</h1>
-            </div>
+          
+
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+            <img
+              draggable={false}
+              src="/images/memoryquiz.webp"
+              alt="Memory Quiz"
+              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
+              style={{
+                filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
+              }}
+            />
           </div>
+
+        </div>
+
+        <div className="flex-shrink-0 -mt-2 sm:-mt-2 absolute top-4 right-4">
+          <img
+            draggable={false}
+            src="/images/gameforsmartlogo.webp"
+            alt="GameForSmart Logo"
+            className="h-10 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain "
+            style={{
+              filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6)) drop-shadow(0 0 16px rgba(255,165,0,0.4))',
+            }}
+          />
         </div>
 
         {/* Quiz Settings */}
@@ -298,7 +311,7 @@ function QuizSettingsPageContent() {
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white border-2 sm:border-4 border-black rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4 pixel-settings-icon">
                     <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
                   </div>
-                  
+
                   {/* Quiz Information Display */}
                   {isLoadingQuiz ? (
                     <div className="bg-white border-2 border-black rounded-lg p-3 sm:p-4 pixel-quiz-info">
@@ -329,14 +342,14 @@ function QuizSettingsPageContent() {
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 border border-black rounded flex items-center justify-center">
-                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                       </div>
                       <div className="inline-block bg-blue-500 border border-black rounded px-2 py-1">
-                        <Label className="text-white font-bold text-xs pixel-font-sm">{t('quizSettings.timeLimit')}</Label>
+                        <Label className="text-shadow-black font-bold text-xs pixel-font-xl">{t('quizSettings.timeLimit')}</Label>
                       </div>
                     </div>
-                    <div className="bg-yellow-400 border-2 border-black rounded px-2 sm:px-3 py-1">
-                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{timeLimit} {t('quizSettings.minutes')}</span>
+                    <div className="bg-blue-500 border-2 border-black rounded px-2 sm:px-3 py-1">
+                      <span className="text-black font-bold text-sm  sm:text-base pixel-font-xl">{timeLimit} {t('quizSettings.minutes')}</span>
                     </div>
                   </div>
                   <div className="relative">
@@ -360,15 +373,15 @@ function QuizSettingsPageContent() {
                 <div className="bg-white border-2 border-black rounded p-3 sm:p-4 pixel-setting-section">
                   <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 border border-black rounded flex items-center justify-center">
-                        <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-300 border border-black rounded flex items-center justify-center">
+                        <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 text-black" />
                       </div>
-                      <div className="inline-block bg-green-500 border border-black rounded px-2 py-1">
-                        <Label className="text-white font-bold text-xs pixel-font-sm">{t('quizSettings.questions')}</Label>
+                      <div className="inline-block bg-blue-300 border border-black rounded px-2 py-1">
+                        <Label className=" text-shadow-black font-bold text-xs pixel-font-xl">{t('quizSettings.questions')}</Label>
                       </div>
                     </div>
-                    <div className="bg-orange-400 border-2 border-black rounded px-2 sm:px-3 py-1">
-                      <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">{questionCount} {t('quizSettings.questionsShort')}</span>
+                    <div className="bg-blue-300 border-2 border-black rounded px-2 sm:px-3 py-1">
+                      <span className="text-black font-bold text-sm sm:text-base pixel-font-xl">{questionCount} </span>
                     </div>
                   </div>
                   <div className="relative">
@@ -388,24 +401,23 @@ function QuizSettingsPageContent() {
                 {/* Pixel Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
                   <div className="flex-1 relative pixel-button-container">
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => router.push("/select-quiz")} 
-                      className="relative w-full bg-gradient-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold min-h-[44px]"
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-rose-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                    <Button
+                      onClick={() => router.push("/select-quiz")}
+                      className="relative w-full bg-gradient-to-br from-red-500 to-rose-500 border-2 border-black rounded-lg text-black hover:bg-gradient-to-br hover:from-red-400 hover:to-rose-400 transform hover:scale-105 transition-all duration-200 font-bold min-h-[44px]"
                     >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      <span className="pixel-font-sm text-sm sm:text-base">{t('quizSettings.back')}</span>
+                      
+                      <span className="pixel-font-xl text-sm sm:text-base">{t('quizSettings.back')}</span>
                     </Button>
                   </div>
                   <div className="flex-1 relative pixel-button-container">
                     <div className="absolute inset-0 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                    <Button 
-                      onClick={handleSettingsComplete} 
+                    <Button
+                      onClick={handleSettingsComplete}
                       disabled={isCreatingRoom}
-                      className="relative w-full bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-black rounded-lg text-white hover:bg-gradient-to-br hover:from-green-400 hover:to-emerald-400 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 min-h-[44px]"
+                      className="relative w-full bg-gradient-to-br from-green-500 to-emerald-500 border-2 border-black rounded-lg text-black hover:bg-gradient-to-br hover:from-green-400 hover:to-emerald-400 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 min-h-[44px]"
                     >
-                      <span className="pixel-font-sm text-sm sm:text-base">{isCreatingRoom ? t('quizSettings.creating') : t('quizSettings.createRoom')}</span>
+                      <span className="pixel-font-xl text-sm sm:text-base">{isCreatingRoom ? t('quizSettings.creating') : t('quizSettings.createRoom')}</span>
                     </Button>
                   </div>
                 </div>
@@ -446,7 +458,7 @@ function PixelBackgroundElements() {
           }}
         />
       ))}
-      
+
       {/* Floating Pixel Blocks */}
       <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>

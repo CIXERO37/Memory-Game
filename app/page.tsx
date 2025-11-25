@@ -435,6 +435,8 @@ function PixelBackgroundElements() {
 
 function FallingPixelCards() {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
   const stream: Array<{ id: string; image: string; color: string; x: string; delay: string; dur: string; rot: string; w?: string; h?: string; }> = [
     { id: '1', image: '/memogame/cat.webp', color: 'bg-red-500', x: '5%', delay: '0s', dur: '12s', rot: '-6deg' },
     { id: '2', image: '/memogame/cow.webp', color: 'bg-blue-500', x: '12%', delay: '2.8s', dur: '11.5s', rot: '8deg' },
@@ -449,6 +451,19 @@ function FallingPixelCards() {
     { id: '11', image: '/memogame/koala.webp', color: 'bg-emerald-500', x: '84%', delay: '2.4s', dur: '12.7s', rot: '1deg' },
     { id: '12', image: '/memogame/crab.webp', color: 'bg-violet-500', x: '92%', delay: '4.6s', dur: '11.3s', rot: '-5deg' },
   ]
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+    }
+  }, [])
 
   useEffect(() => {
     const container = containerRef.current
@@ -496,11 +511,13 @@ function FallingPixelCards() {
         el.replaceWith(el.cloneNode(true))
       })
     }
-  }, [])
+  }, [isMobile]) // Re-run when isMobile changes to attach listeners to new elements
+
+  const visibleStream = isMobile ? stream.filter((_, i) => i % 2 === 0) : stream
 
   return (
     <div ref={containerRef} className="absolute inset-0 z-0">
-      {stream.map((c) => (
+      {visibleStream.map((c) => (
         <div
           key={c.id}
           className="pixel-card falling"
