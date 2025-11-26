@@ -42,7 +42,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
             console.log("[Countdown] Host session detected:", sessionData.user_data)
           }
         }
-        
+
         // Fallback to localStorage if session not found
         if (!playerId && typeof window !== 'undefined') {
           const player = localStorage.getItem("currentPlayer")
@@ -68,7 +68,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
         console.log("[Countdown] Host detected via room.hostId:", { roomHostId: room.hostId, sessionHostId: hostId })
         return
       }
-      
+
       // Fallback: check if player is in room.players and is host
       const currentPlayer = room.players.find((p) => p.id === playerId)
       const hostStatus = currentPlayer?.isHost || false
@@ -86,10 +86,10 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
 
   const handleCountdownComplete = () => {
     console.log("[Countdown] Countdown complete, redirecting...", { isHost, playerId, hostId })
-    
+
     // Clean up any event listeners that might trigger beforeunload
-    window.removeEventListener('beforeunload', () => {})
-    
+    window.removeEventListener('beforeunload', () => { })
+
     if (isHost) {
       // Host goes to monitor page - immediate redirect
       console.log("[Countdown] Redirecting host to monitor page")
@@ -97,13 +97,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
     } else {
       // Player goes to quiz page
       console.log("[Countdown] Redirecting player to quiz page")
-      const params_url = new URLSearchParams({
-        quizId: searchParams.quizId || "math-basic",
-        questionCount: room?.settings.questionCount.toString() || "10",
-        timeLimit: room?.settings.totalTimeLimit.toString() || "5",
-      })
-
-      window.location.replace(`/game/${params.roomCode}/quiz?${params_url.toString()}`)
+      window.location.replace(`/quiz/${params.roomCode}`)
     }
   }
 

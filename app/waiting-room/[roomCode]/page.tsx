@@ -40,15 +40,15 @@ export default function WaitingRoomPage() {
     const restorePlayerInfo = async () => {
       try {
         console.log("[WaitingRoom] Restoring player info for room:", roomCode)
-        
+
         // Try to get session from Supabase
         const sessionId = sessionManager.getSessionIdFromStorage()
         console.log("[WaitingRoom] Session ID from storage:", sessionId)
-        
+
         if (sessionId) {
           const sessionData = await sessionManager.getSessionData(sessionId)
           console.log("[WaitingRoom] Session data from Supabase:", sessionData)
-          
+
           if (sessionData && sessionData.user_type === 'player' && sessionData.room_code === roomCode) {
             console.log("[WaitingRoom] Valid session found, setting player info")
             const playerData = {
@@ -68,17 +68,17 @@ export default function WaitingRoomPage() {
             })
           }
         }
-        
+
         // Fallback to localStorage if Supabase session not found
         if (typeof window !== 'undefined') {
           const storedPlayer = localStorage.getItem("currentPlayer")
           console.log("[WaitingRoom] Stored player from localStorage:", storedPlayer)
-          
+
           if (storedPlayer) {
             try {
               const player = JSON.parse(storedPlayer)
               console.log("[WaitingRoom] Parsed player data:", player)
-              
+
               if (player.roomCode === roomCode) {
                 console.log("[WaitingRoom] Valid localStorage player found, setting player info")
                 const playerData = {
@@ -100,10 +100,10 @@ export default function WaitingRoomPage() {
             }
           }
         }
-        
+
         // If no valid player info found, try to get player from room data as last resort
         console.log("[WaitingRoom] No valid player info found, trying to get player from room data")
-        
+
         // Try to get player info from room data (as fallback)
         if (room && room.players && room.players.length > 0) {
           console.log("[WaitingRoom] Found players in room, using first player as fallback")
@@ -117,7 +117,7 @@ export default function WaitingRoomPage() {
           playerInfoRef.current = playerData
           return
         }
-        
+
         // If still no valid player info found, redirect to join page
         console.log("[WaitingRoom] No valid player info found anywhere, redirecting to join page")
         router.push(`/join?room=${roomCode}`)
@@ -133,7 +133,7 @@ export default function WaitingRoomPage() {
   // Listen for game start and countdown
   useEffect(() => {
     console.log("[WaitingRoom] Room status changed:", room?.status, "GameStarted:", room?.gameStarted)
-    
+
     if (room?.status === "countdown") {
       console.log("[WaitingRoom] Countdown started, showing countdown timer immediately")
       // Force countdown to show immediately
@@ -142,17 +142,9 @@ export default function WaitingRoomPage() {
       // No need to set gameStarting state for countdown
     } else if (room?.gameStarted && !gameStarting) {
       setGameStarting(true)
-      
+
       // Add a small delay before redirecting
-      setTimeout(() => {
-        const params = new URLSearchParams()
-        if (playerInfo) {
-          params.append("playerId", playerInfo.playerId)
-          params.append("nickname", playerInfo.nickname)
-          params.append("avatar", playerInfo.avatar)
-        }
-        window.location.href = `/game/${roomCode}/quiz?${params.toString()}`
-      }, 1000)
+      window.location.href = `/quiz/${roomCode}`
     }
   }, [room?.status, room?.gameStarted, gameStarting, roomCode])
 
@@ -160,20 +152,20 @@ export default function WaitingRoomPage() {
   useEffect(() => {
     if (room && room.players) {
       const currentPlayerCount = room.players.length
-      
+
       // Check if a new player joined (not the first load)
       if (previousPlayerCount > 0 && currentPlayerCount > previousPlayerCount) {
         console.log("[WaitingRoom] New player joined! Count:", previousPlayerCount, "->", currentPlayerCount)
-        
+
         // Show animation for new player
         setShowPlayerJoinedAnimation(true)
-        
+
         // Hide animation after 3 seconds
         setTimeout(() => {
           setShowPlayerJoinedAnimation(false)
         }, 3000)
       }
-      
+
       // Update previous count
       setPreviousPlayerCount(currentPlayerCount)
     }
@@ -184,11 +176,11 @@ export default function WaitingRoomPage() {
     if (!roomCode) return
 
     console.log("[WaitingRoom] Setting up immediate countdown detection")
-    
+
     // Set up broadcast channel for immediate communication
     const broadcastChannel = new BroadcastChannel(`countdown-${roomCode}`)
     const kickChannel = new BroadcastChannel(`kick-${roomCode}`)
-    
+
     // Listen for countdown broadcasts
     broadcastChannel.onmessage = (event) => {
       if (event.data.type === 'countdown-started') {
@@ -196,21 +188,21 @@ export default function WaitingRoomPage() {
         console.log("[WaitingRoom] Received room data:", event.data.room)
         console.log("[WaitingRoom] Countdown start time:", event.data.countdownStartTime)
         console.log("[WaitingRoom] Countdown duration:", event.data.countdownDuration)
-        
+
         // Create room data with countdown information
         const countdownRoomData = {
           ...event.data.room,
           countdownStartTime: event.data.countdownStartTime,
           countdownDuration: event.data.countdownDuration
         }
-        
+
         setBroadcastRoomData(countdownRoomData)
         setForceCountdown(true)
         // Immediately show countdown UI
         console.log("[WaitingRoom] Forcing countdown display immediately with data:", countdownRoomData)
       }
     }
-    
+
     // Listen for kick broadcasts - use ref to avoid stale closure
     kickChannel.onmessage = (event) => {
       const currentPlayerInfo = playerInfoRef.current
@@ -219,13 +211,13 @@ export default function WaitingRoomPage() {
           kickedPlayerId: event.data.playerId,
           currentPlayerId: currentPlayerInfo?.playerId
         })
-        
+
         // Clear session when kicked
         sessionManager.clearSession().catch(console.error)
         if (typeof window !== 'undefined') {
           localStorage.removeItem("currentPlayer")
         }
-        
+
         // Redirect to landing page immediately
         window.location.href = "/"
       } else {
@@ -236,7 +228,7 @@ export default function WaitingRoomPage() {
         })
       }
     }
-    
+
     // Immediate check for countdown status
     const checkCountdownImmediately = async () => {
       try {
@@ -249,226 +241,53 @@ export default function WaitingRoomPage() {
         console.error("[WaitingRoom] Error in immediate countdown check:", error)
       }
     }
-    
+
     checkCountdownImmediately()
-    
-    // Very aggressive polling for countdown detection
-    const immediatePolling = setInterval(async () => {
-      try {
-        const currentRoom = await roomManager.getRoom(roomCode)
-        if (currentRoom?.status === "countdown") {
-          console.log("[WaitingRoom] Countdown detected via immediate polling!")
-          setForceCountdown(true)
-          // Force a state update by triggering a re-render
-          window.dispatchEvent(new CustomEvent('countdown-detected', { 
-            detail: { room: currentRoom } 
-          }))
-        }
-      } catch (error) {
-        console.error("[WaitingRoom] Error in immediate polling:", error)
-      }
-    }, 500) // Check every 500ms for immediate detection
+
+
 
     // Listen for countdown detection events
     const handleCountdownDetected = (event: CustomEvent) => {
       console.log("[WaitingRoom] Countdown detection event received:", event.detail)
       setForceCountdown(true)
     }
-    
+
     window.addEventListener('countdown-detected', handleCountdownDetected as EventListener)
 
     return () => {
-      clearInterval(immediatePolling)
       window.removeEventListener('countdown-detected', handleCountdownDetected as EventListener)
       broadcastChannel.close()
       kickChannel.close()
     }
   }, [roomCode, playerInfo])
 
-  // Listen for room updates via subscription to detect kicks immediately
-  // Note: This subscription is separate from useRoom hook because we need to detect kicks
-  // useRoom hook subscription is for general room updates, this one is specifically for kick detection
+
+
+  // Reactive kick detection and countdown check based on room updates
   useEffect(() => {
-    if (!playerInfo || !roomCode) {
-      console.log("[WaitingRoom] Skipping subscription setup - missing playerInfo or roomCode")
-      return
+    if (!playerInfo || !room || !roomCode) return
+
+    // Check for countdown status
+    if (room.status === "countdown") {
+      console.log("[WaitingRoom] Countdown detected via room update")
+      setForceCountdown(true)
     }
 
-    console.log("[WaitingRoom] Setting up kick detection subscription for player:", playerInfo.playerId)
-    let unsubscribe: (() => void) | null = null
-    let isCleaningUp = false
-    
-    const setupSubscription = async () => {
-      try {
-        console.log("[WaitingRoom] Creating kick detection subscription for room:", roomCode)
-        unsubscribe = await roomManager.subscribe(roomCode, async (updatedRoom) => {
-          // Skip if already cleaning up
-          if (isCleaningUp) return
-          
-          console.log("[WaitingRoom] Kick detection subscription callback triggered")
-          
-          // Use ref to avoid stale closure
-          const currentPlayerInfo = playerInfoRef.current
-          
-          if (updatedRoom?.code === roomCode && currentPlayerInfo) {
-            // Check if current player still exists in room
-            const existingPlayer = updatedRoom?.players?.find(p => p.id === currentPlayerInfo.playerId)
-            
-            if (!existingPlayer) {
-              console.log("[WaitingRoom] Player not found in room via subscription - they were kicked!", {
-                playerId: currentPlayerInfo.playerId,
-                playersInRoom: updatedRoom?.players?.map(p => p.id)
-              })
-              
-              isCleaningUp = true
-              
-              // Clear session when kicked
-              try {
-                await sessionManager.clearSession()
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem("currentPlayer")
-                }
-                console.log("[WaitingRoom] Session cleared successfully")
-              } catch (error) {
-                console.error("[WaitingRoom] Error clearing session after kick:", error)
-              }
-              
-              // Player was kicked, redirect to landing page immediately
-              console.log("[WaitingRoom] Player was kicked - redirecting to landing page...")
-              try {
-                // Use window.location for immediate redirect to landing page
-                window.location.href = "/"
-              } catch (error) {
-                console.error("[WaitingRoom] Redirect failed:", error)
-                // Fallback to join page
-                window.location.href = `/join?room=${roomCode}`
-              }
-              return
-            }
-          }
-        })
-        console.log("[WaitingRoom] Kick detection subscription created successfully")
-      } catch (error) {
-        console.error("[WaitingRoom] Error setting up kick detection subscription:", error)
+    // Check if player is still in the room (Kick detection)
+    const existingPlayer = room.players.find(p => p.id === playerInfo.playerId)
+    if (!existingPlayer) {
+      console.log("[WaitingRoom] Player not found in room - they may have been kicked")
+
+      // Clear session when kicked
+      sessionManager.clearSession().catch(console.error)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem("currentPlayer")
       }
+
+      // Redirect to landing page
+      window.location.href = "/"
     }
-    
-    setupSubscription()
-
-    return () => {
-      console.log("[WaitingRoom] Cleaning up kick detection subscription")
-      isCleaningUp = true
-      if (unsubscribe) {
-        try {
-          unsubscribe()
-        } catch (error) {
-          console.error("[WaitingRoom] Error during subscription cleanup:", error)
-        }
-        unsubscribe = null
-      }
-    }
-  }, [playerInfo, roomCode, router])
-
-  // Periodic check as fallback for player list updates and kick detection
-  useEffect(() => {
-    if (!playerInfo || !room || !roomCode) {
-      console.log("[WaitingRoom] Skipping periodic check - missing playerInfo, room, or roomCode")
-      return
-    }
-
-    console.log("[WaitingRoom] Setting up periodic check for player list updates:", playerInfo.playerId)
-    const rejoinInterval = setInterval(async () => {
-      try {
-        // Use ref to get current player info
-        const currentPlayerInfo = playerInfoRef.current
-        if (!currentPlayerInfo) {
-          console.log("[WaitingRoom] No player info in ref, skipping periodic check")
-          return
-        }
-
-        console.log("[WaitingRoom] Periodic check running for player list updates...")
-        const currentRoom = await roomManager.getRoom(roomCode)
-        if (currentRoom) {
-          // Compare player lists to detect new players
-          const currentPlayerIds = room.players.map(p => p.id).sort().join(',')
-          const latestPlayerIds = currentRoom.players.map(p => p.id).sort().join(',')
-          
-          console.log("[WaitingRoom] Player list comparison:", {
-            current: currentPlayerIds,
-            latest: latestPlayerIds,
-            currentCount: room.players.length,
-            latestCount: currentRoom.players.length
-          })
-          
-          // If player list changed, force update via subscription callback
-          if (currentPlayerIds !== latestPlayerIds) {
-            console.log("[WaitingRoom] 🔄 Player list changed detected via periodic check, forcing update")
-            // Trigger subscription callback manually to update room state
-            // The useRoom hook should pick this up, but we can also manually trigger
-            // by calling getRoom again which will update the subscription
-            const updatedRoom = await roomManager.getRoom(roomCode)
-            if (updatedRoom) {
-              // Force re-render by updating room state
-              // This will be handled by useRoom hook subscription, but we log it
-              console.log("[WaitingRoom] ✅ Player list updated:", updatedRoom.players.map(p => p.nickname))
-            }
-          }
-          
-          // Check for countdown status changes - log for debugging
-          if (currentRoom.status === "countdown" && room.status !== "countdown") {
-            console.log("[WaitingRoom] Countdown detected via periodic check - room should update via subscription")
-            // The subscription should handle this, but we can log it for debugging
-          }
-          
-          const existingPlayer = currentRoom.players.find(p => p.id === currentPlayerInfo.playerId)
-          console.log("[WaitingRoom] Existing player in periodic check:", existingPlayer, {
-            playerId: currentPlayerInfo.playerId,
-            playersInRoom: currentRoom.players.map(p => p.id)
-          })
-          
-          if (!existingPlayer) {
-            console.log("[WaitingRoom] Player not found in room via periodic check - they may have been kicked")
-            
-            // Clear session when kicked
-            try {
-              await sessionManager.clearSession()
-              if (typeof window !== 'undefined') {
-                localStorage.removeItem("currentPlayer")
-              }
-              console.log("[WaitingRoom] Session cleared via periodic check")
-            } catch (error) {
-              console.error("[WaitingRoom] Error clearing session after kick:", error)
-            }
-            
-            // Player was kicked or left, redirect to landing page
-            console.log("[WaitingRoom] Player was kicked - redirecting to landing page via periodic check...")
-            try {
-              // Use window.location for immediate redirect to landing page
-              window.location.href = "/"
-            } catch (error) {
-              console.error("[WaitingRoom] Redirect failed in periodic check:", error)
-              // Fallback to join page
-              window.location.href = `/join?room=${roomCode}`
-            }
-            return
-          } else {
-            // Player exists, just ensure they're marked as ready
-            existingPlayer.isReady = true
-            console.log("[WaitingRoom] Player still exists in room via periodic check")
-          }
-        } else {
-          console.log("[WaitingRoom] No room data in periodic check")
-        }
-      } catch (error) {
-        console.error("[WaitingRoom] Error in periodic room check:", error)
-      }
-    }, 1000) // Check every 1 second for faster detection
-
-    return () => {
-      console.log("[WaitingRoom] Cleaning up periodic check")
-      clearInterval(rejoinInterval)
-    }
-  }, [playerInfo, roomCode, router, room])
+  }, [room, playerInfo, roomCode])
 
   const handleLeaveRoom = async () => {
     if (playerInfo) {
@@ -478,31 +297,25 @@ export default function WaitingRoomPage() {
         console.error("[WaitingRoom] Error leaving room:", error)
       }
     }
-    
+
     // Clear Supabase session
     try {
       await sessionManager.clearSession()
     } catch (error) {
       console.error("[WaitingRoom] Error clearing session:", error)
     }
-    
+
     // Fallback: clear localStorage
     if (typeof window !== 'undefined') {
       localStorage.removeItem("currentPlayer")
     }
-    
+
     router.push("/join")
   }
 
   const handleCountdownComplete = () => {
     // Redirect to quiz when countdown completes
-    const params = new URLSearchParams()
-    if (playerInfo) {
-      params.append("playerId", playerInfo.playerId)
-      params.append("nickname", playerInfo.nickname)
-      params.append("avatar", playerInfo.avatar)
-    }
-    window.location.href = `/game/${roomCode}/quiz?${params.toString()}`
+    window.location.href = `/quiz/${roomCode}`
   }
 
   if (loading || !playerInfo) {
@@ -595,8 +408,8 @@ export default function WaitingRoomPage() {
               <div className="space-y-2 sm:space-y-3">
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-blue-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <Button 
-                    onClick={() => router.push(`/join?room=${roomCode}`)} 
+                  <Button
+                    onClick={() => router.push(`/join?room=${roomCode}`)}
                     className="relative bg-linear-to-br from-blue-500 to-blue-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-blue-400 hover:to-blue-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
                   >
                     <span className="pixel-font-sm text-xs sm:text-sm">TRY TO REJOIN</span>
@@ -604,8 +417,8 @@ export default function WaitingRoomPage() {
                 </div>
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <Button 
-                    onClick={() => router.push("/join")} 
+                  <Button
+                    onClick={() => router.push("/join")}
                     className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold w-full min-h-[44px]"
                   >
                     <span className="pixel-font-sm text-xs sm:text-sm">JOIN DIFFERENT ROOM</span>
@@ -623,17 +436,17 @@ export default function WaitingRoomPage() {
   if ((room && room.status === "countdown") || forceCountdown) {
     // Use broadcast room data if available, otherwise use current room data
     const countdownRoom = broadcastRoomData || room
-    
+
     // Always show CountdownTimer when countdown is active, even if data is not fully ready
     // This ensures countdown number is displayed immediately
     return (
-      <CountdownTimer 
-        room={countdownRoom || { 
-          code: roomCode, 
-          status: "countdown" as const, 
-          countdownStartTime: (countdownRoom as any)?.countdownStartTime || new Date().toISOString(), 
-          countdownDuration: (countdownRoom as any)?.countdownDuration || 10 
-        }} 
+      <CountdownTimer
+        room={countdownRoom || {
+          code: roomCode,
+          status: "countdown" as const,
+          countdownStartTime: (countdownRoom as any)?.countdownStartTime || new Date().toISOString(),
+          countdownDuration: (countdownRoom as any)?.countdownDuration || 10
+        }}
         onCountdownComplete={handleCountdownComplete}
       />
     )
@@ -676,12 +489,12 @@ export default function WaitingRoomPage() {
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       {/* Retro Scanlines */}
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
       </div>
-      
+
       {/* Floating Pixel Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <PixelBackgroundElements />
@@ -694,24 +507,24 @@ export default function WaitingRoomPage() {
           <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
             <div className="flex items-center gap-1 sm:gap-2 min-w-0">
               {/* Memory Quiz Logo with glow effect */}
-              <img 
+              <img
                 draggable={false}
-                src="/images/memoryquiz.webp" 
-                alt="Memory Quiz" 
+                src="/images/memoryquiz.webp"
+                alt="Memory Quiz"
                 className="h-8 sm:h-10 md:h-12 lg:h-16 xl:h-20 2xl:h-24 w-auto object-contain max-w-[45%] sm:max-w-none"
-                style={{ 
+                style={{
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
                 }}
               />
             </div>
           </div>
-          
+
           {/* Right side - GameForSmart Logo */}
           <div className="shrink-0">
-            <img 
+            <img
               draggable={false}
-              src="/images/gameforsmartlogo.webp" 
-              alt="GameForSmart Logo" 
+              src="/images/gameforsmartlogo.webp"
+              alt="GameForSmart Logo"
               className="h-8 sm:h-10 md:h-12 lg:h-16 xl:h-20 2xl:h-24 w-auto object-contain drop-shadow-lg max-w-[45%] sm:max-w-none"
             />
           </div>
@@ -739,7 +552,7 @@ export default function WaitingRoomPage() {
           </div>
         )}
 
-       
+
 
         <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
           {/* Pixel Waiting Room Card */}
@@ -784,8 +597,8 @@ export default function WaitingRoomPage() {
                           </div>
                           <div className="relative pixel-button-container w-full sm:w-auto">
                             <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                            <AlertDialogAction 
-                              onClick={handleLeaveRoom} 
+                            <AlertDialogAction
+                              onClick={handleLeaveRoom}
                               className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]"
                             >
                               LEAVE ROOM
@@ -803,7 +616,7 @@ export default function WaitingRoomPage() {
                     <h2 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-black pixel-font">WAITING ROOM</h2>
                   </div>
                 </div>
-                
+
                 {/* Current Player Card - Displayed at the top */}
                 {playerInfo && (
                   <div className="mb-3 sm:mb-4 md:mb-6">
@@ -869,8 +682,8 @@ export default function WaitingRoomPage() {
                   <p className="text-white text-xs sm:text-sm pixel-font-sm leading-tight sm:leading-normal">
                     {room.gameStarted ? "GAME STARTING SOON..." : "WAITING FOR HOST TO START THE GAME..."}
                   </p>
-                  
-                 
+
+
                 </div>
               </div>
             </div>
@@ -909,7 +722,7 @@ function PixelBackgroundElements() {
           }}
         />
       ))}
-      
+
       {/* Floating Pixel Blocks */}
       <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>

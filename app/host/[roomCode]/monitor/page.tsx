@@ -40,7 +40,7 @@ function MonitorPageContent() {
 
   // 🚀 CRITICAL: Timing constants
   const HOST_COMPLETION_DELAY = 5000
-  const AGGRESSIVE_POLLING_INTERVAL = 500
+
 
   // Debug log
   useEffect(() => {
@@ -231,37 +231,7 @@ function MonitorPageContent() {
     }
   }, [roomCode, redirecting])
 
-  // 🚀 Aggressive polling
-  useEffect(() => {
-    if (roomCode && room && !redirecting) {
-      const aggressivePolling = setInterval(async () => {
-        if (redirecting) {
-          console.log("[Monitor] Skipping poll - redirecting")
-          return
-        }
 
-        try {
-          const latestRoom = await roomManager.getRoom(roomCode)
-
-          if (latestRoom?.status === 'finished') {
-            console.log("[Monitor] Game finished, stopping poll")
-            clearInterval(aggressivePolling)
-            return
-          }
-
-          const hasChanges = JSON.stringify(latestRoom?.players) !== JSON.stringify(room?.players)
-
-          if (hasChanges && latestRoom) {
-            setForceRefresh(prev => prev + 1)
-          }
-        } catch (error) {
-          console.error("[Monitor] Error in aggressive polling:", error)
-        }
-      }, AGGRESSIVE_POLLING_INTERVAL)
-
-      return () => clearInterval(aggressivePolling)
-    }
-  }, [roomCode, room, redirecting])
 
   useEffect(() => {
     if (room) {
@@ -342,49 +312,7 @@ function MonitorPageContent() {
     }
   }, [room?.status, isHost, isHostDetected, redirecting, roomCode, router])
 
-  // 🚀 CRITICAL: Aggressive polling untuk memastikan redirect ketika game finished
-  useEffect(() => {
-    if (roomCode && isHost && isHostDetected && !redirecting) {
-      console.log("[Monitor] Starting status polling for room:", roomCode)
-      const statusPolling = setInterval(async () => {
-        try {
-          const currentRoom = await roomManager.getRoom(roomCode)
-          console.log("[Monitor] Polling check - Room status:", currentRoom?.status)
-          if (currentRoom && currentRoom.status === "finished") {
-            console.log("[Monitor] 🎯 Game finished detected via polling - redirecting immediately...")
-            clearInterval(statusPolling)
-            setRedirecting(true)
 
-            // Redirect immediately with multiple attempts
-            const redirectUrl = `/host/leaderboad?roomCode=${roomCode}`
-            console.log("[Monitor] Polling redirect to:", redirectUrl)
-
-            // Force redirect with multiple methods
-            setTimeout(() => {
-              try {
-                window.location.href = redirectUrl
-              } catch (error) {
-                console.error("[Monitor] Polling redirect error, trying replace...", error)
-                try {
-                  window.location.replace(redirectUrl)
-                } catch (error2) {
-                  console.error("[Monitor] Polling replace error, trying router...", error2)
-                  router.push(redirectUrl)
-                }
-              }
-            }, 100)
-          }
-        } catch (error) {
-          console.error("[Monitor] Error in status polling:", error)
-        }
-      }, 1000) // Check every 1 second
-
-      return () => {
-        console.log("[Monitor] Stopping status polling")
-        clearInterval(statusPolling)
-      }
-    }
-  }, [roomCode, isHost, isHostDetected, redirecting, router])
 
   // 🚀 CRITICAL: Auto-end game ketika ada player yang selesai - force semua player selesai
   useEffect(() => {
@@ -550,49 +478,35 @@ function MonitorPageContent() {
     }
   }, [room, isHost, isHostDetected, redirecting, roomCode, forceRefresh, lastVerifiedCompletion, router])
 
-  // 🚀 Force refresh
+
+
+  // 🚀 Monitoring completion (Reactive instead of polling)
   useEffect(() => {
     if (room && isHost && !redirecting) {
-      const forceRefreshInterval = setInterval(() => {
-        if (redirecting) return
-        setForceRefresh(prev => prev + 1)
-      }, 2000)
+      const nonHostPlayers = room.players.filter(p => !p.isHost)
+      const totalQuestions = room.settings.questionCount || 10
+      const completedCount = nonHostPlayers.filter(p => (p.questionsAnswered || 0) >= totalQuestions).length
 
-      return () => clearInterval(forceRefreshInterval)
-    }
-  }, [room, isHost, redirecting])
+      console.log("[Monitor] Monitoring status:", {
+        total: nonHostPlayers.length,
+        completed: completedCount,
+        redirecting: redirecting,
+        lastVerified: lastVerifiedCompletion,
+        roomStatus: room.status
+      })
 
-  // 🚀 Monitoring
-  useEffect(() => {
-    if (room && isHost && !redirecting) {
-      const checkCompletion = setInterval(() => {
-        const nonHostPlayers = room.players.filter(p => !p.isHost)
-        const totalQuestions = room.settings.questionCount || 10
-        const completedCount = nonHostPlayers.filter(p => (p.questionsAnswered || 0) >= totalQuestions).length
-
-        console.log("[Monitor] Monitoring status:", {
-          total: nonHostPlayers.length,
-          completed: completedCount,
-          redirecting: redirecting,
-          lastVerified: lastVerifiedCompletion,
-          roomStatus: room.status
-        })
-
-        // 🚀 CRITICAL: Force redirect if status is finished (backup check)
-        if (room.status === "finished" && !redirecting && roomCode) {
-          console.log("[Monitor] 🚨 FORCE REDIRECT: Room status is finished in monitoring check!")
-          setRedirecting(true)
-          setTimeout(() => {
-            try {
-              window.location.href = `/host/leaderboad?roomCode=${roomCode}`
-            } catch (error) {
-              window.location.replace(`/host/leaderboad?roomCode=${roomCode}`)
-            }
-          }, 100)
-        }
-      }, 3000)
-
-      return () => clearInterval(checkCompletion)
+      // 🚀 CRITICAL: Force redirect if status is finished (backup check)
+      if (room.status === "finished" && !redirecting && roomCode) {
+        console.log("[Monitor] 🚨 FORCE REDIRECT: Room status is finished in monitoring check!")
+        setRedirecting(true)
+        setTimeout(() => {
+          try {
+            window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+          } catch (error) {
+            window.location.replace(`/host/leaderboad?roomCode=${roomCode}`)
+          }
+        }, 100)
+      }
     }
   }, [room, isHost, redirecting, lastVerifiedCompletion, roomCode])
 

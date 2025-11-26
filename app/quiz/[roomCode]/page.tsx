@@ -256,25 +256,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }
   }, [room?.status, isHost, params.roomCode])
 
-  // Aggressive polling for game end detection (fallback for players)
-  useEffect(() => {
-    if (!isHost && params.roomCode) {
-      const gameEndPolling = setInterval(async () => {
-        try {
-          const currentRoom = await roomManager.getRoom(params.roomCode)
-          if (currentRoom && currentRoom.status === "finished") {
-            console.log("[Quiz] 🎮 Game finished detected via polling - redirecting...")
-            clearInterval(gameEndPolling)
-            window.location.href = `/result?roomCode=${params.roomCode}`
-          }
-        } catch (error) {
-          console.error("[Quiz] ❌ Error in game end polling:", error)
-        }
-      }, 1000)
 
-      return () => clearInterval(gameEndPolling)
-    }
-  }, [isHost, params.roomCode])
 
   // Listen for immediate game end broadcast
   useEffect(() => {
