@@ -34,38 +34,38 @@ export function useRoom(roomCode: string | null) {
 
     // Subscribe to updates using Supabase realtime
     let unsubscribe: (() => void) | null = null
-    
+
     const setupSubscription = async () => {
       try {
         unsubscribe = await roomManager.subscribe(roomCode, (updatedRoom) => {
           // Compare with previous room to ensure we're actually updating
           const previousRoom = roomRef.current
-          const hasChanged = !previousRoom || 
+          const hasChanged = !previousRoom ||
             previousRoom.players?.length !== updatedRoom?.players?.length ||
-            JSON.stringify(previousRoom.players?.map(p => p.id).sort()) !== 
+            JSON.stringify(previousRoom.players?.map(p => p.id).sort()) !==
             JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
             previousRoom.status !== updatedRoom?.status ||
             // Check for score/progress changes
-            JSON.stringify(previousRoom.players?.map(p => ({ 
-              id: p.id, 
-              quizScore: p.quizScore, 
-              memoryScore: p.memoryScore, 
-              questionsAnswered: p.questionsAnswered 
-            })).sort((a, b) => a.id.localeCompare(b.id))) !== 
-            JSON.stringify(updatedRoom?.players?.map(p => ({ 
-              id: p.id, 
-              quizScore: p.quizScore, 
-              memoryScore: p.memoryScore, 
-              questionsAnswered: p.questionsAnswered 
+            JSON.stringify(previousRoom.players?.map(p => ({
+              id: p.id,
+              quizScore: p.quizScore,
+              memoryScore: p.memoryScore,
+              questionsAnswered: p.questionsAnswered
+            })).sort((a, b) => a.id.localeCompare(b.id))) !==
+            JSON.stringify(updatedRoom?.players?.map(p => ({
+              id: p.id,
+              quizScore: p.quizScore,
+              memoryScore: p.memoryScore,
+              questionsAnswered: p.questionsAnswered
             })).sort((a, b) => a.id.localeCompare(b.id)))
-          
+
           if (hasChanged && updatedRoom) {
             console.log('[useRoom] Room updated via subscription:', {
               playerCount: updatedRoom.players?.length,
-              players: updatedRoom.players?.map(p => ({ 
-                username: p.username, 
+              players: updatedRoom.players?.map(p => ({
+                nickname: p.nickname,
                 questionsAnswered: p.questionsAnswered,
-                quizScore: p.quizScore 
+                quizScore: p.quizScore
               })),
               status: updatedRoom.status
             })
@@ -78,7 +78,7 @@ export function useRoom(roomCode: string | null) {
         console.error('[useRoom] Error setting up subscription:', error)
       }
     }
-    
+
     setupSubscription()
 
     // 🚀 IMPROVED: More aggressive polling for progress updates (every 1 second)
@@ -105,7 +105,7 @@ export function useRoom(roomCode: string | null) {
 
               // Detect any progress increase (more sensitive than just difference)
               return latestAnswered > currentAnswered || latestScore > currentScore ||
-                     (player.memoryScore || 0) !== (latestPlayer.memoryScore || 0)
+                (player.memoryScore || 0) !== (latestPlayer.memoryScore || 0)
             })
 
             if (playerListChanged || progressChanged) {
@@ -113,7 +113,7 @@ export function useRoom(roomCode: string | null) {
                 playerListChanged,
                 progressChanged,
                 players: latestRoom.players?.map(p => ({
-                  username: p.username,
+                  nickname: p.nickname,
                   questionsAnswered: p.questionsAnswered,
                   quizScore: p.quizScore
                 }))
@@ -131,7 +131,7 @@ export function useRoom(roomCode: string | null) {
         // Silent error handling for polling
         console.error('[useRoom] Error in fallback polling:', error)
       }
-    }, 1000) // 🚀 IMPROVED: Poll every 1 second instead of 2
+    }, 5000) // 🚀 OPTIMIZED: Poll every 5 seconds as safety net, rely on Realtime for speed
 
     return () => {
       if (unsubscribe) unsubscribe()

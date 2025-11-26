@@ -32,7 +32,7 @@ function LobbyPageContent() {
   const [copiedLink, setCopiedLink] = useState(false)
   const [showQRModal, setShowQRModal] = useState(false)
   const [qrSize, setQrSize] = useState(800)
-  const [localRoom, setLocalRoom] = useState<any>(null)
+
   const [currentPage, setCurrentPage] = useState(0)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
@@ -43,8 +43,8 @@ function LobbyPageContent() {
   const lastUpdateTimeRef = useRef<number>(0)
   const { toast } = useToast()
   const { room, loading } = useRoom(roomCode || "")
-  
-  const currentRoom = localRoom || room
+
+  const currentRoom = room
 
   const quizSettings = currentRoom ? {
     timeLimit: currentRoom.settings.totalTimeLimit,
@@ -134,27 +134,20 @@ function LobbyPageContent() {
 
     try {
       const success = await roomManager.kickPlayer(roomCode, playerToKick.id, hostId)
-      
+
       if (success) {
         toast({
           title: t('lobby.playerKicked'),
           description: `👢 ${playerToKick.nickname} ${t('lobby.playerKickedDesc')}`,
           duration: 3000,
         })
-        
-        setTimeout(async () => {
-          try {
-            const refreshedRoom = await roomManager.getRoom(roomCode)
-            if (refreshedRoom) {
-              setLocalRoom(refreshedRoom)
-            }
-          } catch (error) {}
-        }, 500)
-        
+
+
+
         if (typeof window !== 'undefined') {
           const broadcastChannel = new BroadcastChannel(`kick-${roomCode}`)
-          broadcastChannel.postMessage({ 
-            type: 'player-kicked', 
+          broadcastChannel.postMessage({
+            type: 'player-kicked',
             playerId: playerToKick.id,
             nickname: playerToKick.nickname,
             roomCode: roomCode
@@ -187,13 +180,13 @@ function LobbyPageContent() {
 
   const handleCountdownComplete = async () => {
     if (!roomCode || !hostId) return
-    
+
     setIsRedirecting(true)
-    
+
     try {
-      const beforeUnloadHandler = () => {}
+      const beforeUnloadHandler = () => { }
       window.removeEventListener('beforeunload', beforeUnloadHandler)
-      
+
       const success = await roomManager.startGame(roomCode, hostId)
       if (success) {
         window.location.replace(`/host/${roomCode}/monitor`)
@@ -207,63 +200,8 @@ function LobbyPageContent() {
 
   useEffect(() => {
     if (!roomCode) return
-
-    const loadInitialRoom = async () => {
-      try {
-        const initialRoom = await roomManager.getRoom(roomCode)
-        if (initialRoom) {
-          setLocalRoom(initialRoom)
-        }
-      } catch (error) {}
-    }
-
-    loadInitialRoom()
-
-    let unsubscribe: (() => void) | null = null
-    
-    const setupSubscription = async () => {
-      try {
-        unsubscribe = await roomManager.subscribe(roomCode, (updatedRoom) => {
-          if (updatedRoom?.code === roomCode) {
-            const now = Date.now()
-            if (now - lastUpdateTimeRef.current < 100) {
-              return
-            }
-            lastUpdateTimeRef.current = now
-            setLocalRoom((prevLocalRoom: Room | null) => {
-              if (prevLocalRoom?.status === "countdown" && updatedRoom.status !== "countdown") {
-                return prevLocalRoom
-              }
-              return updatedRoom
-            })
-          }
-        })
-      } catch (error) {}
-    }
-    
-    setupSubscription()
-
-    const pollingInterval = setInterval(async () => {
-      try {
-        const currentRoom = await roomManager.getRoom(roomCode)
-        if (currentRoom) {
-          setLocalRoom((prevLocalRoom: Room | null) => {
-            if (!prevLocalRoom || 
-                prevLocalRoom.players?.length !== currentRoom.players?.length ||
-                JSON.stringify(prevLocalRoom.players?.map(p => p.id).sort()) !== JSON.stringify(currentRoom.players?.map(p => p.id).sort())) {
-              return currentRoom
-            }
-            return prevLocalRoom
-          })
-        }
-      } catch (error) {}
-    }, 2000)
-
-    return () => {
-      if (unsubscribe) unsubscribe()
-      clearInterval(pollingInterval)
-    }
-  }, [roomCode, toast, t])
+    // useRoom hook handles subscription and updates
+  }, [roomCode])
 
   useEffect(() => {
     const paramCode = typeof params?.roomCode === "string" ? params.roomCode : Array.isArray(params?.roomCode) ? params.roomCode[0] : null
@@ -278,31 +216,25 @@ function LobbyPageContent() {
               const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = sessionData.user_data
               setHostId(storedHostId)
               setQuizId(storedQuizId)
-              
+
               if (!paramCode) {
                 setRoomCode(storedRoomCode)
                 const loadRoom = async () => {
                   try {
-                    const room = await roomManager.getRoom(storedRoomCode)
-                    if (room) {
-                      setLocalRoom(room)
-                    }
-                  } catch (error) {}
+                    await roomManager.getRoom(storedRoomCode)
+                  } catch (error) { }
                 }
                 loadRoom()
               } else if (paramCode === storedRoomCode) {
                 setRoomCode(paramCode)
                 const loadRoom = async () => {
                   try {
-                    const room = await roomManager.getRoom(paramCode)
-                    if (room) {
-                      setLocalRoom(room)
-                    }
-                  } catch (error) {}
+                    await roomManager.getRoom(paramCode)
+                  } catch (error) { }
                 }
                 loadRoom()
               } else {
-                await sessionManager.clearSession().catch(() => {})
+                await sessionManager.clearSession().catch(() => { })
                 setRoomCode(paramCode)
               }
               return
@@ -310,7 +242,7 @@ function LobbyPageContent() {
             }
           }
         }
-        
+
         if (typeof window !== 'undefined') {
           const hostData = localStorage.getItem("currentHost")
           if (hostData) {
@@ -318,7 +250,7 @@ function LobbyPageContent() {
               const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = JSON.parse(hostData)
               setHostId(storedHostId)
               setQuizId(storedQuizId)
-              
+
               if (!paramCode) {
                 setRoomCode(storedRoomCode)
               } else if (paramCode === storedRoomCode) {
@@ -414,7 +346,7 @@ function LobbyPageContent() {
         textArea.select();
         document.execCommand("copy");
         document.body.removeChild(textArea);
-        
+
         toast({
           title: t('lobby.shareLinkCopied'),
           description: "Send this link to your friends",
@@ -481,10 +413,10 @@ function LobbyPageContent() {
 
     try {
       const countdownSuccess = await roomManager.startCountdown(roomCode, hostId, 10)
-      
+
       if (countdownSuccess) {
         setGameStarted(true)
-        
+
         const countdownStartTime = new Date().toISOString()
         const updatedRoom = {
           ...currentRoom,
@@ -492,20 +424,20 @@ function LobbyPageContent() {
           countdownStartTime: countdownStartTime,
           countdownDuration: 10
         }
-        setLocalRoom(updatedRoom)
-        
+
+
         if (typeof window !== 'undefined') {
           const broadcastChannel = new BroadcastChannel(`countdown-${roomCode}`)
-          broadcastChannel.postMessage({ 
-            type: 'countdown-started', 
+          broadcastChannel.postMessage({
+            type: 'countdown-started',
             room: updatedRoom,
             countdownStartTime: countdownStartTime,
             countdownDuration: 10
           })
           broadcastChannel.close()
         }
-        
-        setTimeout(() => {}, 100)
+
+        setTimeout(() => { }, 100)
       } else {
         toast({
           title: t('lobby.failedToStartGame'),
@@ -524,8 +456,8 @@ function LobbyPageContent() {
 
   if (currentRoom && currentRoom.status === "countdown") {
     return (
-      <CountdownTimer 
-        room={currentRoom} 
+      <CountdownTimer
+        room={currentRoom}
         playerId={hostId || undefined}
         isHost={true}
         onCountdownComplete={handleCountdownComplete}
@@ -581,9 +513,9 @@ function LobbyPageContent() {
         questionCount: 10,
         totalTimeLimit: 30
       })
-      
+
       if (recreatedRoom) {
-        setLocalRoom(recreatedRoom)
+
       } else {
         return (
           <div className="min-h-screen bg-linear-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center">
@@ -594,58 +526,58 @@ function LobbyPageContent() {
         )
       }
     } else {
-        return (
-          <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
-            <div className="absolute inset-0 opacity-20">
-              <div className="pixel-grid"></div>
-            </div>
-            <div className="absolute inset-0 opacity-10">
-              <div className="scanlines"></div>
-            </div>
-            <div className="absolute inset-0 overflow-hidden">
-              <PixelBackgroundElements />
-            </div>
+      return (
+        <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+          <div className="absolute inset-0 opacity-20">
+            <div className="pixel-grid"></div>
+          </div>
+          <div className="absolute inset-0 opacity-10">
+            <div className="scanlines"></div>
+          </div>
+          <div className="absolute inset-0 overflow-hidden">
+            <PixelBackgroundElements />
+          </div>
 
-            <div className="relative z-10 text-center">
-              <div className="relative inline-block mb-6">
-                <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                <div className="relative bg-linear-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
-                  <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                    <span className="text-2xl">⚠️</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2 pixel-font">ROOM NOT FOUND</h3>
-                  <p className="text-white/80 mb-4 pixel-font-sm">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
-                  <div className="relative pixel-button-container">
-                    <div className="absolute inset-0 bg-linear-to-br from-orange-600 to-orange-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                    <Button 
-                      onClick={() => router.push("/select-quiz")}
-                      className="relative bg-linear-to-br from-orange-500 to-orange-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-orange-400 hover:to-orange-500 transform hover:scale-105 transition-all duration-200 font-bold"
-                    >
-                      <span className="pixel-font-sm">CREATE NEW ROOM</span>
-                    </Button>
-                  </div>
+          <div className="relative z-10 text-center">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <div className="relative bg-linear-to-br from-red-500 to-red-600 rounded-lg border-4 border-black shadow-2xl p-6">
+                <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2 pixel-font">ROOM NOT FOUND</h3>
+                <p className="text-white/80 mb-4 pixel-font-sm">THE ROOM MAY HAVE BEEN CLOSED OR THE HOST LEFT</p>
+                <div className="relative pixel-button-container">
+                  <div className="absolute inset-0 bg-linear-to-br from-orange-600 to-orange-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+                  <Button
+                    onClick={() => router.push("/select-quiz")}
+                    className="relative bg-linear-to-br from-orange-500 to-orange-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-orange-400 hover:to-orange-500 transform hover:scale-105 transition-all duration-200 font-bold"
+                  >
+                    <span className="pixel-font-sm">CREATE NEW ROOM</span>
+                  </Button>
                 </div>
               </div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )
     }
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
       {showQRModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-40" />
       )}
-      
+
       <div className={`absolute inset-0 opacity-20 ${showQRModal ? 'blur-md' : ''}`}>
         <div className="pixel-grid"></div>
       </div>
-      
+
       <div className={`absolute inset-0 opacity-10 ${showQRModal ? 'blur-md' : ''}`}>
         <div className="scanlines"></div>
       </div>
-      
+
       <div className={`absolute inset-0 overflow-hidden ${showQRModal ? 'blur-md' : ''}`}>
         <PixelBackgroundElements />
       </div>
@@ -653,7 +585,7 @@ function LobbyPageContent() {
       <div className={`relative z-10 w-full px-4 pt-6 ${showQRModal ? 'blur-md' : ''}`}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div 
+            <div
               onClick={() => handleNavigationAttempt("/quiz-settings")}
               className="cursor-pointer shrink-0"
             >
@@ -665,23 +597,23 @@ function LobbyPageContent() {
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 min-w-0 -mt-2">
-              <img 
+              <img
                 draggable={false}
-                src="/images/memoryquiz.webp" 
-                alt="Memory Quiz" 
+                src="/images/memoryquiz.webp"
+                alt="Memory Quiz"
                 className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain"
-                style={{ 
+                style={{
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.6))',
                 }}
               />
             </div>
           </div>
-          
+
           <div className="shrink-0 -mt-2 sm:-mt-12">
-            <img 
+            <img
               draggable={false}
-              src="/images/gameforsmartlogo.webp" 
-              alt="GameForSmart Logo" 
+              src="/images/gameforsmartlogo.webp"
+              alt="GameForSmart Logo"
               className={`h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg ${showQRModal ? 'blur-sm' : ''}`}
             />
           </div>
@@ -694,7 +626,7 @@ function LobbyPageContent() {
             <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
             <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-lobby-card">
               <div className="p-4 sm:p-6 space-y-2">
-               
+
                 <div className="flex flex-row sm:flex-row justify-center gap-2 sm:gap-4 mb-4">
                   <div className="bg-blue-100 border border-blue-300 rounded-full px-3 sm:px-4 py-2 flex items-center gap-2 shadow-sm">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-500 rounded-full flex items-center justify-center">
@@ -704,7 +636,7 @@ function LobbyPageContent() {
                       {currentRoom?.settings.totalTimeLimit || 30}:00
                     </span>
                   </div>
-                  
+
                   <div className="bg-green-100 border border-green-300 rounded-full px-3 sm:px-4 py-2 flex items-center gap-2 shadow-sm">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center">
                       <span className="text-white text-xs">❓</span>
@@ -723,7 +655,7 @@ function LobbyPageContent() {
                   >
                     {copiedCode ? <span className="font-bold text-xs sm:text-sm md:text-lg">✓</span> : <Copy className="h-3 w-3 sm:h-4 sm:w-4 md:h-6 md:w-6" />}
                   </button>
-                  
+
                   <div className="text-center pt-0 px-8 sm:px-12 md:px-16">
                     <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black font-mono text-black room-code-text break-all leading-tight">
                       {roomCode}
@@ -742,16 +674,16 @@ function LobbyPageContent() {
                         >
                           <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                         </button>
-                        
+
                         <div className="mb-3 py-0.5 w-full flex justify-center">
-                          <QRCodeSVG 
-                            value={joinUrl} 
+                          <QRCodeSVG
+                            value={joinUrl}
                             size={typeof window !== 'undefined' ? Math.min(window.innerWidth * 0.3, 300) : 300}
                             className="mx-auto"
                             style={{ width: '100%', maxWidth: '300px', height: 'auto' }}
                           />
                         </div>
-                        
+
                         <div className="w-full">
                           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2 sm:p-3 border-2 border-black">
                             <span className="text-xs sm:text-sm font-mono break-all flex-1 text-gray-900">{joinUrl}</span>
@@ -773,40 +705,40 @@ function LobbyPageContent() {
                   </div>
                 )}
 
-              <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
-                <DialogContent 
-                  className="max-w-fit! w-auto! h-auto! z-50 backdrop-blur-sm bg-white border-8 border-black shadow-2xl p-4! overflow-hidden!"
-                  showCloseButton={true}
-                >
-                  <div className="flex justify-center items-center h-full w-full min-w-0 min-h-0 box-border overflow-hidden">
-                    {joinUrl && (
-                      <div 
-                        className="flex items-center justify-center min-w-0 min-h-0 box-border overflow-hidden" 
-                        style={{ 
-                          maxWidth: 'calc(100% - 32px)', 
-                          maxHeight: 'calc(100% - 32px)',
-                          width: `${qrSize}px`,
-                          height: `${qrSize}px`
-                        }}
-                      >
-                        <QRCodeSVG 
-                          value={joinUrl} 
-                          size={qrSize}
-                          style={{ 
-                            display: 'block',
+                <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
+                  <DialogContent
+                    className="max-w-fit! w-auto! h-auto! z-50 backdrop-blur-sm bg-white border-8 border-black shadow-2xl p-4! overflow-hidden!"
+                    showCloseButton={true}
+                  >
+                    <div className="flex justify-center items-center h-full w-full min-w-0 min-h-0 box-border overflow-hidden">
+                      {joinUrl && (
+                        <div
+                          className="flex items-center justify-center min-w-0 min-h-0 box-border overflow-hidden"
+                          style={{
+                            maxWidth: 'calc(100% - 32px)',
+                            maxHeight: 'calc(100% - 32px)',
                             width: `${qrSize}px`,
-                            height: `${qrSize}px`,
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                            boxSizing: 'border-box',
-                            flexShrink: 0
+                            height: `${qrSize}px`
                           }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
+                        >
+                          <QRCodeSVG
+                            value={joinUrl}
+                            size={qrSize}
+                            style={{
+                              display: 'block',
+                              width: `${qrSize}px`,
+                              height: `${qrSize}px`,
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              boxSizing: 'border-box',
+                              flexShrink: 0
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>
@@ -817,10 +749,9 @@ function LobbyPageContent() {
               <div className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
                   <div className="flex items-center gap-2">
-                    <div className={`inline-block bg-white border border-black rounded px-2 py-1 transition-all duration-500 ${
-                      playerCountChanged ? 'animate-pulse bg-green-100 border-green-400' : 
-                      playerLeft ? 'animate-pulse bg-red-100 border-red-400' : ''
-                    }`}>
+                    <div className={`inline-block bg-white border border-black rounded px-2 py-1 transition-all duration-500 ${playerCountChanged ? 'animate-pulse bg-green-100 border-green-400' :
+                        playerLeft ? 'animate-pulse bg-red-100 border-red-400' : ''
+                      }`}>
                       <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">
                         {playerCountChanged ? '🎉 ' : playerLeft ? '👋 ' : ''}{t('lobby.players')} ({currentRoom?.players.length || 0})
                       </span>
@@ -830,7 +761,7 @@ function LobbyPageContent() {
                     <div className="w-full sm:w-auto">
                       <div className="relative pixel-button-container">
                         <div className="absolute inset-0 bg-linear-to-br from-purple-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                        <button 
+                        <button
                           onClick={() => {
                             startGame()
                           }}
@@ -849,7 +780,7 @@ function LobbyPageContent() {
                     </div>
                   )}
                 </div>
-                
+
                 {currentRoom && currentRoom.players.length === 0 ? (
                   <div className="text-center py-6 sm:py-8">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
@@ -898,7 +829,7 @@ function LobbyPageContent() {
                       <div className="flex items-center justify-between">
                         <div className="relative pixel-button-container">
                           <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                          <Button 
+                          <Button
                             onClick={goToPreviousPage}
                             disabled={currentPage === 0}
                             className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
@@ -916,7 +847,7 @@ function LobbyPageContent() {
 
                         <div className="relative pixel-button-container">
                           <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                          <Button 
+                          <Button
                             onClick={goToNextPage}
                             disabled={currentPage === totalPages - 1}
                             className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] px-3 sm:px-4"
@@ -946,14 +877,14 @@ function LobbyPageContent() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.leaveWarning')}</h3>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
-                  {t('lobby.leaveWarningDesc')}<br/>
+                  {t('lobby.leaveWarningDesc')}<br />
                 </p>
               </div>
 
               <div className="flex gap-4 justify-center">
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <Button 
+                  <Button
                     onClick={cancelLeave}
                     className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
@@ -963,7 +894,7 @@ function LobbyPageContent() {
 
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <Button 
+                  <Button
                     onClick={confirmLeave}
                     className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
@@ -987,8 +918,8 @@ function LobbyPageContent() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.kickPlayer')}?</h3>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
-                  {t('lobby.confirmKick')}<br/>
-                  <span className="font-bold text-yellow-300">{playerToKick?.username?.toUpperCase()}</span><br/>
+                  {t('lobby.confirmKick')}<br />
+                  <span className="font-bold text-yellow-300">{playerToKick?.username?.toUpperCase()}</span><br />
                   ?
                 </p>
               </div>
@@ -996,7 +927,7 @@ function LobbyPageContent() {
               <div className="flex gap-4 justify-center">
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <Button 
+                  <Button
                     onClick={cancelKickPlayer}
                     className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
@@ -1006,7 +937,7 @@ function LobbyPageContent() {
 
                 <div className="relative pixel-button-container">
                   <div className="absolute inset-0 bg-linear-to-br from-red-600 to-red-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                  <Button 
+                  <Button
                     onClick={confirmKickPlayer}
                     className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold px-6 py-2"
                   >
@@ -1050,7 +981,7 @@ function PixelBackgroundElements() {
           }}
         />
       ))}
-      
+
       <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>
       </div>
