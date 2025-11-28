@@ -12,13 +12,13 @@ export function useAudio() {
     if (audio) {
       audio.volume = 0.2 // Set volume to 20%
       audio.loop = true
-      
+
       const handleLoadedData = () => {
         setIsAudioLoaded(true)
       }
 
       const handleError = () => {
-        console.log('Audio failed to load')
+
         setIsAudioLoaded(false)
       }
 
@@ -30,10 +30,10 @@ export function useAudio() {
         try {
           await audio.play()
         } catch (error) {
-          console.log('Audio autoplay prevented:', error)
+
         }
       }
-      
+
       playAudio()
 
       return () => {
@@ -62,7 +62,7 @@ export function useAudio() {
       try {
         await audio.play()
       } catch (error) {
-        console.log('Audio play failed:', error)
+
       }
     }
   }

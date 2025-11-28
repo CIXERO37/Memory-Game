@@ -36,31 +36,31 @@ export function useReconnection(roomCode: string | null, playerInfo: PlayerInfo 
       // Check if room still exists
       const room = await roomManager.getRoom(roomCode)
       if (!room) {
-        console.log('[useReconnection] Room no longer exists')
+
         return false
       }
 
       // Check if game is finished
       if (room.status === 'finished') {
-        console.log('[useReconnection] Game is finished, cannot reconnect')
+
         return false
       }
 
       // Check if player was in the room
       const existingPlayer = room.players.find(p => p.id === playerInfo.id)
       if (existingPlayer) {
-        console.log('[useReconnection] Player found in room, can reconnect')
+
         return true
       }
 
       // If player not found but game hasn't started, they might have been kicked
       // but can still rejoin if game is in waiting status
       if (room.status === 'waiting') {
-        console.log('[useReconnection] Game in waiting, player can rejoin')
+
         return true
       }
 
-      console.log('[useReconnection] Player not found and game started, cannot reconnect')
+
       return false
     } catch (error) {
       console.error('[useReconnection] Error checking reconnection eligibility:', error)
@@ -74,8 +74,8 @@ export function useReconnection(roomCode: string | null, playerInfo: PlayerInfo 
       return false
     }
 
-    console.log('[useReconnection] Attempting to reconnect player:', playerInfo.id)
-    
+
+
     setReconnectionState(prev => ({
       ...prev,
       isReconnecting: true,
@@ -97,13 +97,13 @@ export function useReconnection(roomCode: string | null, playerInfo: PlayerInfo 
       // Attempt to rejoin the room
       const success = await roomManager.rejoinRoom(roomCode, {
         id: playerInfo.id,
-        username: playerInfo.username,
+        nickname: playerInfo.username,
         avatar: playerInfo.avatar
       })
 
       if (success) {
-        console.log('[useReconnection] Successfully reconnected to room')
-        
+
+
         // Update session
         try {
           await sessionManager.getOrCreateSession(
@@ -161,7 +161,7 @@ export function useReconnection(roomCode: string | null, playerInfo: PlayerInfo 
 
     // If connection is restored and we were disconnected, attempt reconnection
     if (connected && !reconnectionState.isConnected && reconnectionState.canReconnect) {
-      console.log('[useReconnection] Connection restored, attempting auto-reconnection')
+
       setTimeout(() => {
         attemptReconnection()
       }, 1000) // Wait 1 second before attempting reconnection
@@ -192,7 +192,7 @@ export function useReconnection(roomCode: string | null, playerInfo: PlayerInfo 
 
     const handleVisibilityChange = () => {
       if (!document.hidden && !reconnectionState.isConnected && reconnectionState.canReconnect) {
-        console.log('[useReconnection] Page became visible, checking reconnection')
+
         setTimeout(() => {
           attemptReconnection()
         }, 500)
@@ -205,7 +205,7 @@ export function useReconnection(roomCode: string | null, playerInfo: PlayerInfo 
 
   // Force reconnection method
   const forceReconnect = useCallback(async (): Promise<boolean> => {
-    console.log('[useReconnection] Force reconnection requested')
+
     return await attemptReconnection()
   }, [attemptReconnection])
 

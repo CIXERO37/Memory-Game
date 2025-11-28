@@ -76,14 +76,14 @@ export function useAuth() {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('Getting initial session...')
+
         const { data: { session }, error } = await supabase.auth.getSession()
 
         if (error) {
           console.error('Error getting initial session:', error)
           setLoading(false)
         } else if (session?.user) {
-          console.log('Initial session found:', session.user.email)
+
           setUser(session.user)
 
           // Siapkan quick profile dari OAuth sebagai fallback saja
@@ -94,7 +94,7 @@ export function useAuth() {
             .then(enhancedProfile => {
               // Cache dan gunakan profile dari database sebagai sumber utama
               cacheProfile(session.user.id, enhancedProfile)
-              console.log('Updating profile from database (initial):', enhancedProfile)
+
               setUserProfile(enhancedProfile)
             })
             .catch(() => {
@@ -107,7 +107,7 @@ export function useAuth() {
               setLoading(false)
             })
         } else {
-          console.log('No initial session found')
+
           setLoading(false)
         }
       } catch (error) {
@@ -121,7 +121,7 @@ export function useAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email)
+
 
         if (session?.user) {
           setUser(session.user)
@@ -133,7 +133,7 @@ export function useAuth() {
           createUserProfileWithDatabase(session.user)
             .then(enhancedProfile => {
               cacheProfile(session.user.id, enhancedProfile)
-              console.log('Updating profile from database (auth change):', enhancedProfile)
+
               setUserProfile(enhancedProfile)
             })
             .catch(() => {
@@ -181,7 +181,7 @@ export function useAuth() {
     if (!user) return
 
     try {
-      console.log('Refreshing user profile...')
+
       // Clear cache to force fresh data
       localStorage.removeItem(PROFILE_CACHE_KEY)
 
@@ -189,7 +189,7 @@ export function useAuth() {
       const enhancedProfile = await createUserProfileWithDatabase(user)
       cacheProfile(user.id, enhancedProfile)
       setUserProfile(enhancedProfile)
-      console.log('Profile refreshed:', enhancedProfile)
+
     } catch (error) {
       console.error('Error refreshing profile:', error)
     }
@@ -263,10 +263,10 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
 
         if (!result1.error && result1.data) {
           profileData = result1.data
-          console.log('[useAuth] Profile found using id:', profileData)
+
         } else {
           error = result1.error
-          console.log('[useAuth] Query with id failed, trying auth_user_id:', result1.error)
+
 
           // Fallback: try with auth_user_id (if table structure uses separate column)
           const queryPromise2 = supabase
@@ -282,10 +282,10 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
 
           if (!result2.error && result2.data) {
             profileData = result2.data
-            console.log('[useAuth] Profile found using auth_user_id:', profileData)
+
           } else {
             error = result2.error
-            console.log('[useAuth] Both queries failed:', { idError: result1.error, authUserIdError: result2.error })
+
           }
         }
       } catch (err) {
@@ -293,29 +293,29 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
         error = err as any
       }
 
-      console.log('[useAuth] Final profile query result:', { profileData, error, userId: user.id })
+
 
       if (!error && profileData) {
         // Prefer database full_name/fullname as authoritative name when present
         if (profileData.full_name) {
           name = profileData.full_name
-          console.log('[useAuth] Using full_name from DB:', name)
+
         } else if ((profileData as any).fullname) {
           // some deployments use `fullname` column
           name = (profileData as any).fullname
-          console.log('[useAuth] Using fullname from DB:', name)
+
         }
 
         // Use username from database if available (fallback for display names)
         if (profileData.username) {
           username = profileData.username
-          console.log('[useAuth] Using username from DB:', username)
+
         }
 
         // Use avatar from database if available; otherwise keep Google avatar
         if (profileData.avatar_url) {
           avatar_url = profileData.avatar_url
-          console.log('[useAuth] Using avatar_url from DB:', avatar_url)
+
         }
 
         // If username still empty, try to derive from full_name/fullname

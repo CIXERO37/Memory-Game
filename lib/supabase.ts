@@ -13,7 +13,7 @@ export const isSupabaseConfigured = () => {
   const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const isValidUrl = hasUrl && !process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
   const isValidKey = hasKey && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.includes('placeholder')
-  
+
   return isValidUrl && isValidKey
 }
 
@@ -71,18 +71,18 @@ function isQuizPublic(quiz: any): boolean {
   // Cek is_public sebagai kolom langsung
   if (quiz.is_public === false || quiz.is_public === 'false') return false
   if (quiz.is_public === true || quiz.is_public === 'true') return true
-  
+
   // Cek di metadata (JSONB)
   if (quiz.metadata) {
     // Cek metadata.is_public
     if (quiz.metadata.is_public === false || quiz.metadata.is_public === 'false') return false
     if (quiz.metadata.is_public === true || quiz.metadata.is_public === 'true') return true
-    
+
     // Cek metadata.public
     if (quiz.metadata.public === false || quiz.metadata.public === 'false') return false
     if (quiz.metadata.public === true || quiz.metadata.public === 'true') return true
   }
-  
+
   // Default: jika tidak ada field is_public, anggap public (backward compatibility)
   return true
 }
@@ -96,7 +96,7 @@ export const quizApi = {
       if (!isSupabaseConfigured()) {
         const configStatus = getSupabaseConfigStatus()
         console.error('Supabase configuration error:', configStatus)
-        
+
         if (configStatus.isUsingPlaceholder) {
           throw new Error('Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file. See env.example.txt for instructions.')
         } else {
@@ -104,9 +104,9 @@ export const quizApi = {
         }
       }
 
-      console.log('Supabase URL:', supabaseUrl)
-      console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing')
-      
+
+
+
       // Fetch semua quiz, kemudian filter di client side untuk quiz public
       const { data, error } = await supabase
         .from('quizzes')
@@ -121,7 +121,7 @@ export const quizApi = {
       // Filter hanya quiz yang public
       const publicQuizzes = (data || []).filter(isQuizPublic)
 
-      console.log('Raw data from Supabase (filtered to public only):', publicQuizzes)
+
       return publicQuizzes
     } catch (err) {
       console.error('Error in getQuizzes:', err)
@@ -199,7 +199,7 @@ export const quizApi = {
 
     // Add the new question to the questions array
     const updatedQuestions = [...quiz.questions, question]
-    
+
     // Update metadata
     const updatedMetadata = {
       ...quiz.metadata,
@@ -207,7 +207,7 @@ export const quizApi = {
     }
 
     // Update the quiz
-    return this.updateQuiz(quizId, { 
+    return this.updateQuiz(quizId, {
       questions: updatedQuestions,
       metadata: updatedMetadata
     })
@@ -220,14 +220,14 @@ export const quizApi = {
 
     // Remove the question
     const updatedQuestions = quiz.questions.filter(q => q.id !== questionId)
-    
+
     // Update metadata
     const updatedMetadata = {
       ...quiz.metadata,
       total_points: updatedQuestions.reduce((sum, q) => sum + q.points, 0)
     }
 
-    return this.updateQuiz(quizId, { 
+    return this.updateQuiz(quizId, {
       questions: updatedQuestions,
       metadata: updatedMetadata
     })

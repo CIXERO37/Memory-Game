@@ -67,12 +67,7 @@ function JoinPageContent() {
               if (!selectedAvatar) {
                 setSelectedAvatar(sessionData.user_data.avatar || "")
               }
-              console.log('[Join] Existing session found:', {
-                playerId: sessionData.user_data.id,
-                nickname: sessionData.user_data.nickname,
-                avatar: sessionData.user_data.avatar,
-                roomCode: sessionData.room_code
-              })
+
               return
             }
           } catch (error) {
@@ -80,11 +75,11 @@ function JoinPageContent() {
             // Continue with fallback logic
           }
         }
-        
+
         // Generate new player ID if no valid session
         const newPlayerId = Math.random().toString(36).substr(2, 9)
         setPlayerId(newPlayerId)
-        console.log('[Join] Generated new player ID:', newPlayerId)
+
       } catch (error) {
         console.error("Error initializing session:", error)
         const newPlayerId = Math.random().toString(36).substr(2, 9)
@@ -97,44 +92,34 @@ function JoinPageContent() {
 
   // Prefill from authenticated user once available - HIGHEST PRIORITY
   useEffect(() => {
-    console.log('=== JOIN PAGE DEBUG ===')
-    console.log('Loading:', loading)
-    console.log('Is Authenticated:', isAuthenticated)
-    console.log('User Profile:', userProfile)
-  console.log('User Profile Nickname:', userProfile?.name || userProfile?.username)
-  console.log('User Profile Name:', userProfile?.name)
-    console.log('Avatar URL:', userProfile?.avatar_url)
-    console.log('User Changed Avatar:', userChangedAvatar)
-    console.log('User Changed Nickname:', userChangedNickname)
-    console.log('Current Nickname:', nickname)
-    console.log('========================')
-    
+
+
     if (!loading && isAuthenticated && userProfile) {
-  // Get nickname from Google - prioritize name field, then username
-  const authNickname = userProfile.name || userProfile.username || ""
-      
+      // Get nickname from Google - prioritize name field, then username
+      const authNickname = userProfile.name || userProfile.username || ""
+
       // If user is authenticated, ALWAYS use Google nickname unless user manually changed it
       if (authNickname) {
         if (!userChangedNickname) {
           // User hasn't manually changed nickname, so use Google nickname
           if (nickname !== authNickname) {
-            console.log('Setting nickname from Google auth:', authNickname)
+
             setNickname(authNickname)
           }
         } else {
           // User has manually changed nickname, but if current nickname is empty or from localStorage,
           // still prefer Google nickname
           if (!nickname || nickname.trim() === "") {
-            console.log('Nickname was changed but is empty, restoring from Google auth:', authNickname)
+
             setNickname(authNickname)
             setUserChangedNickname(false) // Reset flag since we're using Google nickname
           }
         }
       }
-      
+
       // If logged in and user hasn't manually changed avatar, prefer auth avatar
       if (userProfile.avatar_url && !userChangedAvatar) {
-        console.log('Setting selected avatar to:', userProfile.avatar_url)
+
         setSelectedAvatar(userProfile.avatar_url)
       }
     } else if (!loading && !isAuthenticated) {
@@ -142,7 +127,7 @@ function JoinPageContent() {
       if (typeof window !== 'undefined' && !nickname && !userChangedNickname) {
         const savedNickname = localStorage.getItem('lastNickname')
         if (savedNickname) {
-          console.log('Loading saved nickname from localStorage (not authenticated):', savedNickname)
+
           setNickname(savedNickname)
         }
       }
@@ -153,11 +138,11 @@ function JoinPageContent() {
   useEffect(() => {
     // If user becomes authenticated and nickname is empty or doesn't match Google nickname, update it
     if (!loading && isAuthenticated && userProfile && !userChangedNickname) {
-  const authNickname = userProfile.name || userProfile.username || ""
+      const authNickname = userProfile.name || userProfile.username || ""
       if (authNickname) {
         // If nickname is empty or different from Google nickname, update it
         if (!nickname || nickname.trim() === "" || nickname !== authNickname) {
-          console.log('Updating nickname to match Google auth:', authNickname)
+
           setNickname(authNickname)
         }
       }
@@ -169,19 +154,19 @@ function JoinPageContent() {
     if (!loading && !nickname.trim() && !userChangedNickname) {
       // Try to restore from auth first (highest priority)
       if (isAuthenticated && userProfile) {
-  const authNickname = userProfile.name || userProfile.username || ""
+        const authNickname = userProfile.name || userProfile.username || ""
         if (authNickname) {
-          console.log('Emergency restore from Google auth:', authNickname)
+
           setNickname(authNickname)
           return
         }
       }
-      
+
       // Fallback to localStorage only if not authenticated
       if (!isAuthenticated && typeof window !== 'undefined') {
         const savedNickname = localStorage.getItem('lastNickname')
         if (savedNickname) {
-          console.log('Emergency restore from localStorage (not authenticated):', savedNickname)
+
           setNickname(savedNickname)
         }
       }
@@ -258,37 +243,37 @@ function JoinPageContent() {
     setNicknameError("")
     setRoomCodeError("")
     setRoomError("")
-    
+
     // Check for validation errors
     let hasValidationError = false
-    
+
     if (!nickname.trim()) {
       setNicknameError("Nickname belum diisi")
       hasValidationError = true
     }
-    
+
     if (!roomCode.trim()) {
       setRoomCodeError("Room code belum diisi")
       hasValidationError = true
     }
-    
+
     // If there are validation errors, don't proceed
     if (hasValidationError) return
-    
+
     if (hasClickedJoin) return
 
     setHasClickedJoin(true)
     setIsJoining(true)
 
-    console.log("[Join] Attempting to join room:", roomCode)
+
 
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     const room = await roomManager.getRoom(roomCode)
-    console.log("[Join] Room found:", room)
+
 
     if (!room) {
-      console.log("[Join] Room not found for code:", roomCode)
+
       setRoomError("Room not found. Please check the room code.")
       setIsJoining(false)
       setHasClickedJoin(false)
@@ -303,21 +288,15 @@ function JoinPageContent() {
     }
 
     // Check if player already exists in room by nickname and avatar (not just playerId)
-    const existingPlayer = room.players.find((p: any) => 
+    const existingPlayer = room.players.find((p: any) =>
       p.nickname === nickname.trim() && p.avatar === selectedAvatar
     )
-    
-    console.log("[Join] Checking for existing player:", {
-      nickname: nickname.trim(),
-      avatar: selectedAvatar,
-      existingPlayer,
-      allPlayers: room.players.map(p => ({ nickname: p.nickname, avatar: p.avatar, id: p.id })),
-      currentPlayerId: playerId
-    })
-    
+
+
+
     // If player exists, update the playerId to match the existing player
     if (existingPlayer) {
-      console.log("[Join] Player exists, updating playerId from", playerId, "to", existingPlayer.id)
+
       setPlayerId(existingPlayer.id)
       // Also update the session with the correct player ID
       try {
@@ -333,21 +312,21 @@ function JoinPageContent() {
             },
             roomCode
           )
-          console.log("[Join] Updated existing session with correct player ID")
+
         }
       } catch (error) {
         console.warn("[Join] Error updating session with correct player ID:", error)
       }
     }
-    
+
     // Get user ID for joinRoom/rejoinRoom
     const { data: { user } } = await supabase.auth.getUser()
     const userId = user?.id
-    
+
     let success: boolean
     if (existingPlayer) {
       // Player exists, use rejoinRoom with existing player ID
-      console.log("[Join] Player exists, rejoining with ID:", existingPlayer.id)
+
       success = await roomManager.rejoinRoom(roomCode, {
         id: existingPlayer.id,
         nickname: nickname.trim(),
@@ -355,41 +334,31 @@ function JoinPageContent() {
       }, userId)
     } else {
       // New player, use joinRoom
-      console.log("[Join] New player, joining room")
+
       success = await roomManager.joinRoom(roomCode, {
         nickname: nickname.trim(),
         avatar: selectedAvatar,
       }, userId)
     }
 
-    console.log("[Join] Join/Rejoin result:", success)
+
 
     if (success) {
       // Get the actual player ID from the room
       const updatedRoom = await roomManager.getRoom(roomCode)
-      const actualPlayer = updatedRoom?.players.find((p: any) => 
+      const actualPlayer = updatedRoom?.players.find((p: any) =>
         p.nickname === nickname.trim() && p.avatar === selectedAvatar
       )
       const finalPlayerId = actualPlayer?.id || existingPlayer?.id || playerId
-      
-      console.log("[Join] Player successfully joined/rejoined:", {
-        finalPlayerId,
-        existingPlayerId: existingPlayer?.id,
-        actualPlayerId: actualPlayer?.id,
-        wasExistingPlayer: !!existingPlayer
-      })
-      
+
+
+
       // Store player info in Supabase session
       try {
-        console.log("[Join] Creating/updating session for player:", {
-          id: finalPlayerId,
-          nickname: nickname.trim(),
-          avatar: selectedAvatar,
-          roomCode
-        })
-        
+
+
         // Always create/update session with the correct player ID
-        console.log("[Join] Creating/updating session with final player ID:", finalPlayerId)
+
         const { sessionId } = await sessionManager.getOrCreateSession(
           'player',
           {
@@ -401,10 +370,10 @@ function JoinPageContent() {
           roomCode
         )
         const newSessionId = sessionId
-        
+
         setSessionId(newSessionId)
-        console.log("[Join] Session created/updated:", newSessionId)
-        
+
+
         // Also store in localStorage as backup
         if (typeof window !== 'undefined') {
           localStorage.setItem(
@@ -416,7 +385,7 @@ function JoinPageContent() {
               roomCode,
             }),
           )
-          console.log("[Join] Player data also stored in localStorage with final ID:", finalPlayerId)
+
         }
       } catch (error) {
         console.warn("[Join] Error creating session:", error)
@@ -431,26 +400,20 @@ function JoinPageContent() {
               roomCode,
             }),
           )
-          console.log("[Join] Fallback: Player data stored in localStorage only with final ID:", finalPlayerId)
+
         }
         // Still set session ID for consistency
         setSessionId(`fallback_${finalPlayerId}_${Date.now()}`)
       }
 
-      console.log("[Join] Successfully joined/rejoined, redirecting to waiting room")
-      console.log("[Join] Final player data:", {
-        id: finalPlayerId,
-        nickname: nickname.trim(),
-        avatar: selectedAvatar,
-        roomCode,
-        wasExistingPlayer: !!existingPlayer
-      })
-      
+
+
+
       // Add a small delay to ensure session is saved
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Redirect to waiting room route
-      console.log("[Join] Redirecting to waiting room:", `/waiting-room/${roomCode}`)
+
       router.push(`/waiting-room/${roomCode}`)
     } else {
       setRoomError("Failed to join room. Please try again.")
@@ -466,12 +429,12 @@ function JoinPageContent() {
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       {/* Floating Pixel Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <FloatingPixelElements />
       </div>
-      
+
       {/* Retro Scanlines */}
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
@@ -491,188 +454,188 @@ function JoinPageContent() {
         </div>
         {/* Header */}
         <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
-        <Link href="/">
-              <div className="relative pixel-button-container">
-                <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
-                <Button variant="outline" size="default" className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-11 min-w-11">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </div>
-            </Link>
-            {/* MemoryQuiz Logo to the right of ArrowLeft */}
-            <Image
-              src="/images/memoryquiz.webp"
-              alt="Memory Quiz Logo"
-              width={240}
-              height={72}
-              className="h-12 sm:h-16 md:h-20 w-auto"
-              priority
-            />
-         
+          <Link href="/">
+            <div className="relative pixel-button-container">
+              <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+              <Button variant="outline" size="default" className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 h-10 w-10 min-h-11 min-w-11">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </div>
+          </Link>
+          {/* MemoryQuiz Logo to the right of ArrowLeft */}
+          <Image
+            src="/images/memoryquiz.webp"
+            alt="Memory Quiz Logo"
+            width={240}
+            height={72}
+            className="h-12 sm:h-16 md:h-20 w-auto"
+            priority
+          />
+
         </div>
 
         <div className="max-w-md mx-auto">
-            <div className="relative pixel-card-container">
-              {/* Pixel Card Background */}
-              <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-card-shadow"></div>
-              <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-card-main">
-                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-                  {/* Pixel Header */}
-                  <div className="text-center space-y-2">
-                    <div className="inline-block bg-white rounded px-3 sm:px-4 py-1 sm:py-2 border-2 border-black transform -rotate-1 shadow-lg">
-                      <h2 className="text-lg sm:text-xl font-bold text-black pixel-font">JOIN ROOM</h2>
-                    </div>
-                   
+          <div className="relative pixel-card-container">
+            {/* Pixel Card Background */}
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-card-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-2 sm:border-4 border-black shadow-2xl pixel-card-main">
+              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                {/* Pixel Header */}
+                <div className="text-center space-y-2">
+                  <div className="inline-block bg-white rounded px-3 sm:px-4 py-1 sm:py-2 border-2 border-black transform -rotate-1 shadow-lg">
+                    <h2 className="text-lg sm:text-xl font-bold text-black pixel-font">JOIN ROOM</h2>
                   </div>
-                  {/* Pixel Input Fields */}
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="space-y-2">
-                      <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                        <Label htmlFor="nickname" className="text-black font-bold text-xs sm:text-sm">NICKNAME</Label>
-                      </div>
-                        <div className="relative">
-                          <Input
-                            id="nickname"
-                            placeholder="Enter your nickname"
-                            value={nickname}
-                            onChange={(e) => {
-                              setNickname(e.target.value)
-                              setUserChangedNickname(true)
-                              if (nicknameError) setNicknameError("")
-                            }}
-                            className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 h-12 sm:h-auto"
-                          />
-                        </div>
-                        {nicknameError && (
-                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-xs sm:text-sm text-white font-bold">{nicknameError}</p>
-                          </div>
-                        )}
+
+                </div>
+                {/* Pixel Input Fields */}
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
+                    <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                      <Label htmlFor="nickname" className="text-black font-bold text-xs sm:text-sm">NICKNAME</Label>
                     </div>
-
-                    {!roomCode && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                            <Label htmlFor="roomCode" className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
-                          </div>
-                          <Button
-                            type="button"
-                            onClick={() => setShowScanner(true)}
-                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-9"
-                          >
-                            <Camera className="h-4 w-4" />
-                            <span>SCAN</span>
-                          </Button>
-                        </div>
-                        <div className="relative">
-                          <Input
-                            id="roomCode"
-                            type="text"
-                            placeholder="Enter 6-digit"
-                            value={roomCode}
-                            onChange={(e) => {
-                              const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                              if (value.length <= 6) {
-                                setRoomCode(value);
-                              }
-                              if (roomCodeError) setRoomCodeError("")
-                            }}
-                            onPaste={handlePaste}
-                            maxLength={6}
-                            className="room-code-input h-12 sm:h-auto"
-                          />
-                        </div>
-                        
-                        {roomCodeError && (
-                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-xs sm:text-sm text-white font-bold">{roomCodeError}</p>
-                          </div>
-                        )}
-                        {roomError && (
-                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
-                          </div>
-                        )}
+                    <div className="relative">
+                      <Input
+                        id="nickname"
+                        placeholder="Enter your nickname"
+                        value={nickname}
+                        onChange={(e) => {
+                          setNickname(e.target.value)
+                          setUserChangedNickname(true)
+                          if (nicknameError) setNicknameError("")
+                        }}
+                        className="bg-white border-2 border-black rounded-none shadow-lg font-mono text-black placeholder:text-gray-500 focus:border-blue-600 h-12 sm:h-auto"
+                      />
+                    </div>
+                    {nicknameError && (
+                      <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                        <p className="text-xs sm:text-sm text-white font-bold">{nicknameError}</p>
                       </div>
                     )}
+                  </div>
 
-                    {roomCode && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                            <Label className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
-                          </div>
-                          <Button
-                            type="button"
-                            onClick={() => setShowScanner(true)}
-                            className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-9"
-                          >
-                            <Camera className="h-4 w-4" />
-                            <span>SCAN</span>
-                          </Button>
-                        </div>
-                        <div className="relative">
-                          <Input
-                            id="roomCodeFromUrl"
-                            type="text"
-                            placeholder="Enter 6-digit"
-                            value={roomCode}
-                            onChange={(e) => {
-                              const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                              if (value.length <= 6) {
-                                setRoomCode(value);
-                              }
-                              if (roomCodeError) setRoomCodeError("")
-                            }}
-                            onPaste={handlePaste}
-                            maxLength={6}
-                            className="room-code-input h-12 sm:h-auto"
-                          />
-                        </div>
-                        {roomCodeError && (
-                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-xs sm:text-sm text-white font-bold">{roomCodeError}</p>
-                          </div>
-                        )}
-                        {roomError && (
-                          <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
-                            <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Pixel Avatar Section */}
+                  {!roomCode && (
                     <div className="space-y-2">
-                      <div className="inline-block bg-white rounded px-2 py-1 border border-black">
-                        <Label className="text-black font-bold text-xs sm:text-sm">CHOOSE AVATAR</Label>
+                      <div className="flex items-center justify-between">
+                        <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                          <Label htmlFor="roomCode" className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => setShowScanner(true)}
+                          className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-9"
+                        >
+                          <Camera className="h-4 w-4" />
+                          <span>SCAN</span>
+                        </Button>
                       </div>
-                      <div className="bg-white border-2 border-black rounded p-2 sm:p-3">
-                        <AvatarSelector 
-                          selectedAvatar={selectedAvatar} 
-                          onAvatarSelect={(a) => { setSelectedAvatar(a); setUserChangedAvatar(true) }}
-                          onFirstAvatarChange={handleFirstAvatarChange}
-                          externalAvatar={isAuthenticated && userProfile?.avatar_url ? userProfile.avatar_url : undefined}
+                      <div className="relative">
+                        <Input
+                          id="roomCode"
+                          type="text"
+                          placeholder="Enter 6-digit"
+                          value={roomCode}
+                          onChange={(e) => {
+                            const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                            if (value.length <= 6) {
+                              setRoomCode(value);
+                            }
+                            if (roomCodeError) setRoomCodeError("")
+                          }}
+                          onPaste={handlePaste}
+                          maxLength={6}
+                          className="room-code-input h-12 sm:h-auto"
                         />
                       </div>
-                    </div>
 
-                    {/* Pixel Button */}
-                    <div className="pt-3 sm:pt-4">
-                      <Button
-                        className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-base sm:text-lg py-3 sm:py-3 transform hover:scale-105 transition-all duration-200 min-h-11"
-                        onClick={handleJoinRoom}
-                        disabled={isJoining || hasClickedJoin}
-                      >
-                        {isJoining ? "JOINING..." : hasClickedJoin ? "PROCESSING..." : "JOIN ROOM"}
-                      </Button>
+                      {roomCodeError && (
+                        <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                          <p className="text-xs sm:text-sm text-white font-bold">{roomCodeError}</p>
+                        </div>
+                      )}
+                      {roomError && (
+                        <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                          <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
+                        </div>
+                      )}
                     </div>
+                  )}
+
+                  {roomCode && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                          <Label className="text-black font-bold text-xs sm:text-sm">ROOM CODE</Label>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => setShowScanner(true)}
+                          className="flex items-center gap-2 bg-white hover:bg-gray-100 border-2 border-black rounded px-3 py-1 text-black font-bold text-xs sm:text-sm transform hover:scale-105 transition-all duration-200 min-h-9"
+                        >
+                          <Camera className="h-4 w-4" />
+                          <span>SCAN</span>
+                        </Button>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="roomCodeFromUrl"
+                          type="text"
+                          placeholder="Enter 6-digit"
+                          value={roomCode}
+                          onChange={(e) => {
+                            const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                            if (value.length <= 6) {
+                              setRoomCode(value);
+                            }
+                            if (roomCodeError) setRoomCodeError("")
+                          }}
+                          onPaste={handlePaste}
+                          maxLength={6}
+                          className="room-code-input h-12 sm:h-auto"
+                        />
+                      </div>
+                      {roomCodeError && (
+                        <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                          <p className="text-xs sm:text-sm text-white font-bold">{roomCodeError}</p>
+                        </div>
+                      )}
+                      {roomError && (
+                        <div className="bg-red-500 border-2 border-black rounded px-3 py-2">
+                          <p className="text-xs sm:text-sm text-white font-bold">{roomError}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Pixel Avatar Section */}
+                  <div className="space-y-2">
+                    <div className="inline-block bg-white rounded px-2 py-1 border border-black">
+                      <Label className="text-black font-bold text-xs sm:text-sm">CHOOSE AVATAR</Label>
+                    </div>
+                    <div className="bg-white border-2 border-black rounded p-2 sm:p-3">
+                      <AvatarSelector
+                        selectedAvatar={selectedAvatar}
+                        onAvatarSelect={(a) => { setSelectedAvatar(a); setUserChangedAvatar(true) }}
+                        onFirstAvatarChange={handleFirstAvatarChange}
+                        externalAvatar={isAuthenticated && userProfile?.avatar_url ? userProfile.avatar_url : undefined}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pixel Button */}
+                  <div className="pt-3 sm:pt-4">
+                    <Button
+                      className="w-full bg-green-500 hover:bg-green-600 border-2 border-black rounded-none shadow-lg font-bold text-black text-base sm:text-lg py-3 sm:py-3 transform hover:scale-105 transition-all duration-200 min-h-11"
+                      onClick={handleJoinRoom}
+                      disabled={isJoining || hasClickedJoin}
+                    >
+                      {isJoining ? "JOINING..." : hasClickedJoin ? "PROCESSING..." : "JOIN ROOM"}
+                    </Button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
       </div>
 
@@ -715,7 +678,7 @@ function FloatingPixelElements() {
           }}
         />
       ))}
-      
+
       {/* Floating Pixel Blocks */}
       <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-purple-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>

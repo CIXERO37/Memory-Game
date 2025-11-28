@@ -41,12 +41,7 @@ class FailedUpdatesManager {
         return false
       }
 
-      console.log('[FailedUpdatesManager] ✅ Stored failed update for retry:', {
-        roomCode,
-        playerId,
-        updateType,
-        updateData
-      })
+
 
       return true
     } catch (error) {
@@ -97,7 +92,7 @@ class FailedUpdatesManager {
       // Mark as processing
       await supabase
         .from('failed_updates')
-        .update({ 
+        .update({
           status: 'processing',
           last_attempt: new Date().toISOString()
         })
@@ -113,7 +108,7 @@ class FailedUpdatesManager {
           .update({ status: 'completed' })
           .eq('id', updateId)
 
-        console.log('[FailedUpdatesManager] ✅ Successfully retried update:', updateId)
+
         return true
       } else {
         // Increment attempts and mark as pending again
@@ -122,14 +117,14 @@ class FailedUpdatesManager {
 
         await supabase
           .from('failed_updates')
-          .update({ 
+          .update({
             attempts: newAttempts,
             status: newStatus,
             last_attempt: new Date().toISOString()
           })
           .eq('id', updateId)
 
-        console.log('[FailedUpdatesManager] ❌ Retry failed, attempts:', newAttempts, 'Status:', newStatus)
+
         return false
       }
     } catch (error) {
@@ -140,8 +135,8 @@ class FailedUpdatesManager {
 
   // Process all pending updates for a player
   async processPendingUpdates(
-    roomCode: string, 
-    playerId: string, 
+    roomCode: string,
+    playerId: string,
     retryFunctions: {
       score?: (data: any) => Promise<boolean>
       progress?: (data: any) => Promise<boolean>
@@ -168,7 +163,7 @@ class FailedUpdatesManager {
         }
       }
 
-      console.log('[FailedUpdatesManager] Processed updates:', { success: successCount, failed: failedCount })
+
       return { success: successCount, failed: failedCount }
     } catch (error) {
       console.error('[FailedUpdatesManager] Error in processPendingUpdates:', error)
@@ -193,7 +188,7 @@ class FailedUpdatesManager {
         return false
       }
 
-      console.log('[FailedUpdatesManager] ✅ Cleaned up old updates older than', daysOld, 'days')
+
       return true
     } catch (error) {
       console.error('[FailedUpdatesManager] Error in cleanupOldUpdates:', error)

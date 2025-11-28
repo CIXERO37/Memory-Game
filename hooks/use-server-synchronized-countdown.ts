@@ -40,7 +40,7 @@ export function useServerSynchronizedCountdown(
   const [isInDelayPeriod, setIsInDelayPeriod] = useState(false)
   const [lastKnownCountdown, setLastKnownCountdown] = useState<number>(0)
   const [fallbackStartTime, setFallbackStartTime] = useState<number>(0)
-  
+
   const animationRef = useRef<number>()
   const lastServerSyncRef = useRef<number>(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>()
@@ -55,11 +55,11 @@ export function useServerSynchronizedCountdown(
   const fetchCountdownState = useCallback(async (retryCount = 0): Promise<ServerCountdownResponse | null> => {
     try {
       const clientTimestamp = Date.now().toString()
-      
+
       // Add timeout for poor network conditions
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // Reduced timeout to 5 seconds
-      
+
       const response = await fetch(`/api/rooms/${roomCode}/countdown-state`, {
         method: 'GET',
         headers: {
@@ -69,7 +69,7 @@ export function useServerSynchronizedCountdown(
         },
         signal: controller.signal
       })
-      
+
       clearTimeout(timeoutId)
 
       if (!response.ok) {
@@ -77,44 +77,36 @@ export function useServerSynchronizedCountdown(
       }
 
       const data: ServerCountdownResponse = await response.json()
-      
+
       // Calculate server offset more accurately
       const responseTime = Date.now()
       const requestLatency = responseTime - parseInt(clientTimestamp)
       const estimatedServerTime = data.serverTime + (requestLatency / 2)
       setServerOffset(estimatedServerTime - responseTime)
-      
+
       // Log sync info for debugging
-      console.log('[ServerCountdown] Sync:', {
-        syncId: data.syncId,
-        serverTime: data.serverTime,
-        clientTime: responseTime,
-        offset: estimatedServerTime - responseTime,
-        requestLatency: requestLatency,
-        latencyCompensation: data.countdownState?.latencyCompensation,
-        remaining: data.countdownState?.remaining
-      })
-      
+
+
       setIsConnected(true)
       lastServerSyncRef.current = responseTime
-      
+
       // Store last known countdown for fallback
       if (data.countdownState) {
         setLastKnownCountdown(data.countdownState.remaining)
         setFallbackStartTime(responseTime)
       }
-      
+
       return data
     } catch (error) {
       console.error('[ServerCountdown] Error fetching countdown state:', error, 'retry:', retryCount)
-      
+
       // Retry mechanism for poor network conditions
       if (retryCount < 2) { // Reduced retry count
-        console.log('[ServerCountdown] Retrying in', (retryCount + 1) * 1000, 'ms')
+
         await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000))
         return fetchCountdownState(retryCount + 1)
       }
-      
+
       setIsConnected(false)
       return null
     }
@@ -141,7 +133,7 @@ export function useServerSynchronizedCountdown(
   // Update countdown based on server state
   const updateCountdown = useCallback(async () => {
     const serverData = await fetchCountdownState()
-    
+
     if (!serverData || !serverData.countdownState) {
       setIsActive(false)
       setCountdown(0)
@@ -149,34 +141,34 @@ export function useServerSynchronizedCountdown(
     }
 
     const { countdownState } = serverData
-    
+
     if (countdownState.isActive) {
       // Use server-calculated remaining time directly for better accuracy
       const newCountdown = countdownState.remaining
-      
+
       // Only update if the countdown value has actually changed to avoid unnecessary re-renders
       if (newCountdown !== countdown) {
         setCountdown(newCountdown)
-        console.log('[ServerCountdown] Countdown updated:', newCountdown, 'isInDelayPeriod:', countdownState.isInDelayPeriod)
+
       }
-      
+
       setIsActive(true)
       setIsInDelayPeriod(countdownState.isInDelayPeriod || false)
-      
+
       // Check if countdown is complete
       if (newCountdown <= 0) {
-        console.log('[ServerCountdown] Countdown completed, triggering callback')
+
         setIsActive(false)
         onCountdownComplete?.()
       }
     } else {
-      console.log('[ServerCountdown] Countdown not active, was:', countdown)
+
       setIsActive(false)
       setCountdown(0)
       setIsInDelayPeriod(false)
       // Trigger completion callback if countdown is not active but was active before
       if (countdown > 0) {
-        console.log('[ServerCountdown] Countdown ended, triggering callback')
+
         onCountdownComplete?.()
       }
     }
@@ -187,17 +179,17 @@ export function useServerSynchronizedCountdown(
     if (!isConnected && lastKnownCountdown > 0 && fallbackStartTime > 0) {
       const timeSinceFallback = Date.now() - fallbackStartTime
       const fallbackCountdown = Math.max(0, lastKnownCountdown - Math.floor(timeSinceFallback / 1000))
-      
-      console.log('[ServerCountdown] Using fallback countdown:', fallbackCountdown, 'original:', lastKnownCountdown)
-      
+
+
+
       // Only update if countdown has changed
       if (fallbackCountdown !== countdown) {
         setCountdown(fallbackCountdown)
       }
       setIsActive(fallbackCountdown > 0)
-      
+
       if (fallbackCountdown <= 0) {
-        console.log('[ServerCountdown] Fallback countdown completed')
+
         onCountdownComplete?.()
       }
     }
@@ -210,11 +202,11 @@ export function useServerSynchronizedCountdown(
     }
 
     reconnectTimeoutRef.current = setTimeout(async () => {
-      console.log('[ServerCountdown] Attempting reconnection...')
+
       const serverData = await fetchCountdownState()
-      
+
       if (serverData) {
-        console.log('[ServerCountdown] Reconnected successfully')
+
         await updateCountdown()
       } else {
         // Try again in 3 seconds (increased from 2 seconds)
@@ -232,13 +224,13 @@ export function useServerSynchronizedCountdown(
     // Set up periodic server sync with more consistent frequency
     const syncInterval = setInterval(() => {
       const now = Date.now()
-      
+
       // More consistent sync frequency for better synchronization
       let syncIntervalMs = 1000 // Default 1 second for stability
       if (countdown <= 5) {
         syncIntervalMs = 500 // More frequent when countdown is low
       }
-      
+
       // Sync based on time elapsed since last sync
       if (now - lastServerSyncRef.current > syncIntervalMs || !isConnected) {
         updateCountdown()

@@ -12,22 +12,56 @@ export function useQuizzes() {
     try {
       setLoading(true)
       setError(null)
-      console.log('Fetching quizzes from Supabase...')
-      
+
+
       const data = await quizApi.getQuizzes()
-      console.log('Quizzes fetched successfully:', data)
-      
+
+
       // If no quizzes from Supabase, use local quizzes as fallback
       if (data && data.length > 0) {
         setQuizzes(data)
       } else {
-        console.log('No quizzes from Supabase, using local quizzes as fallback')
-        setQuizzes(localQuizzes)
+
+        const transformedLocalQuizzes: Quiz[] = localQuizzes.map(q => ({
+          id: q.id,
+          title: q.title,
+          description: q.description,
+          category: q.category,
+          questions: q.questions.map(qt => ({
+            id: qt.id.toString(),
+            question: qt.question,
+            type: 'multiple_choice',
+            options: qt.options,
+            correct_answer: qt.options[qt.correct],
+            explanation: qt.explanation,
+            points: 10
+          })),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }))
+        setQuizzes(transformedLocalQuizzes)
       }
     } catch (err) {
       console.error('Error fetching quizzes:', err)
-      console.log('Using local quizzes as fallback due to error')
-      setQuizzes(localQuizzes)
+
+      const transformedLocalQuizzes: Quiz[] = localQuizzes.map(q => ({
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        category: q.category,
+        questions: q.questions.map(qt => ({
+          id: qt.id.toString(),
+          question: qt.question,
+          type: 'multiple_choice',
+          options: qt.options,
+          correct_answer: qt.options[qt.correct],
+          explanation: qt.explanation,
+          points: 10
+        })),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }))
+      setQuizzes(transformedLocalQuizzes)
       setError(null) // Don't show error if we have local fallback
     } finally {
       setLoading(false)
@@ -132,7 +166,7 @@ export function transformQuizData(quiz: any): any {
   try {
     // Map quiz titles to appropriate categories if category is not set
     let category = quiz.category || 'General'
-    
+
     if (!quiz.category) {
       const title = quiz.title?.toLowerCase() || ''
       if (title.includes('math') || title.includes('mathematics')) {

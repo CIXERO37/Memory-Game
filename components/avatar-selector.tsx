@@ -6,9 +6,9 @@ import Image from "next/image"
 import { RobustGoogleAvatar } from "./robust-google-avatar"
 
 const allAvatars = [
-  "/ava1.webp", "/ava2.webp", "/ava3.webp", "/ava4.webp", 
-  "/ava5.webp", "/ava6.webp", "/ava7.webp", "/ava8.webp", 
-  "/ava9.webp", "/ava10.webp", "/ava11.webp", "/ava12.webp", 
+  "/ava1.webp", "/ava2.webp", "/ava3.webp", "/ava4.webp",
+  "/ava5.webp", "/ava6.webp", "/ava7.webp", "/ava8.webp",
+  "/ava9.webp", "/ava10.webp", "/ava11.webp", "/ava12.webp",
   "/ava13.webp", "/ava14.webp", "/ava15.webp", "/ava16.webp"
 ]
 
@@ -23,24 +23,19 @@ export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarCh
   // Simpan urutan avatar dalam state agar tidak berubah saat re-render
   const [avatars, setAvatars] = React.useState<string[]>([])
   const [isInitialized, setIsInitialized] = React.useState(false)
-  
+
   // Debug logging
   React.useEffect(() => {
-    console.log('=== AVATAR SELECTOR DEBUG ===')
-    console.log('External Avatar:', externalAvatar)
-    console.log('Selected Avatar:', selectedAvatar)
-    console.log('Is External Avatar Valid:', externalAvatar && externalAvatar.length > 0)
-    console.log('Is Initialized:', isInitialized)
-    console.log('============================')
+
   }, [externalAvatar, selectedAvatar, isInitialized])
-  
+
   // Initialize avatars hanya sekali saat mount - tidak berubah lagi
   React.useEffect(() => {
     if (isInitialized) return // Prevent re-initialization
-    
+
     // Buat urutan avatar yang tetap konsisten
     let initialAvatars: string[] = []
-    
+
     if (externalAvatar && externalAvatar.length > 0) {
       // Jika ada external avatar, letakkan di depan
       initialAvatars = [externalAvatar, ...allAvatars]
@@ -48,10 +43,10 @@ export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarCh
       // Jika tidak ada external avatar, gunakan urutan default
       initialAvatars = [...allAvatars]
     }
-    
+
     setAvatars(initialAvatars)
     setIsInitialized(true)
-    
+
     // Notify parent about the initial avatar
     if (onFirstAvatarChange) {
       const initialAvatar = initialAvatars[0]
@@ -62,19 +57,19 @@ export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarCh
   // Handle external avatar yang datang setelah mount tanpa mengubah urutan
   React.useEffect(() => {
     if (!isInitialized || !externalAvatar || externalAvatar.length === 0) return
-    
+
     // Jika external avatar belum ada di list, tambahkan di depan tanpa mengubah urutan yang ada
     setAvatars(prev => {
       if (prev.includes(externalAvatar)) return prev
       return [externalAvatar, ...prev]
     })
-    
+
     // Jika belum ada avatar yang dipilih, pilih external avatar
     if (!selectedAvatar || selectedAvatar.length === 0) {
       onAvatarSelect(externalAvatar)
     }
   }, [externalAvatar, selectedAvatar, onAvatarSelect, isInitialized])
-  
+
   return (
     <div className="relative avatar-selector">
       {/* Scrollable container with fixed height for 2 rows */}
@@ -89,7 +84,7 @@ export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarCh
                   relative w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 sm:border-4 transition-all duration-200 hover:scale-110
                   min-h-[44px] min-w-[44px]
                   ${isSelected
-                    ? 'border-cyan-400 shadow-lg shadow-cyan-400/50 scale-110' 
+                    ? 'border-cyan-400 shadow-lg shadow-cyan-400/50 scale-110'
                     : 'border-gray-300 hover:border-gray-400'
                   }
                 `}
@@ -122,8 +117,7 @@ export function AvatarSelector({ selectedAvatar, onAvatarSelect, onFirstAvatarCh
           })}
         </div>
       </div>
-      
+
     </div>
   )
 }
-  

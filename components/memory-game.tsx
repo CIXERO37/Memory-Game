@@ -79,13 +79,13 @@ export function MemoryGame({ onCorrectMatch, disabled = false }: MemoryGameProps
 
       if (firstCard && secondCard && firstCard.image.name === secondCard.image.name) {
         // Match found
-        console.log("[MemoryGame] Match found:", firstCard.image.name)
+
         setTimeout(() => {
           setCards((prev) => prev.map((c) => (c.id === firstId || c.id === secondId ? { ...c, isMatched: true } : c)))
           setFlippedCards([])
-          console.log("[MemoryGame] Calling onCorrectMatch callback")
+
           onCorrectMatch()
-          
+
           // Setelah 1.5 detik, mulai animasi hide kartu yang sudah matched
           setTimeout(() => {
             setCards((prev) => prev.map((c) => (c.id === firstId || c.id === secondId ? { ...c, isHidden: true } : c)))

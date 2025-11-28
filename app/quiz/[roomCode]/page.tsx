@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -87,7 +87,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   // CRITICAL: Reset initialization flag on room change
   useEffect(() => {
     questionsInitialized.current = false
-    console.log("[Quiz] Reset questionsInitialized flag for new room")
+
   }, [params.roomCode])
 
   // Load player data from session manager
@@ -100,7 +100,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           if (sessionData && sessionData.user_type === 'player') {
             setPlayerId(sessionData.user_data.id)
             setPlayerData(sessionData.user_data)
-            console.log("[Quiz] ✅ Loaded player data from session:", sessionData.user_data)
+
           }
         }
 
@@ -111,7 +111,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             const playerInfo = JSON.parse(player)
             setPlayerId(playerInfo.id)
             setPlayerData(playerInfo)
-            console.log("[Quiz] ✅ Loaded player data from localStorage fallback:", playerInfo)
+
           }
         }
       } catch (error) {
@@ -123,12 +123,12 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   }, [])
 
   // Handle timer expiration
-  const handleTimeUp = async () => {
+  const handleTimeUp = useCallback(async () => {
     if (timeUpHandled || redirecting) return
     setTimeUpHandled(true)
     setRedirecting(true)
 
-    console.log("[Quiz] ⏰ Timer expired! Ending game automatically...")
+
 
     try {
       await roomManager.updateGameStatus(params.roomCode, "finished")
@@ -142,7 +142,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
             roomCode: params.roomCode,
             timestamp: Date.now()
           })
-          console.log("[Quiz] 📡 Broadcasted game end event to players")
+
         }
       } finally {
         if (broadcastChannel) {
@@ -163,7 +163,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         window.location.href = `/host/leaderboad?roomCode=${params.roomCode}`
       }
     }
-  }
+  }, [timeUpHandled, redirecting, params.roomCode, isHost])
 
   const timerState = useSynchronizedTimer(room, undefined, handleTimeUp)
 
@@ -195,10 +195,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       if (currentPlayer && !questionsAnsweredInitialized) {
         const dbQuestionsAnswered = currentPlayer.questionsAnswered || 0
         const dbQuizScore = currentPlayer.quizScore || 0
-        console.log("[Quiz] 🔄 Initial sync from database:", {
-          questionsAnswered: dbQuestionsAnswered,
-          quizScore: dbQuizScore
-        })
+
         setQuestionsAnswered(dbQuestionsAnswered)
         setScore(dbQuizScore)
         // FIX: Pastikan currentQuestion tidak pernah negatif
@@ -206,7 +203,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         setQuestionsAnsweredInitialized(true)
       }
 
-      console.log("[Quiz] ✅ Host detection:", { playerId, hostStatus, isHostDetected: true })
+
     }
   }, [room, playerId, questionsInitialized, questionsAnsweredInitialized, questions.length])
 
@@ -220,11 +217,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
         // Sync jika nilai database berbeda dengan local
         if (dbQuestionsAnswered !== questionsAnswered || dbQuizScore !== score) {
-          console.log("[Quiz] 🔄 REAL-TIME SYNC:", {
-            questionsAnswered: { old: questionsAnswered, new: dbQuestionsAnswered },
-            quizScore: { old: score, new: dbQuizScore },
-            timestamp: new Date().toISOString()
-          })
+
 
           if (dbQuestionsAnswered > questionsAnswered) {
             setQuestionsAnswered(dbQuestionsAnswered)
@@ -243,7 +236,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   // CRITICAL: Sync currentQuestion when questions are loaded
   useEffect(() => {
     if (questions.length > 0 && currentQuestion === -1) {
-      console.log("[Quiz] 🔄 Syncing currentQuestion after questions loaded:", questionsAnswered)
+
       setCurrentQuestion(Math.min(questionsAnswered, questions.length - 1))
     }
   }, [questions.length, questionsAnswered, currentQuestion])
@@ -251,7 +244,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   // Monitor room status for game end
   useEffect(() => {
     if (room && room.status === "finished" && !isHost) {
-      console.log("[Quiz] 🎮 Game finished, redirecting to result page...")
+
       window.location.href = `/result?roomCode=${params.roomCode}`
     }
   }, [room?.status, isHost, params.roomCode])
@@ -265,7 +258,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
       broadcastChannel.onmessage = (event) => {
         if (event.data.type === 'game-ended') {
-          console.log("[Quiz] 📡 Game end broadcast received - redirecting...")
+
           broadcastChannel.close()
           window.location.href = `/result?roomCode=${params.roomCode}`
         }
@@ -280,24 +273,24 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   // CRITICAL: Initialize quiz questions - FIX infinite loading
   useEffect(() => {
     if (!loading && (!room || !room.gameStarted)) {
-      console.log("[Quiz] ❌ Room not ready or game not started, redirecting to home...")
+
       window.location.href = "/"
       return
     }
 
     if (!room || loading) {
-      console.log("[Quiz] ⏳ Waiting for room data... Room:", !!room, "Loading:", loading)
+
       return
     }
 
     // Cek apakah soal sudah diinisialisasi sebelumnya menggunakan useRef
     if (questionsInitialized.current) {
-      console.log("[Quiz] ⚠️ Questions already initialized, skipping...")
+
       return
     }
 
     const initQuestions = async () => {
-      console.log("[Quiz] ✅ Starting question initialization...")
+
       questionsInitialized.current = true
 
       // FIX: Use room.quizId as primary source, fallback to searchParams or default
@@ -305,151 +298,144 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       const questionCount = room.settings.questionCount
       const timeLimit = room.settings.totalTimeLimit
 
-      console.log("[Quiz] 📋 Quiz config - ID:", quizId, "Count:", questionCount, "Time:", timeLimit)
+
 
       // Try to get from local data first
       const localQuiz = getQuizById(quizId)
       let quizQuestions: Question[] = []
       let title = ""
 
-      if (localQuiz) {
-        console.log("[Quiz] 📚 Local quiz data loaded:", localQuiz.title)
+      // Helper to map raw questions to local format
+      const mapQuestions = (rawQuestions: any[]) => {
+        // Collect all potential answers for distractors (Pass 1)
+        const allPotentialAnswers = new Set<string>()
+        rawQuestions.forEach((q: any) => {
+          const ans = q.correct_answer || q.correct || q.answer
+          if (ans) allPotentialAnswers.add(String(ans))
+
+          const opts = q.options || q.choices || q.answers
+          if (Array.isArray(opts)) {
+            opts.forEach((o: any) => {
+              if (typeof o === 'object' && o !== null) {
+                const val = o.answer || o.text || o.value || o.label
+                if (val) allPotentialAnswers.add(String(val))
+              } else {
+                allPotentialAnswers.add(String(o))
+              }
+            })
+          }
+        })
+        const distractorPool = Array.from(allPotentialAnswers)
+
+        return rawQuestions.map((q: any, index) => {
+          // 1. Robust Option Extraction
+          let rawOptions = q.options || q.choices || q.answers || []
+          let options: string[] = []
+
+          if (Array.isArray(rawOptions)) {
+            options = rawOptions.map((opt: any) => {
+              if (typeof opt === 'object' && opt !== null) {
+                return String(opt.answer || opt.text || opt.value || opt.label || "")
+              }
+              return String(opt)
+            }).filter(opt => opt !== "")
+          }
+
+          // Handle True/False without explicit options
+          if (options.length === 0 && (q.type === 'true_false' || q.question.toLowerCase().includes('true') || q.question.toLowerCase().includes('false'))) {
+            options = ["True", "False"]
+          }
+
+          // 2. Robust Correct Answer Extraction
+          const rawCorrectAnswer = q.correct_answer || q.correct || q.answer
+          let correctIndex = -1
+
+          if (rawCorrectAnswer !== undefined && rawCorrectAnswer !== null) {
+            const correctStr = String(rawCorrectAnswer).trim()
+            correctIndex = options.findIndex(opt => opt.trim() === correctStr)
+            if (correctIndex === -1) {
+              correctIndex = options.findIndex(opt => opt.toLowerCase().trim() === correctStr.toLowerCase())
+            }
+            if (correctIndex === -1 && !isNaN(Number(rawCorrectAnswer))) {
+              const idx = Number(rawCorrectAnswer)
+              if (idx >= 0 && idx < options.length) {
+                correctIndex = idx
+              }
+            }
+            if (correctIndex === -1) {
+              options.push(correctStr)
+              correctIndex = options.length - 1
+            }
+          } else {
+            if (options.length > 0) correctIndex = 0
+          }
+
+          // 4. Fill missing options from Distractor Pool
+          if (options.length < 4 && distractorPool.length > 0) {
+            let attempts = 0
+            while (options.length < 4 && attempts < 50) {
+              const randomDistractor = distractorPool[Math.floor(Math.random() * distractorPool.length)]
+              if (randomDistractor && !options.includes(randomDistractor)) {
+                options.push(randomDistractor)
+              }
+              attempts++
+            }
+          }
+
+          // 4b. Numeric Distractor Generation
+          if (options.length < 4 && rawCorrectAnswer && !isNaN(Number(rawCorrectAnswer))) {
+            const num = Number(rawCorrectAnswer)
+            const offsets = [-1, 1, -2, 2, -3, 3]
+            for (const offset of offsets) {
+              if (options.length >= 4) break
+              const dist = String(num + offset)
+              if (!options.includes(dist)) options.push(dist)
+            }
+          }
+
+          // 5. Final Fallback
+          if (options.length === 0) {
+            console.warn(`[Quiz] ⚠️ Question ${index + 1} has NO options. Adding placeholders.`)
+            options = ["Option A", "Option B", "Option C", "Option D"]
+            correctIndex = 0
+          }
+
+          return {
+            id: index + 1,
+            question: q.question,
+            options: options,
+            correct: correctIndex,
+            explanation: q.explanation
+          }
+        })
+      }
+
+      // 1. Check if room has pre-generated questions (Priority)
+      if (room.questions && room.questions.length > 0) {
+        console.log("[Quiz] Using pre-generated questions from room session")
+        quizQuestions = mapQuestions(room.questions)
+        title = room.quizTitle || "Quiz"
+      }
+      // 2. Fallback to local data
+      else if (localQuiz) {
         const countToFetch = questionCount === 0 ? localQuiz.questions.length : questionCount
         quizQuestions = getRandomQuestions(localQuiz, countToFetch)
         title = localQuiz.title
-      } else {
-        console.log("[Quiz] 🔍 Local quiz not found, trying Supabase...")
+      }
+      // 3. Fallback to fetching from Supabase
+      else {
         try {
           const supabaseQuiz = await quizApi.getQuizById(quizId)
           if (supabaseQuiz) {
-            console.log("[Quiz] 📚 Supabase quiz data loaded:", supabaseQuiz.title)
             title = supabaseQuiz.title
+            const mappedQuestions = mapQuestions(supabaseQuiz.questions)
 
-            // Collect all potential answers for distractors (Pass 1)
-            const allPotentialAnswers = new Set<string>()
-            supabaseQuiz.questions.forEach((q: any) => {
-              const ans = q.correct_answer || q.correct || q.answer
-              if (ans) allPotentialAnswers.add(String(ans))
-
-              const opts = q.options || q.choices || q.answers
-              if (Array.isArray(opts)) {
-                opts.forEach((o: any) => {
-                  if (typeof o === 'object' && o !== null) {
-                    // Handle object structure like { answer: "..." }
-                    const val = o.answer || o.text || o.value || o.label
-                    if (val) allPotentialAnswers.add(String(val))
-                  } else {
-                    allPotentialAnswers.add(String(o))
-                  }
-                })
-              }
-            })
-            const distractorPool = Array.from(allPotentialAnswers)
-
-            // Map Supabase questions to local format
-            const mappedQuestions: Question[] = supabaseQuiz.questions.map((q: any, index) => {
-              // 1. Robust Option Extraction
-              let rawOptions = q.options || q.choices || q.answers || []
-              let options: string[] = []
-
-              if (Array.isArray(rawOptions)) {
-                options = rawOptions.map((opt: any) => {
-                  if (typeof opt === 'object' && opt !== null) {
-                    // Handle { id: "0", answer: "13" } format from Supabase JSONB
-                    return String(opt.answer || opt.text || opt.value || opt.label || "")
-                  }
-                  return String(opt)
-                }).filter(opt => opt !== "")
-              }
-
-              // Handle True/False without explicit options
-              if (options.length === 0 && (q.type === 'true_false' || q.question.toLowerCase().includes('true') || q.question.toLowerCase().includes('false'))) {
-                options = ["True", "False"]
-              }
-
-              // 2. Robust Correct Answer Extraction
-              // The correct_answer field might be the answer text itself (e.g. "13") or an index
-              const rawCorrectAnswer = q.correct_answer || q.correct || q.answer
-
-              // 3. Ensure Correct Answer is in options
-              let correctIndex = -1
-
-              if (rawCorrectAnswer !== undefined && rawCorrectAnswer !== null) {
-                const correctStr = String(rawCorrectAnswer).trim()
-
-                // First, try to find matching option text
-                correctIndex = options.findIndex(opt => opt.trim() === correctStr)
-
-                // If not found, try case-insensitive
-                if (correctIndex === -1) {
-                  correctIndex = options.findIndex(opt => opt.toLowerCase().trim() === correctStr.toLowerCase())
-                }
-
-                // If still not found, check if rawCorrectAnswer is actually a valid index (0-3)
-                // BUT only if it looks like a number and is within range
-                if (correctIndex === -1 && !isNaN(Number(rawCorrectAnswer))) {
-                  const idx = Number(rawCorrectAnswer)
-                  if (idx >= 0 && idx < options.length) {
-                    correctIndex = idx
-                  }
-                }
-
-                // If STILL not found, add it as a new option
-                if (correctIndex === -1) {
-                  options.push(correctStr)
-                  correctIndex = options.length - 1
-                }
-              } else {
-                // No correct answer specified? Default to 0 if options exist
-                if (options.length > 0) correctIndex = 0
-              }
-
-              // 4. Fill missing options from Distractor Pool
-              if (options.length < 4 && distractorPool.length > 0) {
-                let attempts = 0
-                while (options.length < 4 && attempts < 50) {
-                  const randomDistractor = distractorPool[Math.floor(Math.random() * distractorPool.length)]
-                  if (randomDistractor && !options.includes(randomDistractor)) {
-                    options.push(randomDistractor)
-                  }
-                  attempts++
-                }
-              }
-
-              // 4b. Numeric Distractor Generation (if pool failed or empty)
-              if (options.length < 4 && rawCorrectAnswer && !isNaN(Number(rawCorrectAnswer))) {
-                const num = Number(rawCorrectAnswer)
-                const offsets = [-1, 1, -2, 2, -3, 3]
-                for (const offset of offsets) {
-                  if (options.length >= 4) break
-                  const dist = String(num + offset)
-                  if (!options.includes(dist)) options.push(dist)
-                }
-              }
-
-              // 5. FINAL FALLBACK: If options are STILL empty, add placeholders
-              if (options.length === 0) {
-                console.warn(`[Quiz] ⚠️ Question ${index + 1} has NO options and NO correct answer. Adding placeholders.`)
-                options = ["Option A", "Option B", "Option C", "Option D"]
-                correctIndex = 0
-              }
-
-              return {
-                id: index + 1,
-                question: q.question,
-                options: options,
-                correct: correctIndex,
-                explanation: q.explanation
-              }
-            })
-
-            // Shuffle and limit
+            // Shuffle and limit (since we fetched raw quiz, not session questions)
             const shuffled = [...mappedQuestions].sort(() => Math.random() - 0.5)
             const countToFetch = questionCount === 0 ? shuffled.length : questionCount
             quizQuestions = shuffled.slice(0, countToFetch)
           } else {
             console.error("[Quiz] ❌ Quiz not found in Supabase either:", quizId)
-            // Fallback to math-basic if everything fails
             const fallbackQuiz = getQuizById("math-basic")
             if (fallbackQuiz) {
               const countToFetch = questionCount === 0 ? fallbackQuiz.questions.length : questionCount
@@ -459,7 +445,6 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           }
         } catch (err) {
           console.error("[Quiz] ❌ Error fetching from Supabase:", err)
-          // Fallback
           const fallbackQuiz = getQuizById("math-basic")
           if (fallbackQuiz) {
             const countToFetch = questionCount === 0 ? fallbackQuiz.questions.length : questionCount
@@ -473,7 +458,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setGameStarted(true)
 
       if (quizQuestions.length > 0) {
-        console.log("[Quiz] 🎯 Selected questions:", quizQuestions.length, "questions")
+
 
         setQuestions(quizQuestions)
         setQuizTitle(title)
@@ -485,7 +470,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           const shuffled = shuffleArrayWithIndices(question.options)
           shuffledOptionsMap[index] = shuffled
         })
-        console.log("[Quiz] 🔀 Shuffled options for", Object.keys(shuffledOptionsMap).length, "questions")
+
         setShuffledOptions(shuffledOptionsMap)
       } else {
         console.error("[Quiz] ❌ Failed to load any questions")
@@ -502,7 +487,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     const timeout = setTimeout(() => {
       if (questions.length === 0 && gameStarted && !loading) {
         console.error("[Quiz] ⏰ Quiz loading timeout - questions still empty after", QUIZ_LOAD_TIMEOUT, "ms")
-        console.log("[Quiz] 📊 Current state - questions:", questions.length, "gameStarted:", gameStarted, "loading:", loading)
+
         // Force set questions to empty array to break loading state
         setQuestions([])
         setShuffledOptions({})
@@ -517,7 +502,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     const checkMemoryGameReturn = async () => {
       const memoryReturn = localStorage.getItem(`memory-return-${params.roomCode}`)
       if (memoryReturn) {
-        console.log("[Quiz] 🎮 Memory game return detected:", memoryReturn)
+
         const data = JSON.parse(memoryReturn)
 
         // Restore progress data from Supabase
@@ -525,7 +510,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           const progressData = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
           if (progressData && progressData.game_progress) {
             const progress = progressData.game_progress
-            console.log("[Quiz] 📥 Restoring progress data from Supabase:", progress)
+
             setCurrentQuestion(progress.current_question || data.resumeQuestion || currentQuestion)
             setScore(progress.quiz_score || 0)
             setCorrectAnswers(progress.correct_answers || 0)
@@ -538,14 +523,14 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         }
 
         localStorage.removeItem(`memory-return-${params.roomCode}`)
-        console.log("[Quiz] ✅ Memory game return processed")
+
 
         // Check if player has completed all questions after memory game
         const totalQuestions = room?.settings.questionCount || 10
         const currentQuestionsAnswered = questionsAnswered || 0
 
         if (currentQuestionsAnswered >= totalQuestions) {
-          console.log("[Quiz] 🎯 Player completed all questions after memory game, ending game...")
+
 
           if (redirecting) return
           setRedirecting(true)
@@ -609,14 +594,14 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     const newQuestionsAnswered = questionsAnswered + 1
     setQuestionsAnswered(newQuestionsAnswered)
 
-    console.log("[Quiz] ✅ ANSWER CHECKED - Correct:", isCorrect, "Score:", newScore, "Questions Answered:", newQuestionsAnswered)
+
 
     // Check for memory game trigger
     if (isCorrect && newCorrectAnswers > 0 && newCorrectAnswers % 3 === 0 && currentQuestion < questions.length - 1) {
-      console.log("[Quiz] 🎯 MEMORY GAME TRIGGER - Player has answered", newCorrectAnswers, "correct questions")
+
 
       if (playerId) {
-        console.log("[Quiz] 🎯 Updating final scores before memory redirect")
+
         await roomManager.updatePlayerScore(params.roomCode, playerId, newScore, newQuestionsAnswered)
       }
 
@@ -632,13 +617,13 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       if (playerId) {
         try {
           await supabaseRoomManager.updateGameProgress(params.roomCode, playerId, progressData)
-          console.log("[Quiz] ✅ Progress saved to Supabase before memory game")
+
         } catch (error) {
           console.error("[Quiz] ❌ Error saving progress to Supabase:", error)
         }
       }
 
-      console.log("[Quiz] 🚀 Redirecting to memory challenge in 2 seconds...")
+
       setTimeout(() => {
         window.location.href = `/game/${params.roomCode}/memory-challenge`
       }, 2000)
@@ -652,14 +637,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         questionsAnswered: newQuestionsAnswered
       }
 
-      console.log("[Quiz] 📊 PROGRESS UPDATE:", {
-        playerId,
-        currentQuestion: currentQuestion + 1,
-        ...updateData,
-        isCorrect,
-        isLastQuestion: currentQuestion >= questions.length - 1,
-        timestamp: new Date().toISOString()
-      })
+
 
       // Retry mechanism dengan await
       const attemptUpdate = async (attempt = 1, maxAttempts = 5) => {
@@ -672,7 +650,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           )
 
           if (success) {
-            console.log(`[Quiz] ✅ Progress updated successfully (attempt ${attempt})`)
+
 
             // Broadcast untuk sync instan
             let broadcastChannel: BroadcastChannel | null = null
@@ -685,7 +663,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
                   updateData,
                   timestamp: Date.now()
                 })
-                console.log("[Quiz] 📡 Broadcasted progress update")
+
               }
             } finally {
               if (broadcastChannel) {
@@ -695,7 +673,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
             // Jika soal terakhir, tunggu sebentar sebelum lanjut
             if (currentQuestion >= questions.length - 1) {
-              console.log("[Quiz] 🎯 Last question answered, waiting for sync...")
+
               await new Promise(resolve => setTimeout(resolve, 1000))
             }
 
@@ -708,7 +686,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
           if (attempt < maxAttempts) {
             const delay = Math.pow(2, attempt) * 500
-            console.log(`[Quiz] 🔄 Retrying in ${delay}ms...`)
+
             await new Promise(resolve => setTimeout(resolve, delay))
             return attemptUpdate(attempt + 1, maxAttempts)
           } else {
@@ -749,14 +727,14 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setRedirecting(true)
       setGameFinished(true)
 
-      console.log("[Quiz] 🎉 Quiz completed! Starting robust final sync...")
+
 
       try {
         if (playerId) {
           // 🚀 IMPROVED: Multiple verification attempts for final update
           const finalUpdate = async (attempt = 1, maxAttempts = 3) => {
             try {
-              console.log(`[Quiz] 🔄 Final update attempt ${attempt}/${maxAttempts}...`)
+
 
               const success = await roomManager.updatePlayerScore(
                 params.roomCode,
@@ -766,17 +744,17 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
               )
 
               if (success) {
-                console.log(`[Quiz] ✅ Final update successful (attempt ${attempt})`)
+
 
                 // 🚀 CRITICAL: Verify the update was actually applied
                 const verifyRoom = await roomManager.getRoom(params.roomCode)
                 const currentPlayer = verifyRoom?.players.find(p => p.id === playerId)
 
                 if (currentPlayer && (currentPlayer.questionsAnswered || 0) >= questionsAnswered) {
-                  console.log(`[Quiz] ✅ VERIFICATION PASSED - questionsAnswered: ${currentPlayer.questionsAnswered}`)
+
                   return true
                 } else {
-                  console.log(`[Quiz] ⚠️ VERIFICATION FAILED - expected >= ${questionsAnswered}, got ${currentPlayer?.questionsAnswered || 0}`)
+
                   throw new Error(`Verification failed on attempt ${attempt}`)
                 }
               }
@@ -785,7 +763,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
               console.error(`[Quiz] ❌ Final update failed (attempt ${attempt}):`, error)
               if (attempt < maxAttempts) {
                 const delay = attempt * 1000 // Progressive delay: 1s, 2s, 3s
-                console.log(`[Quiz] ⏳ Retrying in ${delay}ms...`)
+
                 await new Promise(resolve => setTimeout(resolve, delay))
                 return finalUpdate(attempt + 1, maxAttempts)
               }
@@ -799,7 +777,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           }
 
           // 🚀 IMPROVED: Extra wait time for database sync
-          console.log("[Quiz] ⏳ Waiting for database sync...")
+
           await new Promise(resolve => setTimeout(resolve, 1500))
         }
 
@@ -814,7 +792,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
               updateData: { questionsAnswered, quizScore: score },
               timestamp: Date.now()
             })
-            console.log("[Quiz] 📡 Broadcasted final progress update")
+
           }
         } finally {
           if (progressChannel) {
@@ -837,7 +815,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
               roomCode: params.roomCode,
               timestamp: Date.now()
             })
-            console.log("[Quiz] 📡 Broadcasted game end event")
+
           }
         } finally {
           if (broadcastChannel) {
@@ -846,7 +824,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         }
 
         // 🚀 IMPROVED: Shorter delay since we already waited for sync
-        console.log(`[Quiz] ⏳ Final delay before redirect...`)
+
         await new Promise(resolve => setTimeout(resolve, 2000))
 
         if (isHost) {
@@ -889,7 +867,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
   // CRITICAL: Update kondisi rendering untuk handle currentQuestion negatif
   if (!gameStarted || questions.length === 0 || !room || currentQuestion < 0) { // <-- FIX: Tambahkan currentQuestion < 0
-    console.log("[Quiz] ❌ Game not ready - gameStarted:", gameStarted, "questions:", questions.length, "room:", !!room, "currentQuestion:", currentQuestion)
+
     return (
       <div className="min-h-screen bg-linear-to-br from-background via-card to-muted flex items-center justify-center">
         <Card className="max-w-md mx-auto text-center">
@@ -931,7 +909,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
   // CRITICAL: Guard clause untuk mencegah render jika shuffled options belum siap
   if (!currentShuffled) {
-    console.log("[Quiz] ❌ Shuffled options not ready for question", currentQuestion)
+
     return (
       <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
@@ -948,7 +926,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   }
 
   if (currentQuestion < 0 || currentQuestion >= questions.length) { // <-- FIX: Tambahkan guard clause
-    console.log("[Quiz] ❌ Invalid currentQuestion index:", currentQuestion)
+
     return (
       <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
         <div className="relative z-10 flex items-center justify-center min-h-screen">

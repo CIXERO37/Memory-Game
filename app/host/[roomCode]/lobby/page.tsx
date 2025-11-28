@@ -710,6 +710,7 @@ function LobbyPageContent() {
                     className="max-w-fit! w-auto! h-auto! z-50 backdrop-blur-sm bg-white border-8 border-black shadow-2xl p-4! overflow-hidden!"
                     showCloseButton={true}
                   >
+                    <DialogTitle className="sr-only">QR Code</DialogTitle>
                     <div className="flex justify-center items-center h-full w-full min-w-0 min-h-0 box-border overflow-hidden">
                       {joinUrl && (
                         <div
@@ -750,7 +751,7 @@ function LobbyPageContent() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
                   <div className="flex items-center gap-2">
                     <div className={`inline-block bg-white border border-black rounded px-2 py-1 transition-all duration-500 ${playerCountChanged ? 'animate-pulse bg-green-100 border-green-400' :
-                        playerLeft ? 'animate-pulse bg-red-100 border-red-400' : ''
+                      playerLeft ? 'animate-pulse bg-red-100 border-red-400' : ''
                       }`}>
                       <span className="text-black font-bold text-xs sm:text-sm pixel-font-sm">
                         {playerCountChanged ? '🎉 ' : playerLeft ? '👋 ' : ''}{t('lobby.players')} ({currentRoom?.players.length || 0})
@@ -875,7 +876,7 @@ function LobbyPageContent() {
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                   <AlertTriangle className="h-8 w-8 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.leaveWarning')}</h3>
+                <DialogTitle className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.leaveWarning')}</DialogTitle>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
                   {t('lobby.leaveWarningDesc')}<br />
                 </p>
@@ -916,7 +917,7 @@ function LobbyPageContent() {
                 <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
                   <X className="h-8 w-8 text-red-600" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.kickPlayer')}?</h3>
+                <DialogTitle className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.kickPlayer')}?</DialogTitle>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
                   {t('lobby.confirmKick')}<br />
                   <span className="font-bold text-yellow-300">{playerToKick?.username?.toUpperCase()}</span><br />

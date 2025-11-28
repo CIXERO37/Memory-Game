@@ -79,7 +79,7 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
         // Request camera permission
         await navigator.mediaDevices.getUserMedia({ video: true })
         if (!mounted) return
-        
+
         setHasPermission(true)
 
         // Initialize scanner
@@ -96,7 +96,7 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
           (decodedText) => {
             // Success callback - QR code found
             if (mounted && !isStoppingRef.current) {
-              console.log("QR Code scanned:", decodedText)
+
               onScanRef.current(decodedText)
             }
           },
@@ -125,7 +125,7 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
       mounted = false
       // Mark as stopping to prevent callbacks
       isStoppingRef.current = true
-      
+
       // Call async cleanup but don't await (cleanup must be sync)
       // Use Promise.resolve to handle the async operation
       Promise.resolve().then(async () => {
@@ -276,8 +276,8 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
             )}
 
             {/* QR Scanner Region */}
-            <div 
-              id={qrCodeRegionId} 
+            <div
+              id={qrCodeRegionId}
               className="w-full h-full"
               style={{
                 display: hasPermission === true ? 'block' : 'none'

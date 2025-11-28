@@ -53,7 +53,7 @@ function QuizSettingsPageContent() {
         }
 
         // Use XID from profiles table as host_id
-        console.log("[QuizSettings] Host ID (XID):", profile.id)
+
         setHostId(profile.id)
       } catch (error) {
         console.error("[QuizSettings] Error in getHostId:", error)
@@ -73,10 +73,9 @@ function QuizSettingsPageContent() {
       const fetchQuizData = async () => {
         setIsLoadingQuiz(true)
         try {
-          console.log("[QuizSettings] Fetching quiz from Supabase with ID:", quizId)
-          const quizData = await quizApi.getQuizById(quizId)
-          console.log("[QuizSettings] Supabase Quiz Data:", quizData)
 
+
+          const quizData = await quizApi.getQuizById(quizId)
           if (quizData) {
             setQuiz(quizData)
             setQuestionCount("5") // Default to 5 questions
@@ -84,12 +83,12 @@ function QuizSettingsPageContent() {
             return
           }
         } catch (error) {
-          console.log("[QuizSettings] Supabase fetch failed, trying local data:", error)
+
         }
 
         // Fallback to local data (for short IDs like "math-basic")
         const localQuizData = getQuizById(quizId)
-        console.log("[QuizSettings] Local Quiz Data:", localQuizData)
+
 
         if (localQuizData) {
           setQuiz(localQuizData)
@@ -133,11 +132,7 @@ function QuizSettingsPageContent() {
       // Get quiz title from quiz data
       const quizTitle = quiz?.title || `Quiz ${selectedQuiz}`
 
-      console.log("[QuizSettings] Creating room with settings:", {
-        hostId,
-        timeLimit: parseInt(timeLimit),
-        questionCount: parseInt(questionCount)
-      })
+
 
       const room = await roomManager.createRoom(hostId, {
         questionCount: parseInt(questionCount),
@@ -151,7 +146,7 @@ function QuizSettingsPageContent() {
         return
       }
 
-      console.log("[QuizSettings] Room created successfully:", room)
+
 
       // Verify room exists before proceeding
       const verifyRoom = await roomManager.getRoom(room.code)
@@ -162,7 +157,7 @@ function QuizSettingsPageContent() {
         return
       }
 
-      console.log("[QuizSettings] Room verification successful:", verifyRoom)
+
 
       // Store host info in session manager
       try {
@@ -176,7 +171,7 @@ function QuizSettingsPageContent() {
           },
           room.code
         )
-        console.log("[QuizSettings] Host session created in Supabase")
+
       } catch (error) {
         console.error("[QuizSettings] Error creating host session:", error)
       }
@@ -203,7 +198,7 @@ function QuizSettingsPageContent() {
         }),
       )
 
-      console.log("[QuizSettings] Host data stored, navigating to lobby")
+
 
       // Navigate to lobby with a small delay to ensure data is stored
       setTimeout(() => {
@@ -271,7 +266,7 @@ function QuizSettingsPageContent() {
       <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
         {/* Pixel Header */}
         <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
-          
+
 
           <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <img
@@ -406,7 +401,7 @@ function QuizSettingsPageContent() {
                       onClick={() => router.push("/select-quiz")}
                       className="relative w-full bg-gradient-to-br from-red-500 to-rose-500 border-2 border-black rounded-lg text-black hover:bg-gradient-to-br hover:from-red-400 hover:to-rose-400 transform hover:scale-105 transition-all duration-200 font-bold min-h-[44px]"
                     >
-                      
+
                       <span className="pixel-font-xl text-sm sm:text-base">{t('quizSettings.back')}</span>
                     </Button>
                   </div>
