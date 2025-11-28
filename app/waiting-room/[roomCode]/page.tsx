@@ -39,18 +39,18 @@ export default function WaitingRoomPage() {
   useEffect(() => {
     const restorePlayerInfo = async () => {
       try {
-        console.log("[WaitingRoom] Restoring player info for room:", roomCode)
+
 
         // Try to get session from Supabase
         const sessionId = sessionManager.getSessionIdFromStorage()
-        console.log("[WaitingRoom] Session ID from storage:", sessionId)
+
 
         if (sessionId) {
           const sessionData = await sessionManager.getSessionData(sessionId)
-          console.log("[WaitingRoom] Session data from Supabase:", sessionData)
+
 
           if (sessionData && sessionData.user_type === 'player' && sessionData.room_code === roomCode) {
-            console.log("[WaitingRoom] Valid session found, setting player info")
+
             const playerData = {
               nickname: sessionData.user_data.nickname || sessionData.user_data.username,
               avatar: sessionData.user_data.avatar,
@@ -60,27 +60,22 @@ export default function WaitingRoomPage() {
             playerInfoRef.current = playerData
             return
           } else {
-            console.log("[WaitingRoom] Session validation failed:", {
-              hasSessionData: !!sessionData,
-              userType: sessionData?.user_type,
-              sessionRoomCode: sessionData?.room_code,
-              expectedRoomCode: roomCode
-            })
+
           }
         }
 
         // Fallback to localStorage if Supabase session not found
         if (typeof window !== 'undefined') {
           const storedPlayer = localStorage.getItem("currentPlayer")
-          console.log("[WaitingRoom] Stored player from localStorage:", storedPlayer)
+
 
           if (storedPlayer) {
             try {
               const player = JSON.parse(storedPlayer)
-              console.log("[WaitingRoom] Parsed player data:", player)
+
 
               if (player.roomCode === roomCode) {
-                console.log("[WaitingRoom] Valid localStorage player found, setting player info")
+
                 const playerData = {
                   nickname: player.nickname || player.username,
                   avatar: player.avatar,
@@ -90,10 +85,7 @@ export default function WaitingRoomPage() {
                 playerInfoRef.current = playerData
                 return
               } else {
-                console.log("[WaitingRoom] localStorage room code mismatch:", {
-                  storedRoomCode: player.roomCode,
-                  expectedRoomCode: roomCode
-                })
+
               }
             } catch (error) {
               console.error("[WaitingRoom] Error parsing stored player info:", error)
@@ -102,11 +94,11 @@ export default function WaitingRoomPage() {
         }
 
         // If no valid player info found, try to get player from room data as last resort
-        console.log("[WaitingRoom] No valid player info found, trying to get player from room data")
+
 
         // Try to get player info from room data (as fallback)
         if (room && room.players && room.players.length > 0) {
-          console.log("[WaitingRoom] Found players in room, using first player as fallback")
+
           const firstPlayer = room.players[0]
           const playerData = {
             nickname: firstPlayer.nickname,
@@ -119,7 +111,7 @@ export default function WaitingRoomPage() {
         }
 
         // If still no valid player info found, redirect to join page
-        console.log("[WaitingRoom] No valid player info found anywhere, redirecting to join page")
+
         router.push(`/join?room=${roomCode}`)
       } catch (error) {
         console.error("[WaitingRoom] Error restoring player info:", error)
@@ -132,16 +124,17 @@ export default function WaitingRoomPage() {
 
   // Listen for game start and countdown
   useEffect(() => {
-    console.log("[WaitingRoom] Room status changed:", room?.status, "GameStarted:", room?.gameStarted)
+
 
     if (room?.status === "countdown") {
-      console.log("[WaitingRoom] Countdown started, showing countdown timer immediately")
+
       // Force countdown to show immediately
       setForceCountdown(true)
       // Countdown will be handled by the CountdownTimer component
       // No need to set gameStarting state for countdown
     } else if (room?.gameStarted && !gameStarting) {
       setGameStarting(true)
+      setForceCountdown(false)
 
       // Add a small delay before redirecting
       window.location.href = `/quiz/${roomCode}`
@@ -155,7 +148,7 @@ export default function WaitingRoomPage() {
 
       // Check if a new player joined (not the first load)
       if (previousPlayerCount > 0 && currentPlayerCount > previousPlayerCount) {
-        console.log("[WaitingRoom] New player joined! Count:", previousPlayerCount, "->", currentPlayerCount)
+
 
         // Show animation for new player
         setShowPlayerJoinedAnimation(true)
@@ -175,7 +168,7 @@ export default function WaitingRoomPage() {
   useEffect(() => {
     if (!roomCode) return
 
-    console.log("[WaitingRoom] Setting up immediate countdown detection")
+
 
     // Set up broadcast channel for immediate communication
     const broadcastChannel = new BroadcastChannel(`countdown-${roomCode}`)
@@ -184,10 +177,7 @@ export default function WaitingRoomPage() {
     // Listen for countdown broadcasts
     broadcastChannel.onmessage = (event) => {
       if (event.data.type === 'countdown-started') {
-        console.log("[WaitingRoom] Countdown broadcast received!")
-        console.log("[WaitingRoom] Received room data:", event.data.room)
-        console.log("[WaitingRoom] Countdown start time:", event.data.countdownStartTime)
-        console.log("[WaitingRoom] Countdown duration:", event.data.countdownDuration)
+
 
         // Create room data with countdown information
         const countdownRoomData = {
@@ -199,7 +189,7 @@ export default function WaitingRoomPage() {
         setBroadcastRoomData(countdownRoomData)
         setForceCountdown(true)
         // Immediately show countdown UI
-        console.log("[WaitingRoom] Forcing countdown display immediately with data:", countdownRoomData)
+
       }
     }
 
@@ -207,10 +197,7 @@ export default function WaitingRoomPage() {
     kickChannel.onmessage = (event) => {
       const currentPlayerInfo = playerInfoRef.current
       if (event.data.type === 'player-kicked' && event.data.playerId === currentPlayerInfo?.playerId) {
-        console.log("[WaitingRoom] Player was kicked via broadcast!", {
-          kickedPlayerId: event.data.playerId,
-          currentPlayerId: currentPlayerInfo?.playerId
-        })
+
 
         // Clear session when kicked
         sessionManager.clearSession().catch(console.error)
@@ -221,11 +208,7 @@ export default function WaitingRoomPage() {
         // Redirect to landing page immediately
         window.location.href = "/"
       } else {
-        console.log("[WaitingRoom] Kick broadcast received but not for this player:", {
-          kickedPlayerId: event.data.playerId,
-          currentPlayerId: currentPlayerInfo?.playerId,
-          match: event.data.playerId === currentPlayerInfo?.playerId
-        })
+
       }
     }
 
@@ -234,7 +217,7 @@ export default function WaitingRoomPage() {
       try {
         const currentRoom = await roomManager.getRoom(roomCode)
         if (currentRoom?.status === "countdown") {
-          console.log("[WaitingRoom] Countdown already active - should show immediately")
+
           setForceCountdown(true)
         }
       } catch (error) {
@@ -248,7 +231,7 @@ export default function WaitingRoomPage() {
 
     // Listen for countdown detection events
     const handleCountdownDetected = (event: CustomEvent) => {
-      console.log("[WaitingRoom] Countdown detection event received:", event.detail)
+
       setForceCountdown(true)
     }
 
@@ -269,14 +252,14 @@ export default function WaitingRoomPage() {
 
     // Check for countdown status
     if (room.status === "countdown") {
-      console.log("[WaitingRoom] Countdown detected via room update")
+
       setForceCountdown(true)
     }
 
     // Check if player is still in the room (Kick detection)
     const existingPlayer = room.players.find(p => p.id === playerInfo.playerId)
     if (!existingPlayer) {
-      console.log("[WaitingRoom] Player not found in room - they may have been kicked")
+
 
       // Clear session when kicked
       sessionManager.clearSession().catch(console.error)
@@ -648,7 +631,7 @@ export default function WaitingRoomPage() {
                     {room.players
                       .filter(player => player.nickname !== playerInfo?.nickname)
                       .map((player) => {
-                        console.log("[WaitingRoom] Rendering other player:", player)
+
                         return (
                           <div key={player.id} className="bg-white border-2 border-black rounded p-2 sm:p-3 pixel-player-card">
                             <div className="flex items-center gap-2 sm:gap-3">

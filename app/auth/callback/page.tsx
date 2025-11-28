@@ -12,21 +12,20 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        console.log('=== Auth Callback Debug ===')
-        console.log('URL search params:', searchParams.toString())
-        
+
+
         // Check for error in URL params
         const error = searchParams.get('error')
         const errorDescription = searchParams.get('error_description')
-        
+
         if (error) {
           console.error('OAuth error:', error, errorDescription)
           setStatus('Authentication failed. Redirecting...')
-          
+
           // If error is about database, it means user IS authenticated but profile creation failed
           // This is OK - we can still proceed
           if (errorDescription?.includes('Database error')) {
-            console.log('Database error detected, but user might be authenticated. Checking session...')
+
             // Continue to check session instead of failing immediately
           } else {
             // For other errors, redirect to login
@@ -34,15 +33,14 @@ export default function AuthCallback() {
             return
           }
         }
-        
+
         setStatus('Verifying your session...')
-        
+
         // Handle OAuth callback - exchange code for session
         const { data, error: sessionError } = await supabase.auth.getSession()
-        
-        console.log('Session data:', data)
-        console.log('Session error:', sessionError)
-        
+
+
+
         if (sessionError) {
           console.error('Auth callback error:', sessionError)
           setStatus('Session error. Redirecting...')
@@ -51,28 +49,26 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          console.log('✅ Auth callback successful!')
-          console.log('User:', data.session.user.email)
-          console.log('User metadata:', data.session.user.user_metadata)
-          
+
+
           setStatus('Login successful! Redirecting...')
-          
+
           // Check if there's a redirect URL with room code in the URL params
           const redirectPath = searchParams.get('redirect')
           const roomCode = searchParams.get('room')
-          
+
           // Store redirect in sessionStorage if available
           if (redirectPath === '/join' && roomCode) {
             if (typeof window !== 'undefined') {
               sessionStorage.setItem('pendingRedirect', `/join?room=${roomCode}`)
-              console.log('Stored pending redirect:', `/join?room=${roomCode}`)
+
             }
           }
-          
+
           // Wait a bit to ensure session is fully established
           setTimeout(() => {
             if (redirectPath === '/join' && roomCode) {
-              console.log('Redirecting to join page with room code:', roomCode)
+
               // Force redirect to join page with room code
               window.location.href = `/join?room=${roomCode}`
             } else {
@@ -81,34 +77,33 @@ export default function AuthCallback() {
             router.refresh() // Force refresh to update auth state
           }, 500)
         } else {
-          console.log('No session found immediately, waiting for auth state change...')
+
           setStatus('Finalizing login...')
-          
+
           // Listen for auth state change in case session is still being processed
           const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-              console.log('Auth state change event:', event)
-              console.log('Auth state change session:', session?.user?.email)
-              
+
+
               if (event === 'SIGNED_IN' && session) {
-                console.log('✅ User signed in successfully via state change')
+
                 setStatus('Login successful! Redirecting...')
-                
+
                 // Check if there's a redirect URL with room code in the URL params
                 const redirectPath = searchParams.get('redirect')
                 const roomCode = searchParams.get('room')
-                
+
                 // Store redirect in sessionStorage if available
                 if (redirectPath === '/join' && roomCode) {
                   if (typeof window !== 'undefined') {
                     sessionStorage.setItem('pendingRedirect', `/join?room=${roomCode}`)
-                    console.log('Stored pending redirect in state change:', `/join?room=${roomCode}`)
+
                   }
                 }
-                
+
                 setTimeout(() => {
                   if (redirectPath === '/join' && roomCode) {
-                    console.log('Redirecting to join page with room code:', roomCode)
+
                     // Force redirect to join page with room code
                     window.location.href = `/join?room=${roomCode}`
                   } else {
@@ -118,7 +113,7 @@ export default function AuthCallback() {
                   subscription.unsubscribe()
                 }, 500)
               } else if (event === 'SIGNED_OUT') {
-                console.log('User signed out, redirecting to login')
+
                 setStatus('Session ended. Redirecting...')
                 setTimeout(() => {
                   router.push('/login')
@@ -127,12 +122,12 @@ export default function AuthCallback() {
               }
             }
           )
-          
+
           // Set a longer timeout to give more time for session establishment
           setTimeout(() => {
             subscription.unsubscribe()
             if (!data.session) {
-              console.log('Timeout reached without session, redirecting to login')
+
               setStatus('Login timeout. Redirecting...')
               setTimeout(() => router.push('/login?error=timeout'), 1000)
             }

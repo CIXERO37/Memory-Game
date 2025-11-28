@@ -29,6 +29,7 @@ export interface Room {
   countdownDuration?: number
   quizId?: string
   quizTitle?: string
+  questions?: any[]
 }
 
 class SupabaseRoomManager {
@@ -129,12 +130,44 @@ class SupabaseRoomManager {
 
       const roomCode = this.generateRoomCode()
 
-      // Get quiz detail for quiz_detail JSONB
+      // Get quiz detail for quiz_detail JSONB AND questions
       const { data: quizData } = await supabase
         .from('quizzes')
-        .select('title, description, category, language, image_url')
+        .select('title, description, category, language, image_url, questions')
         .eq('id', quizId)
         .single()
+
+      // Generate looped and randomized questions
+      let sessionQuestions: any[] = []
+      const originalQuestions = quizData?.questions || []
+      const targetCount = settings.questionCount === 0 ? originalQuestions.length : settings.questionCount
+
+      if (originalQuestions.length > 0) {
+        // Helper to shuffle array
+        const shuffle = (array: any[]) => {
+          const newArray = [...array]
+          for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+          }
+          return newArray
+        }
+
+        let currentCount = 0
+        // If target is small, just take random subset
+        if (targetCount <= originalQuestions.length) {
+          sessionQuestions = shuffle(originalQuestions).slice(0, targetCount)
+        } else {
+          // If target is larger, loop and shuffle
+          while (currentCount < targetCount) {
+            const shuffled = shuffle(originalQuestions)
+            const needed = targetCount - currentCount
+            const toAdd = shuffled.slice(0, needed)
+            sessionQuestions = [...sessionQuestions, ...toAdd]
+            currentCount += toAdd.length
+          }
+        }
+      }
 
       // Create game session in database
       const { data: sessionData, error: sessionError } = await supabase
@@ -155,7 +188,7 @@ class SupabaseRoomManager {
           status: 'waiting',
           participants: [],
           responses: [],
-          current_questions: [],
+          current_questions: sessionQuestions, // Store generated questions
           application: 'memoryquiz'
         })
         .select()
@@ -176,7 +209,8 @@ class SupabaseRoomManager {
         startedAt: sessionData.started_at,
         gameStarted: false,
         quizId: quizId,
-        quizTitle: quizTitle
+        quizTitle: quizTitle,
+        questions: sessionQuestions
       }
 
       return room
@@ -223,7 +257,8 @@ class SupabaseRoomManager {
       countdownStartTime: sessionData.countdown_started_at,
       countdownDuration: 10,
       quizId: sessionData.quiz_id,
-      quizTitle: quizTitle
+      quizTitle: quizTitle,
+      questions: sessionData.current_questions || []
     }
   }
 
@@ -547,7 +582,7 @@ class SupabaseRoomManager {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('[SupabaseRoomManager] ✅ Subscribed to room updates:', roomCode)
+
           this.connectionStatus = true
         } else if (status === 'CHANNEL_ERROR') {
           console.error('[SupabaseRoomManager] ❌ Subscription error:', roomCode)
@@ -570,7 +605,7 @@ class SupabaseRoomManager {
 
       this.lastRoomData.delete(roomCode)
 
-      console.log('[SupabaseRoomManager] Unsubscribing from room:', roomCode)
+
       roomSubscription.unsubscribe()
       this.subscriptions.delete(roomCode)
       this.listeners.delete(callback)
@@ -638,17 +673,42 @@ class SupabaseRoomManager {
 
       // Update player progress (monotonic - never decrease)
       const currentPlayer = participants[playerIndex]
-      if (progress.quizScore !== undefined) {
-        currentPlayer.quiz_score = Math.max(currentPlayer.quiz_score || 0, progress.quizScore)
-      }
-      if (progress.questionsAnswered !== undefined) {
-        currentPlayer.questions_answered = Math.max(currentPlayer.questions_answered || 0, progress.questionsAnswered)
-      }
-      if (progress.memoryProgress !== undefined) {
-        currentPlayer.memory_progress = progress.memoryProgress
-      }
-      currentPlayer.last_active = new Date().toISOString()
+      let hasChanged = false
 
+      // OPTIMIZATION: Delta Updates - Only update if values actually changed
+      // Note: While Supabase uses JSON (not Protobuf), this logic minimizes data transfer
+      // by preventing redundant writes, achieving the same goal of bandwidth conservation.
+
+      if (progress.quizScore !== undefined) {
+        const newScore = Math.max(currentPlayer.quiz_score || 0, progress.quizScore)
+        if (newScore !== currentPlayer.quiz_score) {
+          currentPlayer.quiz_score = newScore
+          hasChanged = true
+        }
+      }
+
+      if (progress.questionsAnswered !== undefined) {
+        const newAnswered = Math.max(currentPlayer.questions_answered || 0, progress.questionsAnswered)
+        if (newAnswered !== currentPlayer.questions_answered) {
+          currentPlayer.questions_answered = newAnswered
+          hasChanged = true
+        }
+      }
+
+      if (progress.memoryProgress !== undefined) {
+        // Deep compare for object
+        if (JSON.stringify(currentPlayer.memory_progress) !== JSON.stringify(progress.memoryProgress)) {
+          currentPlayer.memory_progress = progress.memoryProgress
+          hasChanged = true
+        }
+      }
+
+      if (!hasChanged) {
+        // No changes needed, skip database write
+        return true
+      }
+
+      currentPlayer.last_active = new Date().toISOString()
       participants[playerIndex] = currentPlayer
 
       // Update game session

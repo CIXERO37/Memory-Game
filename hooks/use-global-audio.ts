@@ -37,7 +37,7 @@ const initializeGlobalAudio = () => {
   })
 
   globalAudio.addEventListener('error', () => {
-    console.log('Global audio failed to load')
+
     globalAudioState.isLoaded = false
     notifyListeners()
   })
@@ -48,11 +48,11 @@ const initializeGlobalAudio = () => {
       try {
         await globalAudio.play()
       } catch (error) {
-        console.log('Audio autoplay prevented:', error)
+
       }
     }
   }
-  
+
   playAudio()
 
   return globalAudio
@@ -106,7 +106,7 @@ export function useGlobalAudio() {
       try {
         await globalAudio.play()
       } catch (error) {
-        console.log('Audio play failed:', error)
+
       }
     }
   }

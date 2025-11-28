@@ -25,7 +25,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
   const [hasAccess, setHasAccess] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  console.log("[Memory Challenge] Component state:", { correctMatches, gameCompleted, gameWon, hasAccess, loading })
+
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [playerData, setPlayerData] = useState<any>(null)
   const { room } = useRoom(params.roomCode)
@@ -40,7 +40,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
           if (sessionData && sessionData.user_type === 'player') {
             setPlayerId(sessionData.user_data.id)
             setPlayerData(sessionData.user_data)
-            console.log("[Memory Challenge] Loaded player data from session:", sessionData.user_data)
+
           }
         }
 
@@ -51,7 +51,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
             const playerInfo = JSON.parse(player)
             setPlayerId(playerInfo.id)
             setPlayerData(playerInfo)
-            console.log("[Memory Challenge] Loaded player data from localStorage fallback:", playerInfo)
+
           }
         }
       } catch (error) {
@@ -65,7 +65,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
   // Monitor room status for game end
   useEffect(() => {
     if (room && room.status === "finished") {
-      console.log("[Memory Challenge] Game finished, redirecting to result page...")
+
       // Redirect to result page for players
       window.location.href = `/result?roomCode=${params.roomCode}`
     }
@@ -78,7 +78,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         try {
           const currentRoom = await roomManager.getRoom(params.roomCode)
           if (currentRoom && currentRoom.status === "finished") {
-            console.log("[Memory Challenge] Game finished detected via aggressive polling - redirecting immediately...")
+
             clearInterval(gameEndPolling)
             window.location.href = `/result?roomCode=${params.roomCode}`
           }
@@ -98,7 +98,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
       broadcastChannel.onmessage = (event) => {
         if (event.data.type === 'game-ended') {
-          console.log("[Memory Challenge] Game end broadcast received - redirecting immediately...")
+
           broadcastChannel.close()
           window.location.href = `/result?roomCode=${params.roomCode}`
         }
@@ -118,7 +118,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
       try {
         // Always start memory game from 0 - don't load previous progress
         // This ensures each memory game session is fresh
-        console.log("[Memory Challenge] Starting fresh memory game session")
+
         setCorrectMatches(0)
 
         // Clear any previous memory game progress
@@ -156,7 +156,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         if (quizProgress) {
           const progressData = JSON.parse(quizProgress)
           if (progressData.correctAnswers >= 3) {
-            console.log("[Memory Challenge] Access granted via localStorage:", progressData)
+
             setHasAccess(true)
             setLoading(false)
             return
@@ -165,11 +165,11 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
         // If localStorage doesn't have the data, check Supabase
         if (playerId) {
-          console.log("[Memory Challenge] Checking Supabase for quiz progress...")
+
           const supabaseProgress = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
 
           if (supabaseProgress && supabaseProgress.correct_answers >= 3) {
-            console.log("[Memory Challenge] Access granted via Supabase:", supabaseProgress)
+
             setHasAccess(true)
             setLoading(false)
             return
@@ -177,7 +177,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         }
 
         // If neither localStorage nor Supabase has valid progress, redirect to quiz
-        console.log("[Memory Challenge] No valid progress found, redirecting to quiz")
+
         window.location.href = `/quiz/${params.roomCode}`
         return
 
@@ -225,7 +225,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
     if (questionsAnswered >= totalQuestions) {
       // Player has completed all questions - end the game
-      console.log("[Memory Challenge] Player completed all questions, ending game...")
+
 
       try {
         await roomManager.updateGameStatus(params.roomCode, "finished")
@@ -247,7 +247,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
       }
     } else {
       // Continue to quiz for remaining questions
-      console.log("[Memory Challenge] Game completed, redirecting to quiz immediately...")
+
       try {
         window.location.href = `/quiz/${params.roomCode}`
       } catch (error) {
@@ -260,7 +260,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
   const handleCorrectMatch = async () => {
     const newCount = correctMatches + 1
-    console.log(`[Memory Challenge] Match found! Total matches: ${newCount}`)
+
 
     // Save progress to Supabase to prevent reset on refresh
     if (playerId) {
@@ -283,7 +283,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
     // Check if game is completed after this match
     if (newCount >= 6) {
-      console.log("[Memory Challenge] Game completed via handleCorrectMatch!")
+
       // Direct redirect without showing completion modal
       handleGameEnd()
     }

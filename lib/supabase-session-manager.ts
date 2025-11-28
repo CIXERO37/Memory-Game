@@ -27,7 +27,7 @@ export interface GameSession {
 }
 
 class SupabaseSessionManager {
-  private sessionColumnsExist: boolean | null = null // Cache untuk check apakah kolom session ada
+  private sessionColumnsExist: boolean = false // Default false to avoid 404s if table missing. Set to null or true to enable.
   private sessionColumnsCheckPromise: Promise<boolean> | null = null // Promise untuk prevent multiple checks
 
   private generateSessionId(): string {
@@ -42,7 +42,7 @@ class SupabaseSessionManager {
       // If we know columns don't exist, return false immediately to skip queries
       return false
     }
-    
+
     if (this.sessionColumnsExist === true) {
       return true
     }
@@ -72,10 +72,10 @@ class SupabaseSessionManager {
       }
 
       const finalSessionId = sessionId || this.generateSessionId()
-      
+
       // Get device info
       const deviceInfo = this.getDeviceInfo()
-      
+
       const sessionData = {
         session_id: finalSessionId,
         user_type: userType,
@@ -88,16 +88,11 @@ class SupabaseSessionManager {
         is_active: true
       }
 
-      console.log('[SupabaseSessionManager] Creating/updating session:', {
-        sessionId: finalSessionId,
-        userType,
-        userData,
-        roomCode,
-        sessionData
-      })
+
 
       // Try to update existing room session first
-      if (roomCode) {
+      // Try to update existing room session first
+      if (roomCode && await this.checkSessionColumnsExist()) {
         const { data: existingRoom, error: roomError } = await supabase
           .from('rooms')
           .select('id')
@@ -105,12 +100,18 @@ class SupabaseSessionManager {
           .single()
 
         if (roomError) {
+          // If table not found (PGRST205) or other schema errors, fallback to local
+          if (roomError.code === 'PGRST205' || roomError.code === '42P01' || roomError.message?.includes('does not exist')) {
+            console.warn('[SupabaseSessionManager] Rooms table not found, falling back to local storage')
+            this.sessionColumnsExist = false
+            return finalSessionId
+          }
           console.error('[SupabaseSessionManager] Error finding room:', roomError)
           throw roomError
         }
 
         if (existingRoom) {
-          console.log('[SupabaseSessionManager] Room found, updating with session data')
+
           // Update room with session data
           const { error } = await supabase
             .from('rooms')
@@ -123,21 +124,28 @@ class SupabaseSessionManager {
             .eq('room_code', roomCode)
 
           if (error) {
+            // If column not found or other schema errors
+            if (error.code === 'PGRST204' || error.code === '42703' || error.message?.includes('does not exist') || error.message?.includes('column')) {
+              console.warn('[SupabaseSessionManager] Session columns not found, falling back to local storage')
+              this.sessionColumnsExist = false
+              return finalSessionId
+            }
             console.error('[SupabaseSessionManager] Error updating room session:', error)
             throw error
           }
-          
-          console.log('[SupabaseSessionManager] Room session updated successfully')
+
+
         } else {
           console.error('[SupabaseSessionManager] Room not found for code:', roomCode)
-          throw new Error(`Room not found for code: ${roomCode}`)
+          // Don't throw, just return session ID for local storage
+          return finalSessionId
         }
       }
-      
+
       // Note: Session data is now stored in rooms table
       // For non-room sessions, we store in localStorage only
 
-      console.log('[SupabaseSessionManager] Session created/updated:', finalSessionId)
+
       return finalSessionId
     } catch (error) {
       console.error('[SupabaseSessionManager] Error in createOrUpdateSession:', error)
@@ -159,7 +167,7 @@ class SupabaseSessionManager {
         return null
       }
 
-      console.log('[SupabaseSessionManager] Getting session data for ID:', sessionId)
+
 
       const { data, error } = await supabase
         .from('rooms')
@@ -171,7 +179,7 @@ class SupabaseSessionManager {
       // Handle errors
       if (error) {
         // If we get 406 error even after check, mark columns as not existing
-        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+        if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
           this.sessionColumnsExist = false // Update cache
           return null
         }
@@ -198,7 +206,7 @@ class SupabaseSessionManager {
           expires_at: data.session_data.expires_at || '',
           is_active: data.is_session_active
         }
-        
+
         return sessionData
       }
 
@@ -218,7 +226,7 @@ class SupabaseSessionManager {
 
       if (error) {
         // Error 406 or column not found - session columns may not exist
-        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+        if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
           console.warn('[SupabaseSessionManager] Session columns may not exist, skipping session delete:', error.message)
           return true // Return true to indicate "success" (no-op)
         }
@@ -254,7 +262,7 @@ class SupabaseSessionManager {
   // Get device information
   private getDeviceInfo(): any {
     if (typeof window === 'undefined') return {}
-    
+
     return {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
@@ -290,7 +298,7 @@ class SupabaseSessionManager {
       // Handle errors
       if (error) {
         // If we get 406 error even after check, mark columns as not existing
-        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+        if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
           this.sessionColumnsExist = false // Update cache
           return null
         }
@@ -331,10 +339,10 @@ class SupabaseSessionManager {
         .from('rooms')
         .update({ session_last_active: new Date().toISOString() })
         .eq('session_id', sessionId)
-      
+
       if (error) {
         // Error 406 or column not found - session columns may not exist
-        if (error.code === 'PGRST116' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
+        if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.message?.includes('406') || error.message?.includes('column') || error.message?.includes('does not exist')) {
           // Silently skip if columns don't exist
           return
         }
@@ -355,16 +363,16 @@ class SupabaseSessionManager {
     try {
       // Try to get existing session ID from storage
       let sessionId = this.getSessionIdFromStorage()
-      
+
       // Create or update session
       sessionId = await this.createOrUpdateSession(sessionId, userType, userData, roomCode)
-      
+
       // Store session ID in browser storage for persistence
       this.setSessionIdInStorage(sessionId)
-      
+
       // Get the session data
       const sessionData = await this.getSessionData(sessionId)
-      
+
       return { sessionId, sessionData }
     } catch (error) {
       console.error('[SupabaseSessionManager] Error in getOrCreateSession:', error)

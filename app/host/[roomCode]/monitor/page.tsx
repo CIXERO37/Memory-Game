@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense, useRef } from "react"
+import { useState, useEffect, Suspense, useRef, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Users, Trophy, Clock, TrendingUp, TrendingDown } from "lucide-react"
 import { useRoom } from "@/hooks/use-room"
@@ -45,24 +45,17 @@ function MonitorPageContent() {
   // Debug log
   useEffect(() => {
     if (room) {
-      console.log("[Monitor] Room data updated:", {
-        playersCount: room.players.length,
-        status: room.status,
-        timestamp: new Date().toISOString(),
-        isHost,
-        isHostDetected,
-        redirecting
-      })
+
 
       // 🚀 CRITICAL: Immediate redirect check when room status changes to finished
       // Check with isHost conditions first
       if (room.status === "finished" && isHost && isHostDetected && !redirecting && roomCode) {
-        console.log("[Monitor] 🚨 IMMEDIATE REDIRECT: Room status changed to finished in debug log!")
+
         setRedirecting(true)
         // Use setTimeout to ensure state is set before redirect
         setTimeout(() => {
           const redirectUrl = `/host/leaderboad?roomCode=${roomCode}`
-          console.log("[Monitor] Immediate redirect to:", redirectUrl)
+
           try {
             window.location.href = redirectUrl
           } catch (error) {
@@ -76,11 +69,11 @@ function MonitorPageContent() {
         }, 50)
       } else if (room.status === "finished" && !redirecting && roomCode) {
         // 🚀 FALLBACK: Redirect even if isHost/isHostDetected not set yet (we're on /host/[roomCode]/monitor)
-        console.log("[Monitor] 🚨 FALLBACK REDIRECT: Room status finished, redirecting without host check!")
+
         setRedirecting(true)
         setTimeout(() => {
           const redirectUrl = `/host/leaderboad?roomCode=${roomCode}`
-          console.log("[Monitor] Fallback redirect to:", redirectUrl)
+
           try {
             window.location.href = redirectUrl
           } catch (error) {
@@ -104,11 +97,11 @@ function MonitorPageContent() {
     questionCount: 10,
   }
 
-  const handleTimeUp = async () => {
+  const handleTimeUp = useCallback(async () => {
     if (timeUpHandled || !roomCode) return
     setTimeUpHandled(true)
 
-    console.log("[Monitor] Timer expired! Ending game automatically...")
+
 
     try {
       await roomManager.updateGameStatus(roomCode, "finished")
@@ -122,7 +115,7 @@ function MonitorPageContent() {
             roomCode: roomCode,
             timestamp: Date.now()
           })
-          console.log("[Monitor] Broadcasted game end event to players")
+
         }
       } finally {
         if (broadcastChannel) {
@@ -135,7 +128,7 @@ function MonitorPageContent() {
       console.error("[Monitor] Error ending game due to timer expiration:", error)
       window.location.href = `/host/leaderboad?roomCode=${roomCode}`
     }
-  }
+  }, [timeUpHandled, roomCode])
 
   const timerState = useSynchronizedTimer(room, quizSettings.timeLimit, handleTimeUp)
 
@@ -205,16 +198,16 @@ function MonitorPageContent() {
           if (now - lastUpdateTime < 1000) return
           lastUpdateTime = now
 
-          console.log("[Monitor] Received progress broadcast:", event.data)
+
 
           if (redirecting) {
-            console.log("[Monitor] Skipping refresh - already redirecting")
+
             return
           }
 
           roomManager.getRoom(roomCode).then((updatedRoom) => {
             if (updatedRoom?.status === 'finished') {
-              console.log("[Monitor] Game already finished, skipping refresh")
+
               return
             }
 
@@ -270,25 +263,18 @@ function MonitorPageContent() {
 
   // 🚀 CRITICAL: Monitor room status untuk redirect otomatis ketika game finished
   useEffect(() => {
-    console.log("[Monitor] Status check:", {
-      hasRoom: !!room,
-      isHost,
-      isHostDetected,
-      roomStatus: room?.status,
-      redirecting,
-      roomCode
-    })
+
 
     if (room && isHost && isHostDetected && room.status === "finished" && !redirecting) {
-      console.log("[Monitor] 🎯 Game status is finished, redirecting host to leaderboard...")
+
       setRedirecting(true)
 
       // Redirect host ke leaderboard dengan multiple fallback - IMMEDIATE
       const redirectToLeaderboard = () => {
-        console.log("[Monitor] 🚀 Executing redirect to leaderboard...", { roomCode })
+
         try {
           const url = `/host/leaderboad?roomCode=${roomCode}`
-          console.log("[Monitor] Redirecting to:", url)
+
           window.location.href = url
         } catch (error) {
           console.error("[Monitor] Error with window.location.href, trying window.location.replace...", error)
@@ -304,11 +290,7 @@ function MonitorPageContent() {
       // Redirect immediately, no delay
       redirectToLeaderboard()
     } else if (room && room.status === "finished") {
-      console.log("[Monitor] ⚠️ Game is finished but conditions not met:", {
-        isHost,
-        isHostDetected,
-        redirecting
-      })
+
     }
   }, [room?.status, isHost, isHostDetected, redirecting, roomCode, router])
 
@@ -320,14 +302,7 @@ function MonitorPageContent() {
       const nonHostPlayers = room.players.filter(p => !p.isHost)
       const totalQuestions = room.settings.questionCount || 10
 
-      console.log("[Monitor] Auto-end check:", {
-        totalPlayers: nonHostPlayers.length,
-        players: nonHostPlayers.map(p => ({
-          nickname: p.nickname,
-          answered: p.questionsAnswered || 0,
-          total: totalQuestions
-        }))
-      })
+
 
       // Cek apakah ada player yang sudah selesai (bukan semua player)
       const hasPlayerCompleted = nonHostPlayers.some(player => {
@@ -336,13 +311,13 @@ function MonitorPageContent() {
       })
 
       if (hasPlayerCompleted && nonHostPlayers.length > 0) {
-        console.log("[Monitor] 🎯 Player completed detected! Force finishing all players...")
+
 
         // 🚀 IMPROVED: Multiple verification attempts with increasing delays
         const verifyAndForceFinish = async (attempt = 1, maxAttempts = 3) => {
           if (!roomCode) return
           try {
-            console.log(`[Monitor] Force finish attempt ${attempt}/${maxAttempts}`)
+
 
             // Wait longer between attempts for database sync
             const delay = attempt === 1 ? 1000 : attempt === 2 ? 2000 : 3000
@@ -364,12 +339,12 @@ function MonitorPageContent() {
             const playersToForceFinish = verifiedRoom.players
               .filter(p => !p.isHost && (p.questionsAnswered || 0) < totalQuestions)
 
-            console.log(`[Monitor] Force finishing ${playersToForceFinish.length} players...`)
+
 
             // Update semua player yang belum selesai
             const forceFinishPromises = playersToForceFinish.map(async (player) => {
               const currentScore = player.quizScore || 0
-              console.log(`[Monitor] Force finishing player ${player.nickname} (${player.id})`)
+
               return roomManager.updatePlayerScore(
                 roomCode!,
                 player.id,
@@ -405,23 +380,22 @@ function MonitorPageContent() {
               .every(p => (p.questionsAnswered || 0) >= totalQuestions)
 
             if (!allCompleted) {
-              console.log(`[Monitor] Verification attempt ${attempt} failed: not all completed after force finish`)
+
               if (attempt < maxAttempts) {
                 return verifyAndForceFinish(attempt + 1, maxAttempts)
               }
-              console.log("[Monitor] All verification attempts failed, resetting...")
-              setRedirecting(false)
-              setLastVerifiedCompletion(false)
-              return
+
+              console.warn("[Monitor] Could not verify all players completed, but forcing game end anyway.")
+              // Proceed to end game logic
             }
 
-            console.log(`[Monitor] ✅ All players force finished! Verification attempt ${attempt} passed!`)
+
             setLastVerifiedCompletion(true)
             setRedirecting(true)
 
             // Update game status ke finished
             await roomManager.updateGameStatus(roomCode!, "finished")
-            console.log("[Monitor] ✅ Game status updated to 'finished'")
+
 
             // Broadcast game end untuk memberitahu semua player
             const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
@@ -432,15 +406,15 @@ function MonitorPageContent() {
             })
             broadcastChannel.close()
 
-            console.log("[Monitor] 📡 Broadcasted game end event to all players")
+
 
             // Redirect host ke leaderboard IMMEDIATELY - tidak perlu tunggu
-            console.log("[Monitor] 🚀 Redirecting host to leaderboard IMMEDIATELY...")
+
 
             // Use setTimeout with 0 delay to ensure redirect happens after state updates
             setTimeout(() => {
               try {
-                console.log("[Monitor] Attempting redirect via window.location.href...")
+
                 window.location.href = `/host/leaderboad?roomCode=${roomCode}`
               } catch (error) {
                 console.error("[Monitor] Error with window.location.href, trying window.location.replace...")
@@ -459,7 +433,7 @@ function MonitorPageContent() {
               return verifyAndForceFinish(attempt + 1, maxAttempts)
             }
             // Fallback: tetap redirect meskipun ada error
-            console.log("[Monitor] All attempts failed, forcing redirect to leaderboard...")
+
             setRedirecting(true)
             setTimeout(() => {
               try {
@@ -487,17 +461,11 @@ function MonitorPageContent() {
       const totalQuestions = room.settings.questionCount || 10
       const completedCount = nonHostPlayers.filter(p => (p.questionsAnswered || 0) >= totalQuestions).length
 
-      console.log("[Monitor] Monitoring status:", {
-        total: nonHostPlayers.length,
-        completed: completedCount,
-        redirecting: redirecting,
-        lastVerified: lastVerifiedCompletion,
-        roomStatus: room.status
-      })
+
 
       // 🚀 CRITICAL: Force redirect if status is finished (backup check)
       if (room.status === "finished" && !redirecting && roomCode) {
-        console.log("[Monitor] 🚨 FORCE REDIRECT: Room status is finished in monitoring check!")
+
         setRedirecting(true)
         setTimeout(() => {
           try {

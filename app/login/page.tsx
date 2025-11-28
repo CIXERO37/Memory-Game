@@ -88,7 +88,7 @@ export default function LoginPage() {
         setErrors({ general: "Invalid email or password. Please try again." })
       } else if (data.user) {
         // Successfully logged in, redirect will happen via useEffect
-        console.log("Login successful:", data.user)
+
       }
     } catch (error) {
       console.error("Login error:", error)
@@ -120,14 +120,7 @@ export default function LoginPage() {
         redirectUrl += `?redirect=${redirectPath}&room=${roomCode}`
       }
 
-      console.log('=== Google OAuth Debug Info ===')
-      console.log('Current origin:', currentOrigin)
-      console.log('Is localhost:', isLocalhost)
-      console.log('Site URL from env:', process.env.NEXT_PUBLIC_SITE_URL)
-      console.log('Redirect path:', redirectPath)
-      console.log('Room code:', roomCode)
-      console.log('Final redirect URL:', redirectUrl)
-      console.log('================================')
+
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

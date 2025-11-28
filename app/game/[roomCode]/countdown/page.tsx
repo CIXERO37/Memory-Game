@@ -39,7 +39,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
             setPlayerId(sessionData.user_data.id)
             setHostId(sessionData.user_data.hostId)
             setIsHost(true)
-            console.log("[Countdown] Host session detected:", sessionData.user_data)
+
           }
         }
 
@@ -65,7 +65,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
       // Check if this is a host by comparing with room.hostId
       if (room.hostId && hostId && room.hostId === hostId) {
         setIsHost(true)
-        console.log("[Countdown] Host detected via room.hostId:", { roomHostId: room.hostId, sessionHostId: hostId })
+
         return
       }
 
@@ -73,7 +73,7 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
       const currentPlayer = room.players.find((p) => p.id === playerId)
       const hostStatus = currentPlayer?.isHost || false
       setIsHost(hostStatus)
-      console.log("[Countdown] Host detection via players:", { playerId, currentPlayer, hostStatus })
+
     }
   }, [room, playerId, hostId])
 
@@ -85,18 +85,18 @@ export default function CountdownPage({ params, searchParams }: CountdownPagePro
   }, [room, loading])
 
   const handleCountdownComplete = () => {
-    console.log("[Countdown] Countdown complete, redirecting...", { isHost, playerId, hostId })
+
 
     // Clean up any event listeners that might trigger beforeunload
     window.removeEventListener('beforeunload', () => { })
 
     if (isHost) {
       // Host goes to monitor page - immediate redirect
-      console.log("[Countdown] Redirecting host to monitor page")
+
       window.location.replace(`/monitor?roomCode=${params.roomCode}`)
     } else {
       // Player goes to quiz page
-      console.log("[Countdown] Redirecting player to quiz page")
+
       window.location.replace(`/quiz/${params.roomCode}`)
     }
   }

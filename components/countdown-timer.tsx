@@ -15,7 +15,7 @@ interface CountdownTimerProps {
 
 export function CountdownTimer({ room, playerId, isHost = false, onCountdownComplete }: CountdownTimerProps) {
   const handleCountdownComplete = () => {
-    console.log("[CountdownTimer] Countdown complete, isHost:", isHost)
+
     onCountdownComplete()
   }
 
@@ -27,23 +27,12 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
 
   // Debug logging for countdown state
   useEffect(() => {
-    console.log('[CountdownTimer] State update:', {
-      countdown,
-      isActive,
-      isConnected,
-      isInDelayPeriod,
-      roomCode: room.code,
-      playerId
-    })
+
   }, [countdown, isActive, isConnected, isInDelayPeriod, room.code, playerId])
 
   // Show loading state if countdown data is not ready yet
-  console.log("[CountdownTimer] Room data:", { 
-    status: room.status, 
-    countdownStartTime: room.countdownStartTime, 
-    countdownDuration: room.countdownDuration 
-  })
-  
+
+
   // Show countdown even if data is not fully ready, but room status is countdown
   // This ensures players see the countdown number immediately
   if (!room.countdownStartTime || !room.countdownDuration) {
@@ -79,15 +68,13 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
                 <p className="text-white/80 pixel-font-sm mb-6">GET READY FOR THE QUIZ!</p>
                 {/* Show countdown number even in preparing state if available */}
                 {countdown > 0 && (
-                  <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
-                    countdown <= 1 ? 'pixel-countdown final' :
-                    countdown <= 3 ? 'pixel-countdown urgent' :
-                    'pixel-countdown'
-                  }`}>
-                    <span className={`text-9xl font-black ${
-                      isInDelayPeriod ? 'text-yellow-400' :
-                      countdown <= 3 ? 'text-red-400' : 'text-white'
+                  <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${countdown <= 1 ? 'pixel-countdown final' :
+                      countdown <= 3 ? 'pixel-countdown urgent' :
+                        'pixel-countdown'
                     }`}>
+                    <span className={`text-9xl font-black ${isInDelayPeriod ? 'text-yellow-400' :
+                        countdown <= 3 ? 'text-red-400' : 'text-white'
+                      }`}>
                       {countdown}
                     </span>
                   </div>
@@ -111,19 +98,19 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       {/* Retro Scanlines */}
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
       </div>
-      
+
       {/* Floating Pixel Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <PixelBackgroundElements />
       </div>
 
       <div className="relative z-10 text-center countdown-container">
-        
+
 
         <div className="relative inline-block mb-6">
           <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-cyan-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
@@ -132,32 +119,30 @@ export function CountdownTimer({ room, playerId, isHost = false, onCountdownComp
             <div className="w-20 h-20 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-6 countdown-icon">
               <Clock className="w-10 h-10 text-black animate-spin" />
             </div>
-            
+
             {/* Countdown Title */}
             <h3 className="text-2xl font-bold text-white mb-4 pixel-font countdown-message">
               {isInDelayPeriod ? "PREPARING..." : "GET READY!"}
             </h3>
-            
-            
-            
+
+
+
             {/* Countdown Number with Smooth Animation - Always show if countdown is active or room is in countdown status */}
             {(isActive || room.status === "countdown") && (
-              <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${
-                countdown <= 1 ? 'pixel-countdown final' :
-                countdown <= 3 ? 'pixel-countdown urgent' :
-                'pixel-countdown'
-              }`}>
-                <span className={`text-9xl font-black ${
-                  isInDelayPeriod ? 'text-yellow-400' :
-                  countdown <= 3 ? 'text-red-400' : 'text-white'
+              <div className={`w-48 h-48 mx-auto flex items-center justify-center mb-6 countdown-number ${countdown <= 1 ? 'pixel-countdown final' :
+                  countdown <= 3 ? 'pixel-countdown urgent' :
+                    'pixel-countdown'
                 }`}>
+                <span className={`text-9xl font-black ${isInDelayPeriod ? 'text-yellow-400' :
+                    countdown <= 3 ? 'text-red-400' : 'text-white'
+                  }`}>
                   {countdown > 0 ? countdown : (room.countdownDuration || 10)}
                 </span>
               </div>
             )}
-            
-            
-           
+
+
+
           </div>
         </div>
       </div>
@@ -193,7 +178,7 @@ function PixelBackgroundElements() {
           }}
         />
       ))}
-      
+
       {/* Floating Pixel Blocks */}
       <div className="absolute top-20 left-10 w-16 h-16 bg-linear-to-br from-blue-400 to-cyan-400 opacity-30 pixel-block-float">
         <div className="w-full h-full border-2 border-white/50"></div>

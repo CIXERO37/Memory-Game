@@ -55,13 +55,13 @@ function ResultPageContent() {
         setError("Room code not found")
         return
       }
-      
-      console.log(`[Result] Fetching room data (attempt ${attempt}/${maxAttempts})...`)
+
+
       const roomData = await roomManager.getRoom(roomCode)
-      
+
       if (roomData) {
         setRoom(roomData)
-        
+
         // Find current player
         let player = null
         const sessionId = sessionManager.getSessionIdFromStorage()
@@ -70,31 +70,31 @@ function ResultPageContent() {
             const sessionData = await sessionManager.getSessionData(sessionId)
             if (sessionData && sessionData.user_type === 'player') {
               player = sessionData.user_data
-              console.log("[Result] Player found from session:", player)
+
             }
           } catch (error) {
             console.warn("Error getting session data:", error)
           }
         }
-        
+
         if (!player && typeof window !== 'undefined') {
           const playerData = localStorage.getItem("currentPlayer")
           if (playerData) {
             player = JSON.parse(playerData)
-            console.log("[Result] Player found from localStorage:", player)
+
           }
         }
-        
+
         if (player) {
           const allPlayers = roomData.players.filter(p => !p.isHost)
-          
+
           // Sort players by total score
           const sortedPlayers = [...allPlayers].sort((a, b) => {
-          const aTotal = a.quizScore || 0
-          const bTotal = b.quizScore || 0
+            const aTotal = a.quizScore || 0
+            const bTotal = b.quizScore || 0
             return bTotal - aTotal
           })
-          
+
           const playerIndex = sortedPlayers.findIndex(p => p.id === player.id)
           if (playerIndex !== -1) {
             const playerObj = sortedPlayers[playerIndex]
@@ -111,7 +111,7 @@ function ResultPageContent() {
           } else {
             // Player tidak ditemukan di room, coba lagi
             if (attempt < maxAttempts) {
-              console.log(`[Result] Player not found in room, retrying... (attempt ${attempt})`)
+
               setTimeout(() => fetchRoom(attempt + 1), 1000 * attempt)
             } else {
               setError("Player data not found. Please ensure you completed the quiz.")
@@ -126,7 +126,7 @@ function ResultPageContent() {
     } catch (error) {
       console.error("Error fetching room:", error)
       if (attempt < maxAttempts) {
-        console.log(`[Result] Error fetching room, retrying... (attempt ${attempt})`)
+
         setTimeout(() => fetchRoom(attempt + 1), 1000 * attempt)
       } else {
         setError("Failed to load results. Please try again.")
@@ -158,7 +158,7 @@ function ResultPageContent() {
             </div>
             <h2 className="text-xl font-bold text-white mb-2">ERROR</h2>
             <p className="text-red-200 mb-4">{error}</p>
-            <button 
+            <button
               onClick={() => {
                 setLoading(true)
                 setError(null)
@@ -180,11 +180,11 @@ function ResultPageContent() {
         <div className="absolute inset-0 opacity-20">
           <div className="pixel-grid"></div>
         </div>
-        
+
         <div className="absolute inset-0 opacity-10">
           <div className="scanlines"></div>
         </div>
-        
+
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="w-12 h-12 bg-linear-to-r from-blue-400 to-purple-400 rounded-lg border-2 border-white shadow-xl flex items-center justify-center pixel-brain mb-4 mx-auto animate-pulse">
@@ -227,12 +227,12 @@ function ResultPageContent() {
       <div className="absolute inset-0 opacity-20">
         <div className="pixel-grid"></div>
       </div>
-      
+
       {/* Retro Scanlines */}
       <div className="absolute inset-0 opacity-10">
         <div className="scanlines"></div>
       </div>
-      
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Pixel Elements */}
@@ -297,7 +297,7 @@ function ResultPageContent() {
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/8 to-blue-400/8 rounded-lg blur-xl -z-10"></div>
             {/* Card Inner Glow */}
             <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent rounded-lg"></div>
-            
+
             {/* MEMORYQUIZ Identity - Top Left Corner */}
             <div className="absolute top-4 left-4 flex items-center p-2">
               <img
@@ -307,7 +307,7 @@ function ResultPageContent() {
                 draggable={false}
               />
             </div>
-            
+
             {/* GameForSmart Logo - Top Right Corner */}
             <div className="absolute top-4 right-4 flex items-center w-32 h-12 opacity-80 hover:opacity-100 transition-opacity duration-300">
               <img
@@ -340,10 +340,10 @@ function ResultPageContent() {
                 />
               )}
             </div>
-            
+
             {/* Player Name */}
             <h2 className="text-2xl font-bold text-white/95 mb-4 drop-shadow-lg line-clamp-2 leading-tight">{playerRanking.player.nickname}</h2>
-            
+
             {/* Rank Display */}
             <div className="mb-6">
               <div className="text-6xl mb-2">{rankDisplay.icon}</div>
@@ -351,7 +351,7 @@ function ResultPageContent() {
                 {rankDisplay.text}
               </div>
             </div>
-            
+
             {/* Score Display with Glow */}
             <div className="bg-gradient-to-r from-slate-700/60 to-slate-800/70 backdrop-blur-sm rounded-lg px-8 py-4 mb-6 relative border border-slate-400/30 shadow-lg">
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/15 to-blue-400/15 rounded-lg blur-sm"></div>
@@ -359,7 +359,7 @@ function ResultPageContent() {
               <div className="text-4xl font-bold text-cyan-100 relative z-10 drop-shadow-lg">{playerRanking.totalScore}</div>
               <div className="text-lg text-slate-200/80 relative z-10">{t('lobby.points')}</div>
             </div>
-            
+
           </div>
         </div>
 
@@ -376,7 +376,7 @@ function ResultPageContent() {
           </button>
         </div>
       </div>
-      
+
       {/* Pixel Background Elements */}
       <PixelBackgroundElements />
     </div>
@@ -414,12 +414,12 @@ function PixelBackgroundElements() {
       <div className="absolute bottom-20 right-1/3 w-3 h-3 bg-pink-400 animate-float-delayed-slow opacity-60"></div>
       <div className="absolute top-1/2 left-20 w-4 h-4 bg-green-400 animate-float opacity-40"></div>
       <div className="absolute top-1/3 right-40 w-3 h-3 bg-yellow-400 animate-float-delayed opacity-55"></div>
-      
+
       {/* Pixel Blocks */}
       <div className="absolute top-60 left-1/3 w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-400 animate-pixel-float opacity-30"></div>
       <div className="absolute bottom-40 right-20 w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-400 animate-pixel-block-float opacity-25"></div>
       <div className="absolute top-80 right-1/2 w-4 h-4 bg-gradient-to-r from-purple-400 to-pink-400 animate-pixel-float-delayed opacity-35"></div>
-      
+
       {/* Falling Pixels */}
       <div className="absolute top-0 left-1/4 w-2 h-2 bg-blue-400 animate-falling opacity-40"></div>
       <div className="absolute top-0 right-1/3 w-2 h-2 bg-purple-400 animate-falling-delayed opacity-30"></div>

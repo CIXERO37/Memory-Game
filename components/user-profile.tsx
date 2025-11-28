@@ -15,10 +15,7 @@ export function UserProfileComponent({ userProfile, onClick }: UserProfileProps)
   const [retryCount, setRetryCount] = useState(0)
 
   // Debug logging
-  console.log('=== USER PROFILE COMPONENT ===')
-  console.log('UserProfile:', userProfile)
-  console.log('Avatar URL:', userProfile.avatar_url)
-  console.log('=============================')
+
 
   // Reset error state when avatar URL changes
   React.useEffect(() => {
@@ -28,7 +25,7 @@ export function UserProfileComponent({ userProfile, onClick }: UserProfileProps)
   }, [userProfile.avatar_url])
 
   const handleImageError = () => {
-    console.log('Avatar image failed to load, retry count:', retryCount)
+
     if (retryCount < 2) {
       // Retry loading the image
       setRetryCount(prev => prev + 1)
@@ -43,7 +40,7 @@ export function UserProfileComponent({ userProfile, onClick }: UserProfileProps)
   }
 
   const handleImageLoad = () => {
-    console.log('Avatar image loaded successfully')
+
     setImageError(false)
     setImageLoading(false)
   }
