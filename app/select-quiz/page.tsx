@@ -463,7 +463,8 @@ export default function SelectQuizPage() {
 
   const handleQuizSelect = (quizId: string) => {
     // Navigate to settings page with quizId
-    router.push(`/quiz-settings?quizId=${quizId}`)
+    localStorage.setItem("selectedQuizId", quizId)
+    router.push("/quiz-settings")
   }
 
   const toggleFavorite = async (quizId: string, e: React.MouseEvent) => {
@@ -551,8 +552,8 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-          
-         
+
+
 
           {/* Right side - GameForSmart Logo with glow effect */}
           <div className="flex-shrink-0 -mt-2 sm:-mt-12">

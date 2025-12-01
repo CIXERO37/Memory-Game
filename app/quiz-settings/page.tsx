@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Settings } from "lucide-react"
 import Link from "next/link"
@@ -15,7 +15,7 @@ import { Clock, HelpCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 function QuizSettingsPageContent() {
-  const searchParams = useSearchParams()
+
   const router = useRouter()
   const { t } = useTranslation()
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null)
@@ -65,7 +65,7 @@ function QuizSettingsPageContent() {
   }, [router])
 
   useEffect(() => {
-    const quizId = searchParams.get("quizId")
+    const quizId = localStorage.getItem("selectedQuizId")
     if (quizId) {
       setSelectedQuiz(quizId)
 
@@ -116,7 +116,7 @@ function QuizSettingsPageContent() {
       // Redirect to select quiz if no quizId
       router.push("/select-quiz")
     }
-  }, [searchParams, router])
+  }, [router])
 
   const handleSettingsComplete = async () => {
     if (!selectedQuiz || isCreatingRoom || !hostId) {

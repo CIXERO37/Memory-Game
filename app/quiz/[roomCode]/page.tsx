@@ -585,10 +585,13 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     let newCorrectAnswers = correctAnswers
 
     if (isCorrect) {
-      newScore = score + 1
-      setScore(newScore)
       newCorrectAnswers = correctAnswers + 1
       setCorrectAnswers(newCorrectAnswers)
+
+      // Calculate score based on percentage (0-100)
+      const totalQuestions = questions.length > 0 ? questions.length : 1
+      newScore = Math.round((newCorrectAnswers / totalQuestions) * 100)
+      setScore(newScore)
     }
 
     const newQuestionsAnswered = questionsAnswered + 1
