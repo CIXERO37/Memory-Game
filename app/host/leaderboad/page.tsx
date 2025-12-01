@@ -259,6 +259,13 @@ function LeaderboardHostPageContent() {
         localStorage.setItem('hostId', hostId)
         localStorage.setItem('roomCode', newRoom.code)
         localStorage.setItem('quizId', room.quizId)
+        localStorage.setItem('currentHost', JSON.stringify({
+          hostId,
+          roomCode: newRoom.code,
+          quizId: room.quizId,
+          isHost: true,
+          timestamp: Date.now()
+        }))
       } catch { }
       router.push(`/host/${newRoom.code}`)
     } catch (error) {

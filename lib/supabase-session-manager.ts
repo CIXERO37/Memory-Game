@@ -91,8 +91,8 @@ class SupabaseSessionManager {
 
 
       // Try to update existing room session first
-      // Try to update existing room session first
-      if (roomCode && await this.checkSessionColumnsExist()) {
+      // Try to update existing room session first (ONLY FOR HOST)
+      if (roomCode && userType === 'host' && await this.checkSessionColumnsExist()) {
         const { data: existingRoom, error: roomError } = await supabase
           .from('rooms')
           .select('id')
