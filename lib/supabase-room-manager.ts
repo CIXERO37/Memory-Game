@@ -650,7 +650,26 @@ class SupabaseRoomManager {
     }
   ): Promise<boolean> {
     try {
-      // Get current game session
+      // 1. Try to use RPC for atomic update (prevents race conditions)
+      const { error: rpcError } = await supabase.rpc('update_player_progress', {
+        p_game_pin: roomCode,
+        p_player_id: playerId,
+        p_quiz_score: progress.quizScore,
+        p_questions_answered: progress.questionsAnswered,
+        p_memory_progress: progress.memoryProgress || null
+      })
+
+      if (!rpcError) {
+        return true
+      }
+
+      // If RPC fails (e.g. function doesn't exist), fallback to legacy method
+      // Only log warning if it's not a "function not found" error to avoid noise
+      if (rpcError.code !== 'PGRST202') { // PGRST202 is "function not found" usually, but Supabase might return different codes
+        console.warn('[SupabaseRoomManager] RPC update failed, falling back to manual update:', rpcError.message)
+      }
+
+      // 2. Fallback: Get current game session (Legacy Method - Prone to Race Conditions)
       const { data: sessionData, error: sessionError } = await supabase
         .from('game_sessions')
         .select('participants')
