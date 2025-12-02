@@ -189,13 +189,15 @@ class SupabaseRoomManager {
           participants: [],
           responses: [],
           current_questions: sessionQuestions, // Store generated questions
-          application: 'memoryquiz'
+          application: 'memoryquiz',
+          game_end_mode: 'manual'
         })
         .select()
         .single()
 
       if (sessionError) {
         console.error('[SupabaseRoomManager] Error creating game session:', sessionError)
+        console.error('[SupabaseRoomManager] Error details:', JSON.stringify(sessionError, null, 2))
         return null
       }
 

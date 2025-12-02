@@ -270,35 +270,55 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }
   }, [isHost, params.roomCode])
 
+  // Function to shuffle questions deterministically based on a seed (playerId)
+  function shuffleQuestionsWithSeed(questions: Question[], seedStr: string): Question[] {
+    let seed = 0
+    for (let i = 0; i < seedStr.length; i++) {
+      seed = ((seed << 5) - seed) + seedStr.charCodeAt(i)
+      seed |= 0 // Convert to 32bit integer
+    }
+
+    const shuffled = [...questions]
+    // Fisher-Yates shuffle with seeded random
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      // Use Math.sin with the seed and index to generate a deterministic random number
+      const x = Math.sin(seed + i) * 10000
+      const r = x - Math.floor(x)
+
+      const j = Math.floor(r * (i + 1))
+
+      const temp = shuffled[i]
+      shuffled[i] = shuffled[j]
+      shuffled[j] = temp
+    }
+
+    return shuffled
+  }
+
   // CRITICAL: Initialize quiz questions - FIX infinite loading
   useEffect(() => {
     if (!loading && (!room || !room.gameStarted)) {
-
       window.location.href = "/"
       return
     }
 
-    if (!room || loading) {
-
+    // Wait for room, loading, and playerId to be ready
+    if (!room || loading || !playerId) {
       return
     }
 
     // Cek apakah soal sudah diinisialisasi sebelumnya menggunakan useRef
     if (questionsInitialized.current) {
-
       return
     }
 
     const initQuestions = async () => {
-
       questionsInitialized.current = true
 
       // FIX: Use room.quizId as primary source, fallback to searchParams or default
       const quizId = room.quizId || searchParams.quizId || "math-basic"
       const questionCount = room.settings.questionCount
       const timeLimit = room.settings.totalTimeLimit
-
-
 
       // Try to get from local data first
       const localQuiz = getQuizById(quizId)
@@ -458,7 +478,11 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       setGameStarted(true)
 
       if (quizQuestions.length > 0) {
-
+        // Apply deterministic shuffle based on playerId
+        // This ensures each player gets a random order, but it persists on reload
+        if (playerId) {
+          quizQuestions = shuffleQuestionsWithSeed(quizQuestions, playerId)
+        }
 
         setQuestions(quizQuestions)
         setQuizTitle(title)
@@ -480,7 +504,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     }
 
     initQuestions()
-  }, [searchParams, params.roomCode, room, loading])
+  }, [searchParams, params.roomCode, room, loading, playerId])
 
   // CRITICAL: Timeout to prevent infinite loading
   useEffect(() => {

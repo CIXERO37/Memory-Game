@@ -26,7 +26,7 @@ function QuizSettingsPageContent() {
   const [isCreatingRoom, setIsCreatingRoom] = useState(false)
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(true)
 
-  // Get authenticated user's XID from profiles table
+  // Get authenticated user's Profile ID
   useEffect(() => {
     const getHostId = async () => {
       try {
@@ -38,7 +38,7 @@ function QuizSettingsPageContent() {
           return
         }
 
-        // Get profile XID from profiles table using auth_user_id
+        // Get profile ID from profiles table using auth_user_id
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id')
@@ -52,8 +52,7 @@ function QuizSettingsPageContent() {
           return
         }
 
-        // Use XID from profiles table as host_id
-
+        // Use Profile ID (CUID) as host_id, matching the database schema
         setHostId(profile.id)
       } catch (error) {
         console.error("[QuizSettings] Error in getHostId:", error)
@@ -132,8 +131,6 @@ function QuizSettingsPageContent() {
       // Get quiz title from quiz data
       const quizTitle = quiz?.title || `Quiz ${selectedQuiz}`
 
-
-
       const room = await roomManager.createRoom(hostId, {
         questionCount: parseInt(questionCount),
         totalTimeLimit: parseInt(timeLimit),
@@ -145,8 +142,6 @@ function QuizSettingsPageContent() {
         setIsCreatingRoom(false)
         return
       }
-
-
 
       // Verify room exists before proceeding
       const verifyRoom = await roomManager.getRoom(room.code)

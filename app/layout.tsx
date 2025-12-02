@@ -7,12 +7,15 @@ import { AuthGuard } from '../components/auth-guard'
 import { I18nInitializer } from '../components/i18n-initializer'
 import { PageTransition } from '../components/page-transition'
 
+export const viewport = {
+  themeColor: '#1a1a2e',
+}
+
 export const metadata: Metadata = {
   title: 'Memory Quiz',
   description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
   generator: 'v0.app',
   manifest: '/site.webmanifest',
-  themeColor: '#1a1a2e',
   metadataBase: new URL('https://memorygame-quiz.vercel.app'),
   openGraph: {
     title: 'Memory Quiz',
@@ -58,7 +61,7 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
-}>) { 
+}>) {
   return (
     <html lang="en">
       <head>
