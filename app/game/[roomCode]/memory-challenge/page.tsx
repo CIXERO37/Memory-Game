@@ -71,7 +71,9 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     }
   }, [room?.status, params.roomCode])
 
-  // Aggressive polling for game end detection (fallback)
+  // 🚀 OPTIMIZED: Reduced polling interval for game end detection (fallback only)
+  // Primary detection is via Realtime subscription (useRoom) and BroadcastChannel above
+  // This polling is only a safety net in case Realtime fails - reduced from 1s to 10s
   useEffect(() => {
     if (params.roomCode) {
       const gameEndPolling = setInterval(async () => {
@@ -85,7 +87,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         } catch (error) {
           console.error("[Memory Challenge] Error in game end polling:", error)
         }
-      }, 1000) // Check every 1 second for game end
+      }, 10000) // 🚀 OPTIMIZED: Check every 10 seconds (fallback only, not primary detection)
 
       return () => clearInterval(gameEndPolling)
     }

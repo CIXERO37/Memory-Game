@@ -12,6 +12,7 @@ import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { CountdownTimer } from "@/components/countdown-timer"
 import { RobustGoogleAvatar } from "@/components/robust-google-avatar"
+import { VirtualizedPlayerList } from "@/components/virtualized-player-grid"
 
 export default function WaitingRoomPage() {
   const params = useParams()
@@ -625,36 +626,19 @@ export default function WaitingRoomPage() {
                   </div>
                 )}
 
-                {/* Other Players Section */}
+                {/* 🚀 OPTIMIZED: Other Players Section with Virtualized List */}
                 <div className="mb-3 sm:mb-4 md:mb-6">
-                  <div className="grid gap-2 sm:gap-3">
-                    {room.players
+                  <VirtualizedPlayerList
+                    players={room.players
                       .filter(player => player.nickname !== playerInfo?.nickname)
-                      .map((player) => {
-
-                        return (
-                          <div key={player.id} className="bg-white border-2 border-black rounded p-2 sm:p-3 pixel-player-card">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden shrink-0">
-                                <RobustGoogleAvatar
-                                  avatarUrl={player.avatar}
-                                  alt={`${player.nickname} avatar`}
-                                  className="w-full h-full"
-                                  width={32}
-                                  height={32}
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-bold text-black pixel-font-sm text-xs sm:text-sm">
-                                  <span className="truncate block">{player.nickname.toUpperCase()}</span>
-                                  {player.isHost && <span className="text-orange-600 text-[10px] sm:text-xs">(HOST)</span>}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                  </div>
+                      .map(player => ({
+                        id: player.id,
+                        nickname: player.nickname,
+                        avatar: player.avatar,
+                        isHost: player.isHost
+                      }))}
+                    currentPlayerId={playerInfo?.playerId}
+                  />
                 </div>
 
                 {/* Pixel Status Section */}

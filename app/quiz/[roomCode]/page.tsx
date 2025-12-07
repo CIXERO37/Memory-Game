@@ -14,6 +14,7 @@ import { useSynchronizedTimer } from "@/hooks/use-synchronized-timer"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabaseRoomManager } from "@/lib/supabase-room-manager"
 import { quizApi } from "@/lib/supabase"
+import { scoreUpdateQueue } from "@/lib/score-update-queue"
 import { useTranslation } from "react-i18next"
 
 interface QuizPageProps {
@@ -131,6 +132,9 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
 
     try {
+      // 🚀 OPTIMIZED: Flush all pending queue updates before game ends
+      await scoreUpdateQueue.flushNow()
+
       await roomManager.updateGameStatus(params.roomCode, "finished")
 
       let broadcastChannel: BroadcastChannel | null = null
@@ -657,74 +661,92 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       return
     }
 
-    // CRITICAL: Update progress to Supabase dengan menunggu selesai
+    // 🚀 OPTIMIZED: Use queue for normal updates, direct update only for last question
     if (playerId) {
       const updateData = {
         quizScore: newScore,
         questionsAnswered: newQuestionsAnswered
       }
 
+      const isLastQuestion = currentQuestion >= questions.length - 1
 
+      if (isLastQuestion) {
+        // 🔴 CRITICAL: Last question - use direct update with retry for guaranteed sync
+        const attemptUpdate = async (attempt = 1, maxAttempts = 5) => {
+          try {
+            const success = await roomManager.updatePlayerScore(
+              params.roomCode,
+              playerId,
+              updateData.quizScore,
+              updateData.questionsAnswered
+            )
 
-      // Retry mechanism dengan await
-      const attemptUpdate = async (attempt = 1, maxAttempts = 5) => {
-        try {
-          const success = await roomManager.updatePlayerScore(
-            params.roomCode,
-            playerId,
-            updateData.quizScore,
-            updateData.questionsAnswered
-          )
-
-          if (success) {
-
-
-            // Broadcast untuk sync instan
-            let broadcastChannel: BroadcastChannel | null = null
-            try {
-              if (typeof window !== 'undefined') {
-                broadcastChannel = new BroadcastChannel(`progress-update-${params.roomCode}`)
-                broadcastChannel.postMessage({
-                  type: 'progress-update',
-                  playerId,
-                  updateData,
-                  timestamp: Date.now()
-                })
-
+            if (success) {
+              // Broadcast untuk sync instan
+              let broadcastChannel: BroadcastChannel | null = null
+              try {
+                if (typeof window !== 'undefined') {
+                  broadcastChannel = new BroadcastChannel(`progress-update-${params.roomCode}`)
+                  broadcastChannel.postMessage({
+                    type: 'progress-update',
+                    playerId,
+                    updateData,
+                    timestamp: Date.now()
+                  })
+                }
+              } finally {
+                if (broadcastChannel) {
+                  broadcastChannel.close()
+                }
               }
-            } finally {
-              if (broadcastChannel) {
-                broadcastChannel.close()
-              }
-            }
-
-            // Jika soal terakhir, tunggu sebentar sebelum lanjut
-            if (currentQuestion >= questions.length - 1) {
 
               await new Promise(resolve => setTimeout(resolve, 1000))
+              return true
+            } else {
+              throw new Error(`Update failed on attempt ${attempt}`)
             }
+          } catch (error) {
+            console.error(`[Quiz] ❌ Update failed (attempt ${attempt}):`, error)
 
-            return true
-          } else {
-            throw new Error(`Update failed on attempt ${attempt}`)
+            if (attempt < maxAttempts) {
+              const delay = Math.pow(2, attempt) * 500
+              await new Promise(resolve => setTimeout(resolve, delay))
+              return attemptUpdate(attempt + 1, maxAttempts)
+            } else {
+              console.error(`[Quiz] 💥 All ${maxAttempts} attempts failed.`)
+              return false
+            }
           }
-        } catch (error) {
-          console.error(`[Quiz] ❌ Update failed (attempt ${attempt}):`, error)
+        }
 
-          if (attempt < maxAttempts) {
-            const delay = Math.pow(2, attempt) * 500
+        await attemptUpdate()
+      } else {
+        // 🚀 OPTIMIZED: Normal question - use queue for batching (reduces rate limit hits)
+        scoreUpdateQueue.enqueue(
+          params.roomCode,
+          playerId,
+          updateData.quizScore,
+          updateData.questionsAnswered
+        )
 
-            await new Promise(resolve => setTimeout(resolve, delay))
-            return attemptUpdate(attempt + 1, maxAttempts)
-          } else {
-            console.error(`[Quiz] 💥 All ${maxAttempts} attempts failed.`)
-            return false
+        // Broadcast untuk sync instan (bahkan sebelum queue flush)
+        let broadcastChannel: BroadcastChannel | null = null
+        try {
+          if (typeof window !== 'undefined') {
+            broadcastChannel = new BroadcastChannel(`progress-update-${params.roomCode}`)
+            broadcastChannel.postMessage({
+              type: 'progress-update',
+              playerId,
+              updateData,
+              timestamp: Date.now()
+            })
+          }
+        } finally {
+          if (broadcastChannel) {
+            broadcastChannel.close()
           }
         }
       }
-
-      // Jalankan update dan tunggu selesai
-      await attemptUpdate()
     }
 
     // Countdown to next question
@@ -757,6 +779,9 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
 
       try {
+        // 🚀 OPTIMIZED: Flush all pending queue updates before final sync
+        await scoreUpdateQueue.flushNow()
+
         if (playerId) {
           // 🚀 IMPROVED: Multiple verification attempts for final update
           const finalUpdate = async (attempt = 1, maxAttempts = 3) => {
