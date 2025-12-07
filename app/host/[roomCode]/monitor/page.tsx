@@ -695,98 +695,110 @@ function MonitorPageContent() {
                 <p className="text-sm sm:text-base lg:text-lg text-white">{t('monitor.noPlayers')}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                {sortedPlayers.map((player, index) => {
-                  const rank = index + 1
-                  const quizScore = player.quizScore || 0
-                  const totalScore = quizScore
-                  const questionsAnswered = player.questionsAnswered || 0
-                  const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
-                  const rankingChange = rankingChanges[player.id]
+              <>
+                {/* 🚀 OPTIMIZED: Scrollable container for large player lists */}
+                {players.length > 20 && (
+                  <div className="text-center mb-3 text-xs text-white/60">
+                    Showing {players.length} players (scroll to see more)
+                  </div>
+                )}
+                <div
+                  className={`${players.length > 20 ? 'max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent pr-2' : ''}`}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                    {sortedPlayers.map((player, index) => {
+                      const rank = index + 1
+                      const quizScore = player.quizScore || 0
+                      const totalScore = quizScore
+                      const questionsAnswered = player.questionsAnswered || 0
+                      const quizProgress = Math.min((questionsAnswered / quizSettings.questionCount) * 100, 100)
+                      const rankingChange = rankingChanges[player.id]
 
-                  return (
-                    <div key={player.id} className="relative bg-linear-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
-                      <div className="flex items-center justify-between mb-2 sm:mb-3">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="flex items-center gap-1 sm:gap-2">
-                            <div
-                              className={`text-sm sm:text-base lg:text-lg font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
-                            >
-                              #{rank}
-                            </div>
-                            {rankingChange === "up" && <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
-                            {rankingChange === "down" && <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />}
-                          </div>
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex items-center justify-center overflow-hidden">
-                            <RobustGoogleAvatar
-                              avatarUrl={player.avatar}
-                              alt={`${player.nickname} avatar`}
-                              className="w-full h-full"
-                              width={48}
-                              height={48}
-                            />
-                          </div>
-                          <div>
-                            {(() => {
-                              const { firstWord, secondWord } = splitPlayerName(player.nickname)
-                              return (
-                                <div className="text-center">
-                                  <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
-                                    {firstWord}
-                                  </h3>
-                                  {secondWord && (
-                                    <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
-                                      {secondWord}
-                                    </h3>
-                                  )}
+                      return (
+                        <div key={player.id} className="relative bg-linear-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
+                          <div className="flex items-center justify-between mb-2 sm:mb-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <div className="flex items-center gap-1 sm:gap-2">
+                                <div
+                                  className={`text-sm sm:text-base lg:text-lg font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
+                                >
+                                  #{rank}
                                 </div>
-                              )
-                            })()}
+                                {rankingChange === "up" && <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
+                                {rankingChange === "down" && <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />}
+                              </div>
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex items-center justify-center overflow-hidden">
+                                <RobustGoogleAvatar
+                                  avatarUrl={player.avatar}
+                                  alt={`${player.nickname} avatar`}
+                                  className="w-full h-full"
+                                  width={48}
+                                  height={48}
+                                />
+                              </div>
+                              <div>
+                                {(() => {
+                                  const { firstWord, secondWord } = splitPlayerName(player.nickname)
+                                  return (
+                                    <div className="text-center">
+                                      <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
+                                        {firstWord}
+                                      </h3>
+                                      {secondWord && (
+                                        <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
+                                          {secondWord}
+                                        </h3>
+                                      )}
+                                    </div>
+                                  )
+                                })()}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
+                                <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} {t('monitor.points')}</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
-                            <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} {t('monitor.points')}</span>
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="space-y-2 sm:space-y-3">
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-bold text-slate-300">QUIZ PROGRESS</span>
-                            <span className={`text-xs sm:text-sm font-bold ${questionsAnswered >= quizSettings.questionCount
-                              ? 'text-green-300'
-                              : questionsAnswered > 0
-                                ? 'text-blue-300'
-                                : 'text-gray-400'
-                              }`}>
-                              {questionsAnswered}/{quizSettings.questionCount}
-                            </span>
-                          </div>
-                          <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3 sm:h-4 relative overflow-hidden">
-                            <div
-                              className={`h-full rounded-lg transition-all duration-500 ${questionsAnswered >= quizSettings.questionCount
-                                ? 'bg-linear-to-r from-green-400 to-emerald-400'
-                                : questionsAnswered > 0
-                                  ? 'bg-linear-to-r from-blue-400 to-purple-400'
-                                  : 'bg-linear-to-r from-gray-400 to-gray-500'
-                                }`}
-                              style={{ width: `${Math.max(quizProgress, 2)}%` }}
-                            />
-                            {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
-                              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                            )}
-                            {questionsAnswered >= quizSettings.questionCount && (
-                              <div className="absolute inset-0 bg-linear-to-r from-transparent via-green-300/30 to-transparent animate-ping"></div>
-                            )}
+                          <div className="space-y-2 sm:space-y-3">
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-bold text-slate-300">QUIZ PROGRESS</span>
+                                <span className={`text-xs sm:text-sm font-bold ${questionsAnswered >= quizSettings.questionCount
+                                  ? 'text-green-300'
+                                  : questionsAnswered > 0
+                                    ? 'text-blue-300'
+                                    : 'text-gray-400'
+                                  }`}>
+                                  {questionsAnswered}/{quizSettings.questionCount}
+                                </span>
+                              </div>
+                              <div className="w-full bg-black/30 border-2 border-white/30 rounded-lg h-3 sm:h-4 relative overflow-hidden">
+                                <div
+                                  className={`h-full rounded-lg transition-all duration-500 ${questionsAnswered >= quizSettings.questionCount
+                                    ? 'bg-linear-to-r from-green-400 to-emerald-400'
+                                    : questionsAnswered > 0
+                                      ? 'bg-linear-to-r from-blue-400 to-purple-400'
+                                      : 'bg-linear-to-r from-gray-400 to-gray-500'
+                                    }`}
+                                  style={{ width: `${Math.max(quizProgress, 2)}%` }}
+                                />
+                                {questionsAnswered > 0 && questionsAnswered < quizSettings.questionCount && (
+                                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                                )}
+                                {questionsAnswered >= quizSettings.questionCount && (
+                                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-green-300/30 to-transparent animate-ping"></div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
