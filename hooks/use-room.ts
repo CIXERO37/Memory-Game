@@ -45,6 +45,9 @@ export function useRoom(roomCode: string | null) {
             JSON.stringify(previousRoom.players?.map(p => p.id).sort()) !==
             JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
             previousRoom.status !== updatedRoom?.status ||
+            // 🚀 FIX: Check countdownStartTime to detect countdown start
+            previousRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
+            previousRoom.gameStarted !== updatedRoom?.gameStarted ||
             // Check for score/progress changes
             JSON.stringify(previousRoom.players?.map(p => ({
               id: p.id,
