@@ -602,6 +602,8 @@ class SupabaseRoomManager {
 
   async startCountdown(roomCode: string, hostId: string, duration: number = 10): Promise<boolean> {
     try {
+      const countdownStartTime = new Date().toISOString()
+
       // 🚀 SUPABASE B FIRST: Update for instant realtime
       if (isPlayersSupabaseConfigured()) {
         try {
@@ -612,12 +614,13 @@ class SupabaseRoomManager {
         }
       }
 
-      // Also update Supabase A
+      // Also update Supabase A - NOTE: Keep status as 'waiting' during countdown
+      // Status 'active' should only be set when countdown finishes and quiz actually starts
+      // Countdown is detected via countdown_started_at field
       const { error } = await supabase
         .from('game_sessions')
         .update({
-          status: 'active',
-          countdown_started_at: new Date().toISOString(),
+          countdown_started_at: countdownStartTime,
           started_at: null
         })
         .eq('game_pin', roomCode)

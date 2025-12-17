@@ -125,22 +125,22 @@ export default function WaitingRoomPage() {
 
   // Listen for game start and countdown
   useEffect(() => {
-
-
-    if (room?.status === "countdown") {
-
+    // 🚀 FIX: Check for countdown first using both status and countdownStartTime
+    // This ensures countdown is detected even if status hasn't updated yet
+    if (room?.status === "countdown" || (room?.countdownStartTime && !room?.gameStarted)) {
       // Force countdown to show immediately
       setForceCountdown(true)
       // Countdown will be handled by the CountdownTimer component
       // No need to set gameStarting state for countdown
-    } else if (room?.gameStarted && !gameStarting) {
+    } else if (room?.status === "quiz" && !gameStarting) {
+      // Only redirect to quiz after countdown completes (status becomes 'quiz')
       setGameStarting(true)
       setForceCountdown(false)
 
       // Add a small delay before redirecting
       window.location.href = `/quiz/${roomCode}`
     }
-  }, [room?.status, room?.gameStarted, gameStarting, roomCode])
+  }, [room?.status, room?.countdownStartTime, room?.gameStarted, gameStarting, roomCode])
 
   // Detect new players joining and show animation
   useEffect(() => {

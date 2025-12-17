@@ -491,7 +491,8 @@ function LobbyPageContent() {
     }
   }
 
-  if (currentRoom && currentRoom.status === "countdown") {
+  // 🚀 FIX: Check for countdown using both status and countdownStartTime
+  if (currentRoom && (currentRoom.status === "countdown" || (currentRoom.countdownStartTime && !currentRoom.gameStarted))) {
     return (
       <CountdownTimer
         room={currentRoom}
