@@ -8,9 +8,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check, Book, BookOpen, Beaker, Calculator, Clock, Globe, Languages, Laptop, Dumbbell, Film, Briefcase, ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useQuizzes } from "@/hooks/use-quiz"
+import { useQuizzes, useQuizzesPaginated, preloadCategoryImages } from "@/hooks/use-quiz"
 import { useTranslation } from "react-i18next"
 import { supabase, quizApi } from "@/lib/supabase"
+import { CachedImage } from "@/components/cached-image"
 
 // Categories and background images mapping
 const categories = [
@@ -191,15 +192,30 @@ export default function SelectQuizPage() {
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [isSelectAllExpanded, setIsSelectAllExpanded] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 6 // 2 rows x 3 columns
+  const itemsPerPage = 12 // 4 rows x 3 columns
   const [favoriteQuizIds, setFavoriteQuizIds] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<"quiz" | "my-quiz" | "favorite">("quiz")
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null)
   const [myQuizzes, setMyQuizzes] = useState<any[]>([])
   const [loadingMyQuizzes, setLoadingMyQuizzes] = useState(false)
 
-  // Fetch quizzes from Supabase
-  const { quizzes: supabaseQuizzes, loading, error } = useQuizzes()
+  // Fetch quizzes from Supabase with server-side pagination (for "quiz" tab only)
+  const {
+    quizzes: paginatedQuizzes,
+    totalCount: paginatedTotalCount,
+    totalPages: paginatedTotalPages,
+    loading: paginatedLoading,
+    error: paginatedError
+  } = useQuizzesPaginated({
+    page: currentPage,
+    limit: itemsPerPage,
+    category: categoryFilter !== 'all' ? categoryFilter : undefined,
+    searchQuery: searchTerm || undefined,
+    enabled: activeTab === "quiz" // Only fetch when "quiz" tab is active
+  })
+
+  // Also keep the full quizzes for "my-quiz" and "favorite" tabs filtering
+  const { quizzes: allQuizzes, loading: allQuizzesLoading } = useQuizzes()
 
   // Helper function to normalize category name (for consistent filtering)
   const normalizeCategory = (category: string | undefined | null): string => {
@@ -256,10 +272,21 @@ export default function SelectQuizPage() {
     }
   }
 
-  // Transform Supabase data to match existing interface
-  const quizzes = useMemo(() => {
-    return supabaseQuizzes
-  }, [supabaseQuizzes])
+  // Select data source based on active tab
+  const quizzesForFiltering = useMemo(() => {
+    return allQuizzes
+  }, [allQuizzes])
+
+  // 🚀 OPTIMIZED: Preload category background images on mount for faster loading
+  useEffect(() => {
+    // Extract all category background image URLs
+    const categoryImageUrls = categories
+      .map(cat => cat.bgImage)
+      .filter((url): url is string => !!url)
+
+    // Preload images in the background
+    preloadCategoryImages(categoryImageUrls)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -350,9 +377,9 @@ export default function SelectQuizPage() {
     }
   }, [currentUserProfileId])
 
-  const filteredQuizzes = useMemo(() => {
-    // First filter by tab
-    let tabFilteredQuizzes = quizzes
+  // Filtered quizzes for "my-quiz" and "favorite" tabs (client-side pagination)
+  const filteredQuizzesForClientPagination = useMemo(() => {
+    let tabFilteredQuizzes: any[] = []
 
     if (activeTab === "my-quiz") {
       // Use myQuizzes which includes all quizzes created by user (including private)
@@ -360,7 +387,7 @@ export default function SelectQuizPage() {
     } else if (activeTab === "favorite") {
       // Filter favorite quizzes from all quizzes (including private ones if user created them)
       // First get favorite quizzes from public quizzes
-      let favoriteFromPublic = quizzes.filter((quiz) =>
+      let favoriteFromPublic = quizzesForFiltering.filter((quiz) =>
         favoriteQuizIds.includes(quiz.id)
       )
       // Also include favorite quizzes from myQuizzes (in case user favorited their own private quiz)
@@ -373,11 +400,11 @@ export default function SelectQuizPage() {
         index === self.findIndex((q) => q.id === quiz.id)
       )
     } else {
-      // "quiz" tab - show all public quizzes (default behavior)
-      tabFilteredQuizzes = quizzes
+      // "quiz" tab uses server-side pagination, return empty array
+      return []
     }
 
-    // Then apply search and category filters
+    // Then apply search and category filters for client-side tabs
     return tabFilteredQuizzes.filter((quiz) => {
       const matchesSearch =
         searchTerm === "" ||
@@ -395,13 +422,32 @@ export default function SelectQuizPage() {
 
       return matchesSearch && matchesCategory
     })
-  }, [quizzes, myQuizzes, searchTerm, categoryFilter, activeTab, favoriteQuizIds])
+  }, [quizzesForFiltering, myQuizzes, searchTerm, categoryFilter, activeTab, favoriteQuizIds])
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentQuizzes = filteredQuizzes.slice(startIndex, endIndex)
+  // Determine which data source and pagination to use based on active tab
+  const isServerPaginated = activeTab === "quiz"
+
+  // For "quiz" tab: use server-side paginated data
+  // For "my-quiz" and "favorite" tabs: use client-side pagination
+  const totalPages = isServerPaginated
+    ? paginatedTotalPages
+    : Math.ceil(filteredQuizzesForClientPagination.length / itemsPerPage)
+
+  const currentQuizzes = useMemo(() => {
+    if (isServerPaginated) {
+      // Server-side pagination - data already paginated from API
+      return paginatedQuizzes
+    } else {
+      // Client-side pagination for my-quiz and favorite tabs
+      const startIndex = (currentPage - 1) * itemsPerPage
+      const endIndex = startIndex + itemsPerPage
+      return filteredQuizzesForClientPagination.slice(startIndex, endIndex)
+    }
+  }, [isServerPaginated, paginatedQuizzes, filteredQuizzesForClientPagination, currentPage, itemsPerPage])
+
+  // Combined loading state
+  const loading = isServerPaginated ? paginatedLoading : (activeTab === "my-quiz" ? loadingMyQuizzes : allQuizzesLoading)
+  const error = isServerPaginated ? paginatedError : null
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -570,7 +616,7 @@ export default function SelectQuizPage() {
         </div>
 
         {/* Quiz Selector Content */}
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           {/* Tabs Section */}
           <div className="mb-6 sm:mb-8">
             <div className="flex gap-2 sm:gap-3 justify-start flex-wrap">
@@ -873,8 +919,8 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-          {/* Grid: on very small screens force single column cards full width */}
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+          {/* Grid: 3 columns x 4 rows layout */}
+          <div className="flex flex-wrap justify-center gap-3">
             {(loading || (activeTab === "my-quiz" && loadingMyQuizzes)) ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
@@ -922,7 +968,7 @@ export default function SelectQuizPage() {
                   </div>
                 </div>
               </div>
-            ) : filteredQuizzes.length === 0 ? (
+            ) : currentQuizzes.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 {/* Enhanced Empty State Card with Unique Animations */}
                 <div className="relative inline-block mb-6">
@@ -1003,13 +1049,14 @@ export default function SelectQuizPage() {
                     className="relative cursor-pointer group w-full sm:w-[260px] h-[270px] rounded-xl overflow-hidden shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-blue-500/20"
                     onClick={() => handleQuizSelect(quiz.id)}
                   >
-                    {/* Background Image with Zoom Effect */}
-                    <div
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                      style={{
-                        backgroundImage: `url(${quizBgImage})`,
-                      }}
-                    />
+                    {/* Background Image with Zoom Effect - Optimized with lazy loading */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      <CachedImage
+                        src={quizBgImage}
+                        alt={quiz.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    </div>
 
                     {/* Cinematic Gradient Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
@@ -1075,7 +1122,7 @@ export default function SelectQuizPage() {
           </div>
 
           {/* Retro Gaming Style Pagination with Modern Structure */}
-          {!loading && !error && filteredQuizzes.length > itemsPerPage && (
+          {!loading && !error && totalPages > 1 && (
             <div className="mt-8 flex justify-center">
               <div className="relative pixel-button-container">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-blue-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>

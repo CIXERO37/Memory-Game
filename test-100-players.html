@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Simulation Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f0f1a;
+            min-height: 100vh;
+            color: #e4e4e7;
+            line-height: 1.5;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(180deg, #18181b 0%, #1f1f25 100%);
+            border-right: 1px solid #27272a;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: #71717a;
+        }
+
+        /* Card Sections */
+        .card {
+            background: rgba(39, 39, 42, 0.5);
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-header svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #a1a1aa;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #3f3f46;
+            border-radius: 8px;
+            background: #18181b;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        input::placeholder {
+            color: #52525b;
+        }
+
+        /* Toggle Switch */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #e4e4e7;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #3f3f46;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .toggle.active {
+            background: #6366f1;
+        }
+
+        .toggle.active::after {
+            left: 22px;
+        }
+
+        /* Inline Inputs */
+        .inline-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Main Content */
+        .main {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-burst {
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
+        }
+
+        .btn-burst:hover {
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.35);
+        }
+
+        .btn-secondary {
+            background: #27272a;
+            color: #e4e4e7;
+            border: 1px solid #3f3f46;
+        }
+
+        .btn-secondary:hover {
+            background: #3f3f46;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: rgba(39, 39, 42, 0.5);
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card.success .stat-value {
+            background: linear-gradient(135deg, #22c55e, #4ade80);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-card.error .stat-value {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* Progress */
+        .progress-section {
+            background: rgba(39, 39, 42, 0.5);
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #27272a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Log Console */
+        .log-section {
+            background: #0c0c14;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            flex: 1;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .log-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a1a1aa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .log-clear {
+            font-size: 12px;
+            color: #71717a;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .log-clear:hover {
+            background: #27272a;
+            color: #a1a1aa;
+        }
+
+        .log-container {
+            flex: 1;
+            padding: 12px 16px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-time {
+            color: #52525b;
+            flex-shrink: 0;
+        }
+
+        .log-entry.success .log-msg {
+            color: #4ade80;
+        }
+
+        .log-entry.error .log-msg {
+            color: #f87171;
+        }
+
+        .log-entry.info .log-msg {
+            color: #60a5fa;
+        }
+
+        .log-entry.warning .log-msg {
+            color: #fbbf24;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #27272a;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .running .btn-primary,
+        .running .btn-burst {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app" id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <div class="logo-text">Player Simulator</div>
+                    <div class="logo-subtitle">Stress Test Tool</div>
+                </div>
+            </div>
+
+            <!-- Connection -->
+            <div class="card">
+                <div class="card-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    Database
+                </div>
+                <div class="form-group">
+                    <label>Supabase URL</label>
+                    <input type="text" id="supabaseUrl" placeholder="https://xxx.supabase.co">
+                </div>
+                <div class="form-group">
+                    <label>Anon Key</label>
+                    <input type="password" id="supabaseKey" placeholder="eyJhbGci...">
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" />
+                    </svg>
+                    Configuration
+                </div>
+                <div class="form-group">
+                    <label>Game PIN</label>
+                    <input type="text" id="gamePin" placeholder="Enter 6-digit PIN" maxlength="6">
+                </div>
+                <div class="inline-row">
+                    <div class="form-group">
+                        <label>Players</label>
+                        <input type="number" id="playerCount" value="100" min="1" max="500">
+                    </div>
+                    <div class="form-group">
+                        <label>Batch Size</label>
+                        <input type="number" id="batchSize" value="10" min="1" max="50">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Delay (ms)</label>
+                    <input type="number" id="delay" value="0" min="0" max="1000">
+                </div>
+                <div class="toggle-group">
+                    <span class="toggle-label">🔥 Aggressive Mode</span>
+                    <div class="toggle active" id="aggressiveToggle" onclick="toggleAggressive()"></div>
+                    <input type="hidden" id="aggressiveMode" value="true">
+                </div>
+                <div class="toggle-group">
+                    <span class="toggle-label">🛡️ Safe Score Mode</span>
+                    <div class="toggle" id="safeScoreToggle" onclick="toggleSafeScore()"></div>
+                    <input type="hidden" id="safeScoreMode" value="false">
+                </div>
+                <p style="font-size: 10px; color: #71717a; margin-top: 4px;">
+                    Safe Mode: Update score tanpa menandai selesai (tidak trigger game-end)
+                </p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                    Quick Actions
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn btn-secondary" onclick="checkSession()" id="btnCheck"
+                        style="width: 100%; justify-content: center;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        Check Session
+                    </button>
+                    <button class="btn btn-danger" onclick="removeAllPlayers()" id="btnRemove"
+                        style="width: 100%; justify-content: center;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        </svg>
+                        Remove All Players
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="main-header">
+                <h1 class="main-title">Simulation Dashboard</h1>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="startSimulation()" id="btnStart">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        Start Simulation
+                    </button>
+                    <button class="btn btn-burst" onclick="burstJoinSimulation()" id="btnBurst">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                        </svg>
+                        Burst Join
+                    </button>
+                    <button class="btn btn-secondary" onclick="simulateScoreUpdates()" id="btnScores">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 20V10M12 20V4M6 20v-6" />
+                        </svg>
+                        Update Scores
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <div class="stat-value" id="statAdded">0</div>
+                    <div class="stat-label">Players Added</div>
+                </div>
+                <div class="stat-card error">
+                    <div class="stat-value" id="statFailed">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTime">0s</div>
+                    <div class="stat-label">Time Elapsed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statRate">0/s</div>
+                    <div class="stat-label">Rate</div>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span>Progress</span>
+                    <span id="progressText">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Log Console -->
+            <div class="log-section">
+                <div class="log-header">
+                    <span class="log-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width: 14px; height: 14px;">
+                            <polyline points="4 17 10 11 4 5" />
+                            <line x1="12" y1="19" x2="20" y2="19" />
+                        </svg>
+                        Console Output
+                    </span>
+                    <button class="log-clear" onclick="clearLog()">Clear</button>
+                </div>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry info">
+                        <span class="log-time">--:--:--</span>
+                        <span class="log-msg">Ready. Configure settings and click Start Simulation.</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <script>
+        // Player name generators
+        const adjectives = ['Happy', 'Swift', 'Brave', 'Clever', 'Mighty', 'Silent', 'Cosmic', 'Thunder', 'Shadow', 'Golden', 'Crystal', 'Storm', 'Frozen', 'Blazing', 'Electric', 'Iron', 'Steel', 'Savage', 'Noble', 'Ancient'];
+        const nouns = ['Tiger', 'Dragon', 'Phoenix', 'Wolf', 'Eagle', 'Lion', 'Hawk', 'Bear', 'Shark', 'Falcon', 'Panther', 'Viper', 'Knight', 'Ninja', 'Wizard', 'Hunter', 'Warrior', 'Master', 'Legend', 'Hero'];
+
+        // Avatar options (using DiceBear API)
+        const avatarStyles = ['adventurer', 'avataaars', 'bottts', 'fun-emoji', 'lorelei', 'micah', 'miniavs', 'pixel-art', 'thumbs'];
+
+        let supabase = null;
+        let addedPlayers = [];
+        let isRunning = false;
+        let sessionId = null;
+
+        // Generate random player data
+        function generatePlayer(index) {
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            const num = Math.floor(Math.random() * 1000);
+            const nickname = `${adj}${noun}${num}`;
+
+            const style = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
+            const seed = `player-${index}-${Date.now()}`;
+            const avatar = `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+
+            return {
+                id: generateXID(),
+                nickname: nickname,
+                avatar: avatar,
+                is_host: false,
+                score: 0,
+                questions_answered: 0
+            };
+        }
+
+        // Generate XID (similar to what the app uses)
+        function generateXID() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 20; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Initialize Supabase client
+        function initSupabase() {
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
+
+            if (!url || !key) {
+                log('Please fill in Supabase URL and Key', 'error');
+                return false;
+            }
+
+            try {
+                supabase = window.supabase.createClient(url, key);
+                log('Supabase client initialized', 'success');
+                return true;
+            } catch (error) {
+                log(`Failed to initialize Supabase: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Get session ID from game_pin
+        async function getSessionId(gamePin) {
+            const { data, error } = await supabase
+                .from('sessions')
+                .select('id')
+                .eq('game_pin', gamePin)
+                .single();
+
+            if (error) {
+                throw new Error(`Session not found: ${error.message}`);
+            }
+
+            return data.id;
+        }
+
+        // Add a single player
+        async function addPlayer(player, gamePin, sessionId) {
+            const { data, error } = await supabase
+                .from('game_participants')
+                .upsert({
+                    id: player.id,
+                    session_id: sessionId,
+                    game_pin: gamePin,
+                    nickname: player.nickname,
+                    avatar: player.avatar,
+                    is_host: false,
+                    score: 0,
+                    questions_answered: 0,
+                    answers: []
+                }, {
+                    onConflict: 'id'
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            return player;
+        }
+
+        // Log message
+        function log(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            entry.innerHTML = `<span class="log-time">${time}</span><span class="log-msg">${message}</span>`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Clear log
+        function clearLog() {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '';
+            log('Console cleared', 'info');
+        }
+
+        // Toggle aggressive mode
+        function toggleAggressive() {
+            const toggle = document.getElementById('aggressiveToggle');
+            const input = document.getElementById('aggressiveMode');
+            const isActive = toggle.classList.toggle('active');
+            input.value = isActive ? 'true' : 'false';
+        }
+
+        // Get aggressive mode value
+        function getAggressiveMode() {
+            return document.getElementById('aggressiveMode').value === 'true';
+        }
+
+        // Toggle safe score mode
+        function toggleSafeScore() {
+            const toggle = document.getElementById('safeScoreToggle');
+            const input = document.getElementById('safeScoreMode');
+            const isActive = toggle.classList.toggle('active');
+            input.value = isActive ? 'true' : 'false';
+        }
+
+        // Get safe score mode value
+        function getSafeScoreMode() {
+            return document.getElementById('safeScoreMode').value === 'true';
+        }
+
+        // Update progress
+        function updateProgress(current, total, added, failed, startTime) {
+            const percent = Math.round((current / total) * 100);
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('progressText').textContent = `${percent}%`;
+            document.getElementById('statAdded').textContent = added;
+            document.getElementById('statFailed').textContent = failed;
+
+            const elapsed = (Date.now() - startTime) / 1000;
+            document.getElementById('statTime').textContent = `${elapsed.toFixed(1)}s`;
+
+            const rate = elapsed > 0 ? (added / elapsed).toFixed(1) : 0;
+            document.getElementById('statRate').textContent = `${rate}/s`;
+        }
+
+        // Main simulation function
+        async function startSimulation() {
+            if (isRunning) {
+                log('Simulation already running!', 'warning');
+                return;
+            }
+
+            if (!initSupabase()) return;
+
+            const gamePin = document.getElementById('gamePin').value.trim();
+            const playerCount = parseInt(document.getElementById('playerCount').value);
+            const delay = parseInt(document.getElementById('delay').value);
+
+            if (!gamePin) {
+                log('Please enter a Game PIN', 'error');
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('app').classList.add('running');
+            addedPlayers = [];
+
+            let added = 0;
+            let failed = 0;
+            const startTime = Date.now();
+
+            try {
+                // Get session ID first
+                log(`Looking for session with game_pin: ${gamePin}...`, 'info');
+                sessionId = await getSessionId(gamePin);
+                log(`Found session: ${sessionId}`, 'success');
+
+                const aggressiveMode = getAggressiveMode();
+                const batchSize = parseInt(document.getElementById('batchSize').value) || 10;
+
+                log(`Starting simulation: Adding ${playerCount} players...`, 'info');
+                log(`Mode: ${aggressiveMode ? '🔥 AGGRESSIVE (Parallel Batches)' : 'Normal (Sequential)'}`, 'info');
+
+                if (aggressiveMode) {
+                    // AGGRESSIVE MODE: Process in parallel batches for maximum speed
+                    const batches = [];
+                    for (let i = 0; i < playerCount; i += batchSize) {
+                        batches.push(Array.from({ length: Math.min(batchSize, playerCount - i) }, (_, j) => i + j));
+                    }
+
+                    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+                        const batch = batches[batchIndex];
+                        const batchPromises = batch.map(async (i) => {
+                            try {
+                                const player = generatePlayer(i);
+                                await addPlayer(player, gamePin, sessionId);
+                                addedPlayers.push(player);
+                                return { success: true, player };
+                            } catch (error) {
+                                return { success: false, error: error.message };
+                            }
+                        });
+
+                        const results = await Promise.all(batchPromises);
+                        results.forEach(r => r.success ? added++ : failed++);
+
+                        const processed = (batchIndex + 1) * batchSize;
+                        log(`Batch ${batchIndex + 1}/${batches.length}: Added ${results.filter(r => r.success).length}/${batch.length} players`, 'success');
+                        updateProgress(Math.min(processed, playerCount), playerCount, added, failed, startTime);
+
+                        // Minimal delay between batches (0-10ms based on settings)
+                        if (delay > 0) {
+                            await new Promise(resolve => setTimeout(resolve, Math.min(delay, 10)));
+                        }
+                    }
+                } else {
+                    // NORMAL MODE: Sequential processing
+                    for (let i = 0; i < playerCount; i++) {
+                        try {
+                            const player = generatePlayer(i);
+                            await addPlayer(player, gamePin, sessionId);
+                            addedPlayers.push(player);
+                            added++;
+
+                            if (i % 10 === 0 || i === playerCount - 1) {
+                                log(`Added player ${i + 1}/${playerCount}: ${player.nickname}`, 'success');
+                            }
+                        } catch (error) {
+                            failed++;
+                            log(`Failed to add player ${i + 1}: ${error.message}`, 'error');
+                        }
+
+                        updateProgress(i + 1, playerCount, added, failed, startTime);
+
+                        // Add delay between players
+                        if (delay > 0 && i < playerCount - 1) {
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                        }
+                    }
+                }
+
+                const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                log(`✅ Simulation complete! Added ${added} players in ${totalTime}s`, 'success');
+                log(`📊 Success rate: ${((added / playerCount) * 100).toFixed(1)}%`, 'info');
+
+            } catch (error) {
+                log(`❌ Simulation failed: ${error.message}`, 'error');
+            }
+
+            isRunning = false;
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('app').classList.remove('running');
+        }
+
+        async function simulateScoreUpdates() {
+            if (!supabase || addedPlayers.length === 0) {
+                log('No players to update. Run simulation first!', 'warning');
+                return;
+            }
+
+            const gamePin = document.getElementById('gamePin').value.trim();
+            if (!gamePin) {
+                log('Please enter a Game PIN', 'error');
+                return;
+            }
+
+            log(`📋 Fetching session data to get total questions...`, 'info');
+
+            try {
+                // Get session to find total questions
+                const { data: session, error: sessionError } = await supabase
+                    .from('sessions')
+                    .select('settings, questions')
+                    .eq('game_pin', gamePin)
+                    .single();
+
+                if (sessionError) {
+                    log(`❌ Failed to get session: ${sessionError.message}`, 'error');
+                    log(`💡 Will use default of 10 questions`, 'warning');
+                }
+
+                // Get total questions from settings or questions array
+                let totalQuestions = 10; // default fallback
+
+                if (session) {
+                    if (session.settings && session.settings.questionCount) {
+                        totalQuestions = session.settings.questionCount;
+                    } else if (session.questions && Array.isArray(session.questions)) {
+                        totalQuestions = session.questions.length;
+                    }
+                }
+
+                const pointsPerQuestion = Math.round(100 / totalQuestions);
+
+                const safeMode = getSafeScoreMode();
+
+                if (safeMode) {
+                    log(`🛡️ SAFE MODE: Score akan diupdate TANPA menandai selesai`, 'warning');
+                    log(`📊 Found ${totalQuestions} questions (${pointsPerQuestion} points each)`, 'success');
+                    log(`⚡ Updating scores for ${addedPlayers.length} players (safe mode)...`, 'info');
+                } else {
+                    log(`📊 Found ${totalQuestions} questions (${pointsPerQuestion} points each)`, 'success');
+                    log(`⚡ Simulating COMPLETE quiz for ${addedPlayers.length} players...`, 'info');
+                    log(`🎯 Each player will answer ALL ${totalQuestions} questions (100% completion)`, 'info');
+                    log(`⚠️ WARNING: Ini akan MENGAKHIRI game! Gunakan Safe Mode untuk menghindari ini.`, 'warning');
+                }
+
+                const aggressiveMode = getAggressiveMode();
+                log(`Mode: ${aggressiveMode ? '🔥 BURST (Parallel)' : 'Sequential'}`, 'info');
+
+                const startTime = Date.now();
+                let updated = 0;
+                let failed = 0;
+                let totalScoreSum = 0;
+
+                // Function to calculate realistic score
+                const calculateScore = () => {
+                    // Random number of correct answers (weighted towards higher scores for realism)
+                    const correctAnswers = Math.floor(Math.random() * (totalQuestions + 1));
+                    // Score = correct answers * points per question (max 100)
+                    const score = Math.min(100, correctAnswers * pointsPerQuestion);
+                    return { score, correctAnswers };
+                };
+
+                // Safe mode: only update to partial questions (e.g., 80% max)
+                const getQuestionsAnswered = () => {
+                    if (safeMode) {
+                        // Set to a random value between 1 and totalQuestions - 1
+                        // This prevents triggering game-end while still showing progress
+                        return Math.max(1, Math.floor(Math.random() * (totalQuestions - 1)));
+                    }
+                    return totalQuestions; // Full completion
+                };
+
+                if (aggressiveMode) {
+                    // BURST MODE: Update all players in parallel batches
+                    const batchSize = parseInt(document.getElementById('batchSize').value) || 10;
+                    const batches = [];
+                    for (let i = 0; i < addedPlayers.length; i += batchSize) {
+                        batches.push(addedPlayers.slice(i, i + batchSize));
+                    }
+
+                    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+                        const batch = batches[batchIndex];
+                        const promises = batch.map(async (player) => {
+                            try {
+                                const { score } = calculateScore();
+                                totalScoreSum += score;
+
+                                const { error } = await supabase
+                                    .from('game_participants')
+                                    .update({
+                                        score: score,
+                                        questions_answered: getQuestionsAnswered()
+                                    })
+                                    .eq('id', player.id);
+
+                                return !error;
+                            } catch {
+                                return false;
+                            }
+                        });
+
+                        const results = await Promise.all(promises);
+                        updated += results.filter(r => r).length;
+                        failed += results.filter(r => !r).length;
+
+                        if (batchIndex % 5 === 0 || batchIndex === batches.length - 1) {
+                            log(`Score batch ${batchIndex + 1}/${batches.length}: ${updated} updated`, 'success');
+                        }
+                    }
+                } else {
+                    // Sequential mode
+                    for (const player of addedPlayers) {
+                        try {
+                            const { score } = calculateScore();
+                            totalScoreSum += score;
+
+                            const { error } = await supabase
+                                .from('game_participants')
+                                .update({
+                                    score: score,
+                                    questions_answered: getQuestionsAnswered()
+                                })
+                                .eq('id', player.id);
+
+                            if (!error) {
+                                updated++;
+                            } else {
+                                failed++;
+                            }
+                        } catch (error) {
+                            failed++;
+                            log(`Failed to update ${player.nickname}: ${error.message}`, 'error');
+                        }
+                    }
+                }
+
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                const avgScore = (totalScoreSum / updated).toFixed(1);
+
+                log(`✅ Updated ${updated}/${addedPlayers.length} players in ${elapsed}s`, 'success');
+                if (safeMode) {
+                    log(`🛡️ Players have partial progress (game NOT ended)`, 'success');
+                } else {
+                    log(`📊 All players answered ${totalQuestions}/${totalQuestions} questions (100%)`, 'success');
+                }
+                log(`🏆 Average score: ${avgScore}/100 points`, 'info');
+                log(`📈 Rate: ${(updated / parseFloat(elapsed)).toFixed(1)} updates/second`, 'info');
+
+            } catch (error) {
+                log(`❌ Score simulation failed: ${error.message}`, 'error');
+            }
+        }
+
+        // BURST JOIN - Most aggressive mode, all players at once
+        async function burstJoinSimulation() {
+            if (isRunning) {
+                log('Simulation already running!', 'warning');
+                return;
+            }
+
+            if (!initSupabase()) return;
+
+            const gamePin = document.getElementById('gamePin').value.trim();
+            const playerCount = parseInt(document.getElementById('playerCount').value);
+
+            if (!gamePin) {
+                log('Please enter a Game PIN', 'error');
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('btnBurst').disabled = true;
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('app').classList.add('running');
+            addedPlayers = [];
+
+            let added = 0;
+            let failed = 0;
+            const startTime = Date.now();
+
+            try {
+                log(`Looking for session with game_pin: ${gamePin}...`, 'info');
+                sessionId = await getSessionId(gamePin);
+                log(`Found session: ${sessionId}`, 'success');
+
+                log(`⚡ BURST MODE: Adding ALL ${playerCount} players simultaneously...`, 'warning');
+                log(`🔥 NO DELAY - Maximum stress test!`, 'warning');
+
+                // Generate all players first
+                const allPlayers = Array.from({ length: playerCount }, (_, i) => generatePlayer(i));
+
+                // Fire ALL requests at once - maximum aggression!
+                const allPromises = allPlayers.map(async (player) => {
+                    try {
+                        await addPlayer(player, gamePin, sessionId);
+                        addedPlayers.push(player);
+                        return { success: true, player };
+                    } catch (error) {
+                        return { success: false, error: error.message };
+                    }
+                });
+
+                // Wait for all to complete
+                log(`🚀 Firing ${playerCount} simultaneous requests...`, 'info');
+                const results = await Promise.all(allPromises);
+
+                results.forEach(r => r.success ? added++ : failed++);
+                updateProgress(playerCount, playerCount, added, failed, startTime);
+
+                const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                log(`⚡ BURST COMPLETE! Added ${added} players in ${totalTime}s`, 'success');
+                log(`📊 Rate: ${(added / parseFloat(totalTime)).toFixed(1)} players/second!`, 'info');
+                log(`✅ Success rate: ${((added / playerCount) * 100).toFixed(1)}%`, 'info');
+
+            } catch (error) {
+                log(`❌ Burst simulation failed: ${error.message}`, 'error');
+            }
+
+            isRunning = false;
+            document.getElementById('btnBurst').disabled = false;
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('app').classList.remove('running');
+        }
+
+        // Remove all test players
+        async function removeAllPlayers() {
+            if (!supabase) {
+                if (!initSupabase()) return;
+            }
+
+            const gamePin = document.getElementById('gamePin').value.trim();
+            if (!gamePin) {
+                log('Please enter a Game PIN', 'error');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to remove ALL players from game ${gamePin}?`)) {
+                return;
+            }
+
+            log(`Removing all players from game ${gamePin}...`, 'warning');
+
+            try {
+                // Delete all non-host players
+                // Note: is_host is boolean, so we use 'false' or filter differently
+                const { error } = await supabase
+                    .from('game_participants')
+                    .delete()
+                    .eq('game_pin', gamePin)
+                    .eq('is_host', false); // Only delete non-host players
+
+                if (error) {
+                    // If that fails, try deleting by player IDs we added
+                    log(`⚠️ Bulk delete failed: ${error.message}`, 'warning');
+                    log(`🔄 Trying to delete added players individually...`, 'info');
+
+                    let deleted = 0;
+                    for (const player of addedPlayers) {
+                        const { error: delError } = await supabase
+                            .from('game_participants')
+                            .delete()
+                            .eq('id', player.id);
+                        if (!delError) deleted++;
+                    }
+
+                    log(`✅ Removed ${deleted}/${addedPlayers.length} test players`, 'success');
+                } else {
+                    log(`✅ Removed all non-host players from game ${gamePin}`, 'success');
+                }
+
+                addedPlayers = [];
+                updateProgress(0, 100, 0, 0, Date.now());
+
+            } catch (error) {
+                log(`❌ Failed to remove players: ${error.message}`, 'error');
+            }
+        }
+
+        // Check session status
+        async function checkSession() {
+            if (!supabase) {
+                if (!initSupabase()) return;
+            }
+
+            const gamePin = document.getElementById('gamePin').value.trim();
+            if (!gamePin) {
+                log('Please enter a Game PIN', 'error');
+                return;
+            }
+
+            log(`Checking session ${gamePin}...`, 'info');
+
+            try {
+                // Get session
+                const { data: session, error: sessionError } = await supabase
+                    .from('sessions')
+                    .select('*')
+                    .eq('game_pin', gamePin)
+                    .single();
+
+                if (sessionError) {
+                    throw sessionError;
+                }
+
+                log(`📋 Session found: ${session.id}`, 'success');
+                log(`   Status: ${session.status}`, 'info');
+                log(`   Quiz: ${session.quiz_title || 'N/A'}`, 'info');
+                log(`   Created: ${new Date(session.created_at).toLocaleString()}`, 'info');
+
+                // Get participants count
+                const { data: participants, error: partError } = await supabase
+                    .from('game_participants')
+                    .select('id, nickname, score, questions_answered')
+                    .eq('game_pin', gamePin);
+
+                if (!partError && participants) {
+                    log(`👥 Total players: ${participants.length}`, 'success');
+
+                    // Show top 5 players
+                    const sorted = participants.sort((a, b) => b.score - a.score).slice(0, 5);
+                    log(`🏆 Top 5 players:`, 'info');
+                    sorted.forEach((p, i) => {
+                        log(`   ${i + 1}. ${p.nickname}: ${p.score} pts`, 'info');
+                    });
+                }
+
+            } catch (error) {
+                log(`❌ Session check failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Save config to localStorage
+        function saveConfig() {
+            const config = {
+                url: document.getElementById('supabaseUrl').value,
+                gamePin: document.getElementById('gamePin').value,
+                playerCount: document.getElementById('playerCount').value,
+                delay: document.getElementById('delay').value,
+                aggressiveMode: getAggressiveMode(),
+                safeScoreMode: getSafeScoreMode(),
+                batchSize: document.getElementById('batchSize').value
+            };
+            localStorage.setItem('playerSimConfig', JSON.stringify(config));
+        }
+
+        // Load config from localStorage
+        function loadConfig() {
+            const saved = localStorage.getItem('playerSimConfig');
+            if (saved) {
+                const config = JSON.parse(saved);
+                document.getElementById('supabaseUrl').value = config.url || '';
+                document.getElementById('gamePin').value = config.gamePin || '';
+                document.getElementById('playerCount').value = config.playerCount || '100';
+                document.getElementById('delay').value = config.delay || '0';
+                document.getElementById('batchSize').value = config.batchSize || '10';
+
+                // Update aggressive toggle state
+                const isAggressive = config.aggressiveMode !== false;
+                document.getElementById('aggressiveMode').value = isAggressive ? 'true' : 'false';
+                const aggToggle = document.getElementById('aggressiveToggle');
+                if (isAggressive) {
+                    aggToggle.classList.add('active');
+                } else {
+                    aggToggle.classList.remove('active');
+                }
+
+                // Update safe score toggle state
+                const isSafeScore = config.safeScoreMode === true;
+                document.getElementById('safeScoreMode').value = isSafeScore ? 'true' : 'false';
+                const safeToggle = document.getElementById('safeScoreToggle');
+                if (isSafeScore) {
+                    safeToggle.classList.add('active');
+                } else {
+                    safeToggle.classList.remove('active');
+                }
+            }
+        }
+
+        // Auto-save on input change
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', saveConfig);
+        });
+
+        // Also save when toggles are clicked
+        document.getElementById('aggressiveToggle').addEventListener('click', () => {
+            setTimeout(saveConfig, 100);
+        });
+        document.getElementById('safeScoreToggle').addEventListener('click', () => {
+            setTimeout(saveConfig, 100);
+        });
+
+        // Load saved config on page load
+        loadConfig();
+    </script>
+</body>
+
+</html>

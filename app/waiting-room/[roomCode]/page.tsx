@@ -174,6 +174,7 @@ export default function WaitingRoomPage() {
     // Set up broadcast channel for immediate communication
     const broadcastChannel = new BroadcastChannel(`countdown-${roomCode}`)
     const kickChannel = new BroadcastChannel(`kick-${roomCode}`)
+    const hostLeftChannel = new BroadcastChannel(`host-left-${roomCode}`)
 
     // Listen for countdown broadcasts
     broadcastChannel.onmessage = (event) => {
@@ -213,6 +214,22 @@ export default function WaitingRoomPage() {
       }
     }
 
+    // Listen for host-left broadcasts - redirect players when host leaves
+    hostLeftChannel.onmessage = (event) => {
+      if (event.data.type === 'host-left' && event.data.roomCode === roomCode) {
+        console.log('[WaitingRoom] Host left the room, redirecting...')
+
+        // Clear session
+        sessionManager.clearSession().catch(console.error)
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem("currentPlayer")
+        }
+
+        // Redirect to join page with message
+        window.location.href = "/join?message=host-left"
+      }
+    }
+
     // Immediate check for countdown status
     const checkCountdownImmediately = async () => {
       try {
@@ -242,6 +259,7 @@ export default function WaitingRoomPage() {
       window.removeEventListener('countdown-detected', handleCountdownDetected as EventListener)
       broadcastChannel.close()
       kickChannel.close()
+      hostLeftChannel.close()
     }
   }, [roomCode, playerInfo])
 
@@ -272,6 +290,46 @@ export default function WaitingRoomPage() {
       window.location.href = "/"
     }
   }, [room, playerInfo, roomCode])
+
+  // Detect when host deletes the room (cross-device support via polling)
+  // This is needed because BroadcastChannel only works within the same browser
+  useEffect(() => {
+    if (!roomCode || !playerInfo) return
+
+    // State to track if we've already detected room deletion
+    let hasRedirected = false
+
+    // Poll to check if room still exists (for cross-device support)
+    const checkRoomExists = async () => {
+      if (hasRedirected) return
+
+      try {
+        const currentRoom = await roomManager.getRoom(roomCode)
+        if (!currentRoom && !hasRedirected) {
+          hasRedirected = true
+          console.log('[WaitingRoom] Room no longer exists, host may have left')
+
+          // Clear session
+          sessionManager.clearSession().catch(console.error)
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem("currentPlayer")
+          }
+
+          // Redirect to join page with message
+          window.location.href = "/join?message=host-left"
+        }
+      } catch (error) {
+        console.error('[WaitingRoom] Error checking room existence:', error)
+      }
+    }
+
+    // Check every 3 seconds
+    const pollInterval = setInterval(checkRoomExists, 3000)
+
+    return () => {
+      clearInterval(pollInterval)
+    }
+  }, [roomCode, playerInfo])
 
   const handleLeaveRoom = async () => {
     if (playerInfo) {

@@ -2,11 +2,11 @@ import { supabaseRoomManager, type Player, type Room } from './supabase-room-man
 
 // Re-export types for backward compatibility
 export type { Player, Room }
-  
+
 class RoomManager {
   // Wrapper class that uses Supabase Room Manager
   // This maintains backward compatibility with existing code
-  
+
   generateRoomCode(): string {
     return supabaseRoomManager.generateRoomCode()
   }
@@ -60,9 +60,8 @@ class RoomManager {
     return await supabaseRoomManager.kickPlayer(roomCode, playerId, hostId)
   }
 
-  deleteRoom(roomCode: string, hostId: string): boolean {
-    console.warn("[RoomManager] deleteRoom is deprecated. Rooms are managed by Supabase.")
-    return false
+  async deleteRoom(roomCode: string, hostId: string): Promise<boolean> {
+    return await supabaseRoomManager.deleteRoom(roomCode, hostId)
   }
 
   async subscribe(roomCode: string, callback: (room: Room | null) => void) {
@@ -81,6 +80,5 @@ class RoomManager {
     supabaseRoomManager.cleanup()
   }
 }
-  
-  export const roomManager = new RoomManager()
-  
+
+export const roomManager = new RoomManager()

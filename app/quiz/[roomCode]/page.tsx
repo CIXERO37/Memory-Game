@@ -15,6 +15,7 @@ import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabaseRoomManager } from "@/lib/supabase-room-manager"
 import { quizApi } from "@/lib/supabase"
 import { scoreUpdateQueue } from "@/lib/score-update-queue"
+import { participantsApi } from "@/lib/supabase-players"
 import { useTranslation } from "react-i18next"
 
 interface QuizPageProps {
@@ -53,6 +54,53 @@ function shuffleArrayWithIndices<T>(array: T[]): { shuffled: T[], originalIndice
 // CRITICAL: Delay untuk memastikan Supabase sync selesai sebelum redirect
 const COMPLETION_CHECK_DELAY = 3000 // 3 detik delay untuk final sync
 const QUIZ_LOAD_TIMEOUT = 5000 // 5 detik timeout untuk load quiz
+
+/**
+ * Helper function to determine font size based on question text length
+ * Returns Tailwind CSS classes for responsive font sizing
+ */
+function getQuestionFontSize(text: string): string {
+  const length = text?.length || 0
+
+  if (length < 80) {
+    // Short questions - large font
+    return 'text-xl sm:text-2xl'
+  } else if (length < 150) {
+    // Medium questions
+    return 'text-lg sm:text-xl'
+  } else if (length < 250) {
+    // Longer questions
+    return 'text-base sm:text-lg'
+  } else if (length < 400) {
+    // Very long questions
+    return 'text-sm sm:text-base'
+  } else {
+    // Extremely long questions - smallest readable font with max height
+    return 'text-sm'
+  }
+}
+
+/**
+ * Helper function to determine if question needs scrollable container
+ */
+function needsScrollableContainer(text: string): boolean {
+  return (text?.length || 0) > 400
+}
+
+/**
+ * Helper function to determine font size for answer options
+ */
+function getOptionFontSize(text: string): string {
+  const length = text?.length || 0
+
+  if (length < 50) {
+    return 'text-sm sm:text-base'
+  } else if (length < 100) {
+    return 'text-sm'
+  } else {
+    return 'text-xs sm:text-sm'
+  }
+}
 
 export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const { t } = useTranslation()
@@ -612,6 +660,10 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     let newScore = score
     let newCorrectAnswers = correctAnswers
 
+    // Calculate points earned for this answer
+    const pointsPerQuestion = Math.round(100 / (questions.length > 0 ? questions.length : 1))
+    const pointsEarned = isCorrect ? pointsPerQuestion : 0
+
     if (isCorrect) {
       newCorrectAnswers = correctAnswers + 1
       setCorrectAnswers(newCorrectAnswers)
@@ -625,6 +677,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     const newQuestionsAnswered = questionsAnswered + 1
     setQuestionsAnswered(newQuestionsAnswered)
 
+    // 🆕 Save answer to Supabase B for history
+    if (playerId && questions[currentQuestion]) {
+      participantsApi.addAnswer(params.roomCode, playerId, {
+        question_id: String(questions[currentQuestion].id),
+        answer_id: String(originalIndex),
+        is_correct: isCorrect,
+        points_earned: pointsEarned
+      }).catch(err => console.error('[Quiz] Error saving answer:', err))
+    }
 
 
     // Check for memory game trigger
@@ -721,31 +782,14 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
         await attemptUpdate()
       } else {
-        // 🚀 OPTIMIZED: Normal question - use queue for batching (reduces rate limit hits)
-        scoreUpdateQueue.enqueue(
+        // 🚀 REALTIME: Direct update to Supabase B for instant host visibility
+        // No queue - direct database update for 0ms delay
+        roomManager.updatePlayerScore(
           params.roomCode,
           playerId,
           updateData.quizScore,
           updateData.questionsAnswered
-        )
-
-        // Broadcast untuk sync instan (bahkan sebelum queue flush)
-        let broadcastChannel: BroadcastChannel | null = null
-        try {
-          if (typeof window !== 'undefined') {
-            broadcastChannel = new BroadcastChannel(`progress-update-${params.roomCode}`)
-            broadcastChannel.postMessage({
-              type: 'progress-update',
-              playerId,
-              updateData,
-              timestamp: Date.now()
-            })
-          }
-        } finally {
-          if (broadcastChannel) {
-            broadcastChannel.close()
-          }
-        }
+        ).catch(err => console.error('[Quiz] Direct score update failed:', err))
       }
     }
 
@@ -852,32 +896,20 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           }
         }
 
-        // Update room status jika belum finished (don't wait for this)
-        roomManager.updateGameStatus(params.roomCode, "finished").catch(error => {
-          console.error("[Quiz] Error updating game status:", error)
-        })
-
-        // Broadcast game end
-        let broadcastChannel: BroadcastChannel | null = null
+        // 🚀 CRITICAL: Update room status to finished - MUST await this!
         try {
-          if (typeof window !== 'undefined') {
-            broadcastChannel = new BroadcastChannel(`game-end-${params.roomCode}`)
-            broadcastChannel.postMessage({
-              type: 'game-ended',
-              roomCode: params.roomCode,
-              timestamp: Date.now()
-            })
-
+          const statusUpdated = await roomManager.updateGameStatus(params.roomCode, "finished")
+          if (statusUpdated) {
+            console.log("[Quiz] ✅ Game status updated to finished")
+          } else {
+            console.warn("[Quiz] ⚠️ Failed to update game status to finished")
           }
-        } finally {
-          if (broadcastChannel) {
-            broadcastChannel.close()
-          }
+        } catch (error) {
+          console.error("[Quiz] Error updating game status:", error)
         }
 
-        // 🚀 IMPROVED: Shorter delay since we already waited for sync
-
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Small delay to allow Realtime to propagate
+        await new Promise(resolve => setTimeout(resolve, 1000))
 
         if (isHost) {
           window.location.href = `/host/leaderboad?roomCode=${params.roomCode}`
@@ -1100,7 +1132,12 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         <div className="max-w-3xl mx-auto">
           <div className="bg-linear-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg p-6 pixel-lobby-card">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-white mb-3">{question.question}</h2>
+              {/* Auto-sizing question text based on length */}
+              <div className={needsScrollableContainer(question.question) ? 'max-h-48 overflow-y-auto custom-scrollbar' : ''}>
+                <h2 className={`font-bold text-white mb-3 leading-relaxed ${getQuestionFontSize(question.question)}`}>
+                  {question.question}
+                </h2>
+              </div>
             </div>
             <div className="grid gap-3">
               {currentShuffled.shuffled.map((option, index) => {
@@ -1136,7 +1173,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
                         }`}>
                         {String.fromCharCode(65 + index)}
                       </div>
-                      <span className="text-sm font-medium">{option}</span>
+                      <span className={`font-medium ${getOptionFontSize(option)}`}>{option}</span>
                     </div>
                   </button>
                 )

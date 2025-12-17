@@ -186,7 +186,7 @@ function MonitorPageContent() {
     }
   }, [params, router])
 
-  // 🚀 Broadcast listener
+  // 🚀 Broadcast listener for progress updates
   useEffect(() => {
     if (roomCode) {
       const broadcastChannel = new BroadcastChannel(`progress-update-${roomCode}`)
@@ -224,7 +224,51 @@ function MonitorPageContent() {
     }
   }, [roomCode, redirecting])
 
+  // 🚀 CRITICAL: Listen for game-ended broadcast for immediate redirect
+  useEffect(() => {
+    if (!roomCode || redirecting) return
 
+    const gameEndChannel = new BroadcastChannel(`game-end-${roomCode}`)
+
+    gameEndChannel.onmessage = (event) => {
+      if (event.data.type === 'game-ended') {
+        console.log('[Monitor] Received game-ended broadcast, redirecting to leaderboard')
+        setRedirecting(true)
+        setLastVerifiedCompletion(true)
+
+        // Immediate redirect
+        window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+      }
+    }
+
+    return () => {
+      gameEndChannel.close()
+    }
+  }, [roomCode, redirecting])
+
+  // 🚀 SUPABASE REALTIME: Updates are handled by useRoom hook via Realtime subscriptions
+  // This effect only checks for 'finished' status as a fallback (every 5 seconds)
+  useEffect(() => {
+    if (!roomCode || redirecting) return
+
+    const checkForFinished = async () => {
+      try {
+        const currentRoom = await roomManager.getRoom(roomCode)
+        if (currentRoom?.status === 'finished' && !redirecting) {
+          console.log('[Monitor] Fallback check detected game finished, redirecting...')
+          setRedirecting(true)
+          setLastVerifiedCompletion(true)
+          window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+        }
+      } catch (error) {
+        console.error('[Monitor] Error checking for finished:', error)
+      }
+    }
+
+    const interval = setInterval(checkForFinished, 5000) // Fallback check every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [roomCode, redirecting])
 
   useEffect(() => {
     if (room) {
@@ -300,7 +344,8 @@ function MonitorPageContent() {
   useEffect(() => {
     if (room && isHost && isHostDetected && !redirecting && !lastVerifiedCompletion) {
       const nonHostPlayers = room.players.filter(p => !p.isHost)
-      const totalQuestions = room.settings.questionCount || 10
+      // Use questions array length if available, otherwise use settings.questionCount
+      const totalQuestions = room.questions?.length || room.settings.questionCount || 10
 
 
 
@@ -313,14 +358,14 @@ function MonitorPageContent() {
       if (hasPlayerCompleted && nonHostPlayers.length > 0) {
 
 
-        // 🚀 IMPROVED: Multiple verification attempts with increasing delays
+        // 🚀 IMPROVED: Multiple verification attempts with faster delays
         const verifyAndForceFinish = async (attempt = 1, maxAttempts = 3) => {
           if (!roomCode) return
           try {
 
 
-            // Wait longer between attempts for database sync
-            const delay = attempt === 1 ? 1000 : attempt === 2 ? 2000 : 3000
+            // Reduced delays for faster redirect
+            const delay = attempt === 1 ? 500 : attempt === 2 ? 1000 : 1500
             await new Promise(resolve => setTimeout(resolve, delay))
 
             const verifiedRoom = await roomManager.getRoom(roomCode!)
@@ -361,8 +406,8 @@ function MonitorPageContent() {
               console.warn("[Monitor] Some force finish updates failed, but continuing...")
             }
 
-            // Verifikasi lagi setelah force finish
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            // Verifikasi lagi setelah force finish (reduced delay)
+            await new Promise(resolve => setTimeout(resolve, 300))
             const finalRoom = await roomManager.getRoom(roomCode!)
 
             if (!finalRoom) {
@@ -697,11 +742,6 @@ function MonitorPageContent() {
             ) : (
               <>
                 {/* 🚀 OPTIMIZED: Scrollable container for large player lists */}
-                {players.length > 20 && (
-                  <div className="text-center mb-3 text-xs text-white/60">
-                    Showing {players.length} players (scroll to see more)
-                  </div>
-                )}
                 <div
                   className={`${players.length > 20 ? 'max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent pr-2' : ''}`}
                 >
@@ -716,47 +756,39 @@ function MonitorPageContent() {
 
                       return (
                         <div key={player.id} className="relative bg-linear-to-br from-white/10 to-white/5 border-2 border-white/20 rounded-lg p-3 sm:p-4 pixel-player-card hover:bg-white/15 transition-all duration-300">
-                          <div className="flex items-center justify-between mb-2 sm:mb-3">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <div className="flex items-center gap-1 sm:gap-2">
-                                <div
-                                  className={`text-sm sm:text-base lg:text-lg font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
-                                >
-                                  #{rank}
-                                </div>
-                                {rankingChange === "up" && <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />}
-                                {rankingChange === "down" && <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />}
+                          {/* Grid layout: rank | avatar | name | points */}
+                          <div className="grid grid-cols-[auto_auto_1fr_auto] items-center gap-2 mb-2 sm:mb-3">
+                            {/* Rank + trend icon */}
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <div
+                                className={`text-sm sm:text-base font-bold ${rank === 1 ? "text-yellow-500" : rank === 2 ? "text-gray-400" : rank === 3 ? "text-amber-600" : "text-blue-400"}`}
+                              >
+                                #{rank}
                               </div>
-                              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 flex items-center justify-center overflow-hidden">
-                                <RobustGoogleAvatar
-                                  avatarUrl={player.avatar}
-                                  alt={`${player.nickname} avatar`}
-                                  className="w-full h-full"
-                                  width={48}
-                                  height={48}
-                                />
-                              </div>
-                              <div>
-                                {(() => {
-                                  const { firstWord, secondWord } = splitPlayerName(player.nickname)
-                                  return (
-                                    <div className="text-center">
-                                      <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
-                                        {firstWord}
-                                      </h3>
-                                      {secondWord && (
-                                        <h3 className="font-bold text-sm sm:text-base lg:text-lg text-white leading-tight">
-                                          {secondWord}
-                                        </h3>
-                                      )}
-                                    </div>
-                                  )
-                                })()}
-                              </div>
+                              {rankingChange === "up" && <TrendingUp className="h-3 w-3 text-green-500" />}
+                              {rankingChange === "down" && <TrendingDown className="h-3 w-3 text-red-500" />}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 sm:px-3 py-1">
-                                <span className="text-yellow-400 font-bold text-xs sm:text-sm">{totalScore} {t('monitor.points')}</span>
+                            {/* Avatar */}
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                              <RobustGoogleAvatar
+                                avatarUrl={player.avatar}
+                                alt={`${player.nickname} avatar`}
+                                className="w-full h-full"
+                                width={40}
+                                height={40}
+                              />
+                            </div>
+                            {/* Name - truncated to prevent overlap */}
+                            <div className="min-w-0 overflow-hidden">
+                              <h3 className="font-bold text-sm sm:text-base text-white truncate" title={player.nickname}>
+                                {player.nickname}
+                              </h3>
+                            </div>
+                            {/* Points card - fixed width */}
+                            <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 py-1 flex-shrink-0 min-w-[50px]">
+                              <div className="text-center">
+                                <span className="text-yellow-400 font-bold text-xs sm:text-sm block leading-tight">{totalScore}</span>
+                                <span className="text-yellow-300/80 font-semibold text-[9px] uppercase block leading-tight">{t('monitor.points')}</span>
                               </div>
                             </div>
                           </div>

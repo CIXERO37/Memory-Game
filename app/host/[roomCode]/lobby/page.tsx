@@ -102,14 +102,51 @@ function LobbyPageContent() {
     setShowLeaveDialog(true)
   }
 
-  const confirmLeave = () => {
-    if (pendingNavigation === "browser-back") {
-      window.history.back()
-    } else if (pendingNavigation) {
-      router.push(pendingNavigation)
+  const confirmLeave = async () => {
+    // Delete the room when host leaves - this will kick all players
+    if (roomCode && hostId) {
+      try {
+        // Broadcast to all players that host is leaving
+        if (typeof window !== 'undefined') {
+          const hostLeftChannel = new BroadcastChannel(`host-left-${roomCode}`)
+          hostLeftChannel.postMessage({
+            type: 'host-left',
+            roomCode: roomCode
+          })
+          hostLeftChannel.close()
+        }
+
+        // Delete the room from database
+        await roomManager.deleteRoom(roomCode, hostId)
+        console.log(`[Host Lobby] Room ${roomCode} deleted successfully`)
+      } catch (error) {
+        console.error('[Host Lobby] Error deleting room:', error)
+      }
     }
+
+    // Clear host session
+    try {
+      await sessionManager.clearSession()
+    } catch (error) {
+      console.error('[Host Lobby] Error clearing session:', error)
+    }
+
+    // Clear localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("currentHost")
+    }
+
     setShowLeaveDialog(false)
     setPendingNavigation(null)
+
+    // Navigate to the pending destination
+    if (pendingNavigation === "browser-back") {
+      router.push("/select-quiz")
+    } else if (pendingNavigation) {
+      router.push(pendingNavigation)
+    } else {
+      router.push("/select-quiz")
+    }
   }
 
   const cancelLeave = () => {
