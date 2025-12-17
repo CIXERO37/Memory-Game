@@ -16,11 +16,13 @@ import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
 import { supabase } from "@/lib/supabase"
 import { QRScanner } from "@/components/qr-scanner"
+import { useToast } from "@/hooks/use-toast"
 
 function JoinPageContent() {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
+  const { toast } = useToast()
   const { userProfile, isAuthenticated, loading } = useAuth()
   const [nickname, setNickname] = useState("")
   const [roomCode, setRoomCode] = useState("")
@@ -35,6 +37,24 @@ function JoinPageContent() {
   const [nicknameError, setNicknameError] = useState("")
   const [roomCodeError, setRoomCodeError] = useState("")
   const [showScanner, setShowScanner] = useState(false)
+
+  // Show toast if player was redirected because host left
+  useEffect(() => {
+    const message = searchParams.get("message")
+    if (message === 'host-left') {
+      toast({
+        title: "Session Ended",
+        description: "The host has left the room. Please join another room.",
+        duration: 5000,
+      })
+      // Remove the message from URL to prevent showing toast again on refresh
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('message')
+        window.history.replaceState({}, '', url.toString())
+      }
+    }
+  }, [searchParams, toast])
 
   useEffect(() => {
     const roomFromUrl = searchParams.get("room")

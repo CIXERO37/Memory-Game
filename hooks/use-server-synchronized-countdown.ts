@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { sessionsApi, isPlayersSupabaseConfigured, GameSessionB } from "@/lib/supabase-players"
 
 interface CountdownState {
   remaining: number
@@ -26,6 +27,7 @@ interface ServerCountdownResponse {
 
 /**
  * Custom hook for server-synchronized countdown timer
+ * 🚀 OPTIMIZED: Uses Supabase Realtime subscription instead of polling
  * Ensures all players see the same countdown regardless of network conditions
  */
 export function useServerSynchronizedCountdown(
@@ -45,20 +47,110 @@ export function useServerSynchronizedCountdown(
   const lastServerSyncRef = useRef<number>(0)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>()
   const heartbeatIntervalRef = useRef<NodeJS.Timeout>()
+  const countdownIntervalRef = useRef<NodeJS.Timeout>()
+  const countdownStartTimeRef = useRef<number | null>(null)
+  const countdownDurationRef = useRef<number>(10)
 
   // Calculate client time with server offset
   const getSynchronizedTime = useCallback(() => {
     return Date.now() + serverOffset
   }, [serverOffset])
 
-  // Fetch countdown state from server with retry mechanism for poor network
+  // 🚀 Calculate countdown from session data (Realtime payload)
+  const calculateCountdownFromSession = useCallback((session: GameSessionB) => {
+    if (!session.countdown_started_at) {
+      setIsActive(false)
+      setCountdown(0)
+      setIsInDelayPeriod(false)
+      countdownStartTimeRef.current = null
+      return
+    }
+
+    const countdownStart = new Date(session.countdown_started_at).getTime()
+    const countdownDuration = session.countdown_duration_seconds || 10
+
+    countdownStartTimeRef.current = countdownStart
+    countdownDurationRef.current = countdownDuration
+
+    const now = Date.now()
+    const totalDuration = countdownDuration * 1000
+    const timeSinceStart = now - countdownStart
+
+    let remainingSeconds: number
+    let inDelayPeriod: boolean
+
+    if (timeSinceStart < 0) {
+      // Countdown hasn't started yet
+      remainingSeconds = countdownDuration
+      inDelayPeriod = true
+    } else if (timeSinceStart >= totalDuration) {
+      // Countdown finished
+      remainingSeconds = 0
+      inDelayPeriod = false
+    } else {
+      // Active countdown
+      const remainingMs = totalDuration - timeSinceStart
+      remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000))
+      inDelayPeriod = false
+    }
+
+    setCountdown(remainingSeconds)
+    setIsActive(remainingSeconds > 0)
+    setIsInDelayPeriod(inDelayPeriod)
+    setLastKnownCountdown(remainingSeconds)
+    setFallbackStartTime(now)
+
+    // Trigger completion if countdown finished
+    if (remainingSeconds <= 0 && countdownStartTimeRef.current) {
+      onCountdownComplete?.()
+    }
+  }, [onCountdownComplete])
+
+  // 🚀 Local countdown tick (updates every second based on stored start time)
+  const updateLocalCountdown = useCallback(() => {
+    if (!countdownStartTimeRef.current) return
+
+    const now = Date.now()
+    const countdownStart = countdownStartTimeRef.current
+    const totalDuration = countdownDurationRef.current * 1000
+    const timeSinceStart = now - countdownStart
+
+    let remainingSeconds: number
+
+    if (timeSinceStart < 0) {
+      remainingSeconds = countdownDurationRef.current
+    } else if (timeSinceStart >= totalDuration) {
+      remainingSeconds = 0
+    } else {
+      const remainingMs = totalDuration - timeSinceStart
+      remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000))
+    }
+
+    // Only update if changed to avoid unnecessary re-renders
+    setCountdown(prev => {
+      if (prev !== remainingSeconds) {
+        return remainingSeconds
+      }
+      return prev
+    })
+
+    setIsActive(remainingSeconds > 0)
+
+    // Trigger completion callback
+    if (remainingSeconds <= 0 && countdownStartTimeRef.current) {
+      onCountdownComplete?.()
+      countdownStartTimeRef.current = null // Prevent multiple calls
+    }
+  }, [onCountdownComplete])
+
+  // Fetch countdown state from server (fallback for initial load or reconnection)
   const fetchCountdownState = useCallback(async (retryCount = 0): Promise<ServerCountdownResponse | null> => {
     try {
       const clientTimestamp = Date.now().toString()
 
       // Add timeout for poor network conditions
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // Reduced timeout to 5 seconds
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
 
       const response = await fetch(`/api/rooms/${roomCode}/countdown-state`, {
         method: 'GET',
@@ -78,22 +170,25 @@ export function useServerSynchronizedCountdown(
 
       const data: ServerCountdownResponse = await response.json()
 
-      // Calculate server offset more accurately
+      // Calculate server offset
       const responseTime = Date.now()
       const requestLatency = responseTime - parseInt(clientTimestamp)
       const estimatedServerTime = data.serverTime + (requestLatency / 2)
       setServerOffset(estimatedServerTime - responseTime)
 
-      // Log sync info for debugging
-
-
       setIsConnected(true)
       lastServerSyncRef.current = responseTime
 
-      // Store last known countdown for fallback
+      // Store countdown info for local updates
       if (data.countdownState) {
         setLastKnownCountdown(data.countdownState.remaining)
         setFallbackStartTime(responseTime)
+
+        // Store start time for local countdown
+        if (data.countdownState.countdownStartTime) {
+          countdownStartTimeRef.current = data.countdownState.countdownStartTime
+          countdownDurationRef.current = (data.countdownState.totalDuration || 10000) / 1000
+        }
       }
 
       return data
@@ -101,8 +196,7 @@ export function useServerSynchronizedCountdown(
       console.error('[ServerCountdown] Error fetching countdown state:', error, 'retry:', retryCount)
 
       // Retry mechanism for poor network conditions
-      if (retryCount < 2) { // Reduced retry count
-
+      if (retryCount < 2) {
         await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000))
         return fetchCountdownState(retryCount + 1)
       }
@@ -112,7 +206,7 @@ export function useServerSynchronizedCountdown(
     }
   }, [roomCode])
 
-  // Send heartbeat to server
+  // Send heartbeat to server (kept for session activity tracking)
   const sendHeartbeat = useCallback(async () => {
     try {
       await fetch(`/api/rooms/${roomCode}/heartbeat`, {
@@ -128,9 +222,9 @@ export function useServerSynchronizedCountdown(
     } catch (error) {
       console.error('[ServerCountdown] Heartbeat failed:', error)
     }
-  }, [roomCode])
+  }, [roomCode, playerId])
 
-  // Update countdown based on server state
+  // Update countdown based on server state (for initial sync and reconnection)
   const updateCountdown = useCallback(async () => {
     const serverData = await fetchCountdownState()
 
@@ -143,32 +237,24 @@ export function useServerSynchronizedCountdown(
     const { countdownState } = serverData
 
     if (countdownState.isActive) {
-      // Use server-calculated remaining time directly for better accuracy
       const newCountdown = countdownState.remaining
 
-      // Only update if the countdown value has actually changed to avoid unnecessary re-renders
       if (newCountdown !== countdown) {
         setCountdown(newCountdown)
-
       }
 
       setIsActive(true)
       setIsInDelayPeriod(countdownState.isInDelayPeriod || false)
 
-      // Check if countdown is complete
       if (newCountdown <= 0) {
-
         setIsActive(false)
         onCountdownComplete?.()
       }
     } else {
-
       setIsActive(false)
       setCountdown(0)
       setIsInDelayPeriod(false)
-      // Trigger completion callback if countdown is not active but was active before
       if (countdown > 0) {
-
         onCountdownComplete?.()
       }
     }
@@ -180,16 +266,12 @@ export function useServerSynchronizedCountdown(
       const timeSinceFallback = Date.now() - fallbackStartTime
       const fallbackCountdown = Math.max(0, lastKnownCountdown - Math.floor(timeSinceFallback / 1000))
 
-
-
-      // Only update if countdown has changed
       if (fallbackCountdown !== countdown) {
         setCountdown(fallbackCountdown)
       }
       setIsActive(fallbackCountdown > 0)
 
       if (fallbackCountdown <= 0) {
-
         onCountdownComplete?.()
       }
     }
@@ -202,14 +284,11 @@ export function useServerSynchronizedCountdown(
     }
 
     reconnectTimeoutRef.current = setTimeout(async () => {
-
       const serverData = await fetchCountdownState()
 
       if (serverData) {
-
         await updateCountdown()
       } else {
-        // Try again in 3 seconds (increased from 2 seconds)
         attemptReconnection()
       }
     }, 3000)
@@ -218,27 +297,33 @@ export function useServerSynchronizedCountdown(
   useEffect(() => {
     if (!roomCode) return
 
-    // Initial sync
+    // 🚀 INITIAL SYNC: Fetch once to get countdown state
     updateCountdown()
 
-    // Set up periodic server sync with more consistent frequency
-    const syncInterval = setInterval(() => {
-      const now = Date.now()
+    // 🚀 REALTIME SUBSCRIPTION: Listen to session changes instead of polling
+    let unsubscribeSession: (() => void) | null = null
 
-      // More consistent sync frequency for better synchronization
-      let syncIntervalMs = 1000 // Default 1 second for stability
-      if (countdown <= 5) {
-        syncIntervalMs = 500 // More frequent when countdown is low
-      }
+    if (isPlayersSupabaseConfigured()) {
+      unsubscribeSession = sessionsApi.subscribeToSession(
+        roomCode,
+        (session) => {
+          if (session) {
+            setIsConnected(true)
+            calculateCountdownFromSession(session)
+          }
+        }
+      )
+      console.log('[ServerCountdown] 🚀 Subscribed to Realtime session updates')
+    }
 
-      // Sync based on time elapsed since last sync
-      if (now - lastServerSyncRef.current > syncIntervalMs || !isConnected) {
-        updateCountdown()
-      }
-    }, 500) // Check every 500ms but sync based on countdown state
+    // 🚀 LOCAL COUNTDOWN TICK: Update every second based on stored start time
+    // This replaces the frequent API polling with local calculation
+    countdownIntervalRef.current = setInterval(() => {
+      updateLocalCountdown()
+    }, 1000)
 
-    // Set up heartbeat (every 10 seconds for less network overhead)
-    heartbeatIntervalRef.current = setInterval(sendHeartbeat, 10000)
+    // Set up heartbeat (every 30 seconds - reduced from 10s since we use Realtime now)
+    heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30000)
 
     // Set up reconnection attempts for disconnected state
     if (!isConnected) {
@@ -247,7 +332,9 @@ export function useServerSynchronizedCountdown(
 
     // Cleanup
     return () => {
-      clearInterval(syncInterval)
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current)
       }
@@ -257,15 +344,19 @@ export function useServerSynchronizedCountdown(
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
+      if (unsubscribeSession) {
+        unsubscribeSession()
+        console.log('[ServerCountdown] 🔌 Unsubscribed from Realtime session updates')
+      }
     }
-  }, [roomCode, updateCountdown, sendHeartbeat, isConnected, attemptReconnection])
+  }, [roomCode, updateCountdown, sendHeartbeat, isConnected, attemptReconnection, calculateCountdownFromSession, updateLocalCountdown])
 
   // Fallback countdown for poor network conditions
   useEffect(() => {
     if (!isConnected && lastKnownCountdown > 0) {
       const fallbackInterval = setInterval(() => {
         updateFallbackCountdown()
-      }, 1000) // Update every second for fallback
+      }, 1000)
 
       return () => clearInterval(fallbackInterval)
     }

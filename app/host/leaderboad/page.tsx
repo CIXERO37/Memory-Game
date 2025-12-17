@@ -297,6 +297,85 @@ function LeaderboardHostPageContent() {
         </div>
       </div>
 
+      {/* Fixed Home Button - Left Side */}
+      <div
+        className="hidden md:block"
+        style={{
+          position: 'fixed',
+          left: '24px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 9999,
+        }}
+      >
+        <button
+          className="relative hover:scale-110 transition-all duration-200 group"
+          onClick={() => {
+            router.push("/")
+          }}
+          style={{
+            imageRendering: 'pixelated',
+          }}
+        >
+          <div
+            className="w-14 h-14 flex items-center justify-center"
+            style={{
+              background: '#533483',
+              border: '3px solid #3d2562',
+              borderRadius: '4px',
+              boxShadow: `
+                inset -2px -2px 0px #6b4a9e,
+                inset 2px 2px 0px #3d2562,
+                0 0 0 2px #2a1a3d,
+                4px 4px 0px rgba(0, 0, 0, 0.3)
+              `,
+              imageRendering: 'pixelated',
+            }}
+          >
+            <Home className="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
+          </div>
+        </button>
+      </div>
+
+      {/* Fixed Restart Button - Right Side */}
+      <div
+        className="hidden md:block"
+        style={{
+          position: 'fixed',
+          right: '24px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 9999,
+        }}
+      >
+        <button
+          className="relative hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          onClick={handleRestart}
+          disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
+          style={{
+            imageRendering: 'pixelated',
+          }}
+        >
+          <div
+            className="w-14 h-14 flex items-center justify-center"
+            style={{
+              background: '#4a90e2',
+              border: '3px solid #2c5f8d',
+              borderRadius: '4px',
+              boxShadow: `
+                inset -2px -2px 0px #6ba3e8,
+                inset 2px 2px 0px #2c5f8d,
+                0 0 0 2px #1a3d5f,
+                4px 4px 0px rgba(0, 0, 0, 0.3)
+              `,
+              imageRendering: 'pixelated',
+            }}
+          >
+            <RotateCw className="w-6 h-6 text-white group-hover:rotate-180 transition-transform duration-300" />
+          </div>
+        </button>
+      </div>
+
       {/* Top-left Memory Quiz Logo */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 z-20">
         <img
@@ -586,19 +665,21 @@ function LeaderboardHostPageContent() {
                   </h3>
                 </div>
               </div>
-              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {sortedPlayers.slice(3).map((player, index) => {
                   const totalScore = player.quizScore || 0
                   const rank = index + 4
                   return (
                     <div key={player.id} className="group relative">
                       <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/20 to-purple-400/20 rounded-lg blur-md group-hover:blur-lg transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-                      <div className="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 rounded-lg p-3 border border-slate-600/50 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:border-indigo-400/60 overflow-hidden">
-                        <div className="flex items-center gap-4">
-                          <div className="text-yellow-400 font-bold text-lg flex-shrink-0">
+                      <div className="relative bg-gradient-to-r from-slate-800/60 to-slate-900/60 rounded-lg p-3 border border-slate-600/50 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:border-indigo-400/60">
+                        <div className="grid grid-cols-[auto_48px_1fr_auto] items-center gap-2">
+                          {/* Rank - fixed width */}
+                          <div className="text-yellow-400 font-bold text-base w-8 text-center flex-shrink-0">
                             #{rank}
                           </div>
-                          <div className="w-12 h-12 rounded-full border-2 border-slate-400 overflow-hidden shadow-md group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                          {/* Avatar - fixed size */}
+                          <div className="w-12 h-12 rounded-full border-2 border-slate-400 overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-300 flex-shrink-0 relative">
                             <div className="absolute inset-0 bg-indigo-400/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             {/^https?:\/\//.test(player.avatar) ? (
                               <RobustGoogleAvatar
@@ -619,13 +700,15 @@ function LeaderboardHostPageContent() {
                               />
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-lg text-white group-hover:text-indigo-200 transition-colors duration-300 whitespace-pre-line">{formatPlayerName(player.nickname)}</h4>
+                          {/* Name - truncate to prevent overlap */}
+                          <div className="min-w-0 overflow-hidden">
+                            <h4 className="font-bold text-sm text-white group-hover:text-indigo-200 transition-colors duration-300 truncate" title={player.nickname}>{player.nickname}</h4>
                           </div>
-                          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-3 py-2 shadow-sm group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                          {/* Points card - fixed width */}
+                          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-2 py-1.5 shadow-sm group-hover:scale-105 transition-transform duration-300 flex-shrink-0 min-w-[60px]">
                             <div className="text-center">
-                              <div className="text-lg font-bold text-white">{totalScore}</div>
-                              <div className="text-xs text-black font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
+                              <div className="text-base font-bold text-white leading-tight">{totalScore}</div>
+                              <div className="text-[10px] text-white/90 font-semibold uppercase tracking-wide">{t('lobby.points')}</div>
                             </div>
                           </div>
                         </div>
@@ -643,65 +726,6 @@ function LeaderboardHostPageContent() {
             </div>
           </div>
         )}
-
-        <div className="fixed left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-50 hidden md:block">
-          <button
-            className="relative transform hover:scale-110 transition-all duration-200 group"
-            onClick={() => {
-              router.push("/")
-            }}
-            style={{
-              imageRendering: 'pixelated',
-            }}
-          >
-            <div
-              className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
-              style={{
-                background: '#533483',
-                border: '3px solid #3d2562',
-                borderRadius: '4px',
-                boxShadow: `
-                  inset -2px -2px 0px #6b4a9e,
-                  inset 2px 2px 0px #3d2562,
-                  0 0 0 2px #2a1a3d,
-                  4px 4px 0px rgba(0, 0, 0, 0.3)
-                `,
-                imageRendering: 'pixelated',
-              }}
-            >
-              <Home className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
-            </div>
-          </button>
-        </div>
-
-        <div className="fixed right-2 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 z-50 hidden md:block">
-          <button
-            className="relative transform hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            onClick={handleRestart}
-            disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
-            style={{
-              imageRendering: 'pixelated',
-            }}
-          >
-            <div
-              className="relative z-10 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
-              style={{
-                background: '#4a90e2',
-                border: '3px solid #2c5f8d',
-                borderRadius: '4px',
-                boxShadow: `
-                  inset -2px -2px 0px #6ba3e8,
-                  inset 2px 2px 0px #2c5f8d,
-                  0 0 0 2px #1a3d5f,
-                  4px 4px 0px rgba(0, 0, 0, 0.3)
-                `,
-                imageRendering: 'pixelated',
-              }}
-            >
-              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white group-hover:rotate-180 transition-transform duration-300" />
-            </div>
-          </button>
-        </div>
       </div>
     </div>
   )

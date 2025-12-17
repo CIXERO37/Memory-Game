@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase'
+import { participantsApi, sessionsApi, isPlayersSupabaseConfigured, GameParticipant } from './supabase-players'
 
 export interface Player {
   id: string
@@ -40,7 +41,7 @@ class SupabaseRoomManager {
   private lastRoomData: Map<string, Room | null> = new Map()
 
   generateRoomCode(): string {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    const chars = "0123456789"
     let result = ""
     for (let i = 0; i < 6; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length))
@@ -48,23 +49,27 @@ class SupabaseRoomManager {
     return result
   }
 
-  // Map game_sessions status to Room status
+  // Map database status to Room status
+  // DB status: waiting, active, finished
+  // Room status: waiting, countdown, quiz, memory, finished
+  // Countdown detected via countdown_started_at
   private mapSessionStatusToRoomStatus(sessionStatus: string, countdownStartedAt?: string | null, startedAt?: string | null): Room["status"] {
-    if (sessionStatus === 'active') {
-      // If startedAt is present, the game has officially started (post-countdown)
-      if (startedAt) {
-        return 'quiz'
-      }
-      // If only countdownStartedAt is present, it's in countdown phase
-      if (countdownStartedAt) {
-        return 'countdown'
-      }
-      // Active but no countdown and no start time (shouldn't happen normally, but treat as quiz)
-      return 'quiz'
-    }
     if (sessionStatus === 'finished') {
       return 'finished'
     }
+
+    if (sessionStatus === 'active') {
+      return 'quiz'
+    }
+
+    // Status 'waiting' - check if countdown has started
+    if (sessionStatus === 'waiting') {
+      if (countdownStartedAt) {
+        return 'countdown'
+      }
+      return 'waiting'
+    }
+
     return 'waiting'
   }
 
@@ -169,7 +174,30 @@ class SupabaseRoomManager {
         }
       }
 
-      // Create game session in database
+      // 🚀 SUPABASE B: Create session FIRST for realtime operations
+      let supabaseBSessionId: string | null = null
+      if (isPlayersSupabaseConfigured()) {
+        const sessionB = await sessionsApi.createSession({
+          game_pin: roomCode,
+          host_id: hostId,
+          quiz_id: quizId,
+          quiz_title: quizTitle,
+          settings: {
+            questionCount: settings.questionCount === 0 ? originalQuestions.length : settings.questionCount,
+            totalTimeLimit: settings.totalTimeLimit
+          },
+          questions: sessionQuestions
+        })
+
+        if (sessionB) {
+          supabaseBSessionId = sessionB.id
+          console.log('[SupabaseRoomManager] ✅ Session created in Supabase B:', roomCode, 'ID:', supabaseBSessionId)
+        } else {
+          console.warn('[SupabaseRoomManager] ⚠️ Failed to create session in Supabase B, continuing with A only')
+        }
+      }
+
+      // Also create in Supabase A (for historical data / backup)
       const { data: sessionData, error: sessionError } = await supabase
         .from('game_sessions')
         .insert({
@@ -188,7 +216,7 @@ class SupabaseRoomManager {
           status: 'waiting',
           participants: [],
           responses: [],
-          current_questions: sessionQuestions, // Store generated questions
+          current_questions: sessionQuestions,
           application: 'memoryquiz',
           game_end_mode: 'manual'
         })
@@ -196,9 +224,11 @@ class SupabaseRoomManager {
         .single()
 
       if (sessionError) {
-        console.error('[SupabaseRoomManager] Error creating game session:', sessionError)
-        console.error('[SupabaseRoomManager] Error details:', JSON.stringify(sessionError, null, 2))
-        return null
+        console.error('[SupabaseRoomManager] Error creating game session in Supabase A:', sessionError)
+        // If Supabase B succeeded, we can still continue
+        if (!supabaseBSessionId) {
+          return null
+        }
       }
 
       const room: Room = {
@@ -207,8 +237,8 @@ class SupabaseRoomManager {
         players: [],
         settings,
         status: 'waiting',
-        createdAt: sessionData.created_at,
-        startedAt: sessionData.started_at,
+        createdAt: sessionData?.created_at || new Date().toISOString(),
+        startedAt: sessionData?.started_at,
         gameStarted: false,
         quizId: quizId,
         quizTitle: quizTitle,
@@ -222,23 +252,46 @@ class SupabaseRoomManager {
     }
   }
 
-  // Helper to parse session data into Room object
-  private _parseSessionDataToRoom(sessionData: any): Room {
-    // Parse participants from JSONB
-    const participants = Array.isArray(sessionData.participants) ? sessionData.participants : []
-
-    const players: Player[] = participants.map((p: any) => ({
-      id: p.id || '',
-      user_id: p.user_id || null,
-      nickname: p.nickname || 'Guest',
+  // Helper to convert GameParticipant from Players DB to Player
+  private _convertParticipantToPlayer(p: GameParticipant): Player {
+    return {
+      id: p.id,  // XID format
+      user_id: undefined,
+      nickname: p.nickname,
       avatar: p.avatar || '/avatars/default.webp',
-      joinedAt: p.joined_at || new Date().toISOString(),
+      joinedAt: p.joined_at,
       isReady: true,
-      isHost: false,
-      quizScore: p.quiz_score || 0,
+      isHost: p.is_host,
+      quizScore: p.score || 0,
       questionsAnswered: p.questions_answered || 0,
-      memoryScore: p.memory_score || 0 // Ensure memory score is mapped
-    }))
+      memoryScore: 0  // memory_score removed from DB
+    }
+  }
+
+  // Helper to parse session data into Room object
+  // Now supports both JSONB (legacy) and Players DB (new)
+  private _parseSessionDataToRoom(sessionData: any, playersFromDB?: GameParticipant[]): Room {
+    let players: Player[]
+
+    // 🚀 DUAL DB: If we have players from Players DB, use those (more up-to-date scores)
+    if (playersFromDB && playersFromDB.length > 0) {
+      players = playersFromDB.map(p => this._convertParticipantToPlayer(p))
+    } else {
+      // Fallback to JSONB participants (backward compatible)
+      const participants = Array.isArray(sessionData.participants) ? sessionData.participants : []
+      players = participants.map((p: any) => ({
+        id: p.id || '',
+        user_id: p.user_id || null,
+        nickname: p.nickname || 'Guest',
+        avatar: p.avatar || '/avatars/default.webp',
+        joinedAt: p.joined_at || new Date().toISOString(),
+        isReady: true,
+        isHost: false,
+        quizScore: p.quiz_score || 0,
+        questionsAnswered: p.questions_answered || 0,
+        memoryScore: p.memory_score || 0
+      }))
+    }
 
     // Extract quiz title and question count
     const quizTitle = sessionData.quiz_detail?.title || ''
@@ -271,7 +324,43 @@ class SupabaseRoomManager {
         return null
       }
 
-      // Get game session data
+      // 🚀 SUPABASE B FIRST: Try to get session from Supabase B for faster realtime
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          const sessionB = await sessionsApi.getSession(roomCode)
+          const playersFromDB = await participantsApi.getParticipants(roomCode)
+
+          if (sessionB) {
+            // Convert Supabase B session to Room format
+            const players: Player[] = playersFromDB.map(p => this._convertParticipantToPlayer(p))
+
+            const room: Room = {
+              code: sessionB.game_pin,
+              hostId: sessionB.host_id,
+              players,
+              settings: {
+                questionCount: sessionB.settings?.questionCount || 10,
+                totalTimeLimit: sessionB.settings?.totalTimeLimit || 300
+              },
+              status: this.mapSessionStatusToRoomStatus(sessionB.status, sessionB.countdown_started_at, sessionB.started_at),
+              createdAt: sessionB.created_at,
+              startedAt: sessionB.started_at || undefined,
+              gameStarted: sessionB.status !== 'waiting',
+              countdownStartTime: sessionB.countdown_started_at || undefined,
+              countdownDuration: sessionB.countdown_duration_seconds || 10,
+              quizId: sessionB.quiz_id || undefined,
+              quizTitle: sessionB.quiz_title || undefined,
+              questions: sessionB.questions || []
+            }
+
+            return room
+          }
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Supabase B fetch failed, falling back to A:', error)
+        }
+      }
+
+      // Fallback: Get game session data from Supabase A
       const { data: sessionData, error: sessionError } = await supabase
         .from('game_sessions')
         .select('*')
@@ -282,7 +371,17 @@ class SupabaseRoomManager {
         return null
       }
 
-      return this._parseSessionDataToRoom(sessionData)
+      // Try to get participants from Players DB for up-to-date scores
+      let playersFromDB: GameParticipant[] = []
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          playersFromDB = await participantsApi.getParticipants(roomCode)
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Players DB fetch failed, using JSONB fallback:', error)
+        }
+      }
+
+      return this._parseSessionDataToRoom(sessionData, playersFromDB)
     } catch (error) {
       console.error('[SupabaseRoomManager] Error getting room:', error)
       return null
@@ -291,61 +390,140 @@ class SupabaseRoomManager {
 
   async joinRoom(roomCode: string, player: Omit<Player, "id" | "joinedAt" | "isReady" | "isHost">, userId?: string): Promise<boolean> {
     try {
-      if (!isSupabaseConfigured()) return false
+      if (!isSupabaseConfigured() && !isPlayersSupabaseConfigured()) return false
 
-      // Get current room data
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('game_sessions')
-        .select('*')
-        .eq('game_pin', roomCode)
-        .single()
+      let sessionStatus: string = ''
+      let participants: any[] = []
+      let useSupabaseB = false
 
-      if (sessionError || !sessionData) {
+      // 🚀 SUPABASE B FIRST: Check if session exists in Players DB (faster)
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          const sessionB = await sessionsApi.getSession(roomCode)
+          if (sessionB) {
+            useSupabaseB = true
+            sessionStatus = sessionB.status
+
+            // Get existing participants from Players DB
+            const existingPlayers = await participantsApi.getParticipants(roomCode)
+            participants = existingPlayers.map(p => ({
+              id: p.id,
+              nickname: p.nickname,
+              avatar: p.avatar,
+              joined_at: p.joined_at,
+              is_ready: true,
+              is_host: p.is_host,
+              score: p.score || 0,
+              questions_answered: p.questions_answered || 0,
+              memory_score: 0
+            }))
+
+            console.log('[SupabaseRoomManager] Using Supabase B for joinRoom validation')
+          }
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Supabase B check failed, falling back to A:', error)
+        }
+      }
+
+      // Fallback to Supabase A if B not available or failed
+      if (!useSupabaseB && isSupabaseConfigured()) {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('game_sessions')
+          .select('status, participants')
+          .eq('game_pin', roomCode)
+          .single()
+
+        if (sessionError || !sessionData) {
+          console.error('[SupabaseRoomManager] Room not found in any database:', roomCode)
+          return false
+        }
+
+        sessionStatus = sessionData.status
+        participants = Array.isArray(sessionData.participants) ? [...sessionData.participants] : []
+      }
+
+      // Room not found in either database
+      if (!sessionStatus) {
         console.error('[SupabaseRoomManager] Room not found:', roomCode)
         return false
       }
 
-      if (sessionData.status !== 'waiting') {
+      if (sessionStatus !== 'waiting') {
         console.warn('[SupabaseRoomManager] Game already started')
         return false
       }
 
-      const participants = Array.isArray(sessionData.participants) ? [...sessionData.participants] : []
+      // 🔧 FIX: Instead of rejecting duplicate nicknames, we now allow rejoin by cleaning up old entries
+      // This handles the case when a player leaves and rejoins with the same nickname
+      // The cleanup is done in addParticipant for Supabase B, and below for Supabase A (JSONB)
 
-      // Check if nickname taken
-      if (participants.some((p: any) => p.nickname === player.nickname)) {
-        console.warn('[SupabaseRoomManager] Nickname already taken:', player.nickname)
-        return false
-      }
+      // Generate player ID using XID format if Players DB configured, otherwise use short ID
+      const playerId = isPlayersSupabaseConfigured()
+        ? participantsApi.generatePlayerId()
+        : Math.random().toString(36).substr(2, 9)
 
-      // Get user info if userId provided
-      const userInfo = await this.getUserInfo(userId)
-
+      // Create player object for JSONB
       const newPlayer = {
-        id: Math.random().toString(36).substr(2, 9),
-        user_id: userInfo.user_id,
+        id: playerId,
         nickname: player.nickname,
         avatar: player.avatar,
         joined_at: new Date().toISOString(),
         is_ready: true,
         is_host: false,
-        quiz_score: 0,
+        score: 0,
         questions_answered: 0,
         memory_score: 0
       }
 
-      participants.push(newPlayer)
-
-      const { error: updateError } = await supabase
-        .from('game_sessions')
-        .update({ participants })
-        .eq('game_pin', roomCode)
-
-      if (updateError) {
-        console.error('[SupabaseRoomManager] Error joining room:', updateError)
-        return false
+      // 🚀 WRITE TO SUPABASE B FIRST (Players DB) - Primary source
+      // addParticipant now handles cleanup of old entries with same nickname
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          await participantsApi.addParticipant(
+            roomCode,
+            playerId,
+            player.nickname,
+            player.avatar,
+            false // not host
+          )
+          console.log(`[SupabaseRoomManager] Player ${player.nickname} added to Supabase B`)
+        } catch (error) {
+          console.error('[SupabaseRoomManager] Players DB insert failed:', error)
+          // Try to continue with Supabase A
+        }
       }
 
+      // 🔄 ALSO WRITE TO SUPABASE A (JSONB) - For Realtime updates to host
+      if (isSupabaseConfigured()) {
+        // Refetch participants to ensure we have latest data for JSONB update
+        const { data: latestSession } = await supabase
+          .from('game_sessions')
+          .select('participants')
+          .eq('game_pin', roomCode)
+          .single()
+
+        // 🔧 FIX: Remove any existing participant with the same nickname before adding new one
+        const latestParticipants = Array.isArray(latestSession?.participants)
+          ? latestSession.participants.filter((p: any) => p.nickname !== player.nickname)
+          : []
+        latestParticipants.push(newPlayer)
+
+        const { error: updateError } = await supabase
+          .from('game_sessions')
+          .update({ participants: latestParticipants })
+          .eq('game_pin', roomCode)
+
+        if (updateError) {
+          console.warn('[SupabaseRoomManager] Error updating Supabase A (non-critical if B succeeded):', updateError)
+          // If Supabase B succeeded, we can still return true
+          if (isPlayersSupabaseConfigured()) {
+            return true
+          }
+          return false
+        }
+      }
+
+      console.log(`[SupabaseRoomManager] Player ${player.nickname} joined room ${roomCode} successfully`)
       return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error in joinRoom:', error)
@@ -399,17 +577,48 @@ class SupabaseRoomManager {
   }
 
   async updatePlayerScore(roomCode: string, playerId: string, quizScore?: number, questionsAnswered?: number): Promise<boolean> {
+    // 🚀 FULL SUPABASE B: Only update Players DB during game
+    // Data will be synced to Supabase A (JSONB) when game finishes
+    if (isPlayersSupabaseConfigured() && quizScore !== undefined && questionsAnswered !== undefined) {
+      try {
+        const success = await participantsApi.updateScore(
+          roomCode,
+          playerId,
+          quizScore,
+          questionsAnswered
+        )
+
+        if (success) {
+          return true
+        }
+      } catch (error) {
+        console.warn('[SupabaseRoomManager] Players DB update failed, falling back to JSONB:', error)
+      }
+    }
+
+    // Fallback to JSONB update only if Players DB not configured or failed
     return this.updateGameProgress(roomCode, playerId, { quizScore, questionsAnswered })
   }
 
   async startCountdown(roomCode: string, hostId: string, duration: number = 10): Promise<boolean> {
     try {
+      // 🚀 SUPABASE B FIRST: Update for instant realtime
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          await sessionsApi.startCountdown(roomCode, duration)
+          console.log('[SupabaseRoomManager] ✅ Countdown started in Supabase B')
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Failed to start countdown in Supabase B:', error)
+        }
+      }
+
+      // Also update Supabase A
       const { error } = await supabase
         .from('game_sessions')
         .update({
-          status: 'active', // Use active for countdown phase too, distinguished by countdown_started_at
+          status: 'active',
           countdown_started_at: new Date().toISOString(),
-          started_at: null // Reset started_at until countdown finishes
+          started_at: null
         })
         .eq('game_pin', roomCode)
         .eq('host_id', hostId)
@@ -423,6 +632,17 @@ class SupabaseRoomManager {
 
   async startGame(roomCode: string, hostId: string): Promise<boolean> {
     try {
+      // 🚀 SUPABASE B FIRST: Update for instant realtime
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          await sessionsApi.updateStatus(roomCode, 'active')
+          console.log('[SupabaseRoomManager] ✅ Game started in Supabase B')
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Failed to start game in Supabase B:', error)
+        }
+      }
+
+      // Also update Supabase A
       const { error } = await supabase
         .from('game_sessions')
         .update({
@@ -446,6 +666,16 @@ class SupabaseRoomManager {
       if (status === 'countdown' || status === 'quiz' || status === 'memory') dbStatus = 'active'
       if (status === 'finished') dbStatus = 'finished'
 
+      // 🚀 SUPABASE B FIRST: Update for instant realtime
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          await sessionsApi.updateStatus(roomCode, dbStatus as any)
+          console.log('[SupabaseRoomManager] ✅ Status updated in Supabase B:', status)
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Failed to update status in Supabase B:', error)
+        }
+      }
+
       const updateData: any = { status: dbStatus }
 
       if (status === 'countdown') {
@@ -454,6 +684,61 @@ class SupabaseRoomManager {
         updateData.started_at = new Date().toISOString()
       }
 
+      // 🚀 GAME FINISHED: Sync all player data from Supabase B to Supabase A
+      if (status === 'finished' && isPlayersSupabaseConfigured()) {
+        try {
+          console.log('[SupabaseRoomManager] Game finished - syncing players to main database...')
+
+          // Get all players from Supabase B
+          const playersFromB = await participantsApi.getParticipants(roomCode)
+
+          if (playersFromB.length > 0) {
+            // Convert to JSONB format for participants field
+            const participantsForJsonb = playersFromB.map(p => ({
+              id: p.id,
+              nickname: p.nickname,
+              avatar: p.avatar || '/avatars/default.webp',
+              joined_at: p.joined_at,
+              started: p.started,
+              ended: p.ended,
+              is_ready: true,
+              is_host: p.is_host,
+              score: p.score || 0,
+              questions_answered: p.questions_answered || 0
+            }))
+
+            // 🆕 Build responses array with answers for history
+            const responsesForJsonb = playersFromB
+              .filter(p => !p.is_host) // Exclude host from responses
+              .map(p => ({
+                id: p.id,
+                participant: p.id,
+                nickname: p.nickname,
+                score: p.score || 0,
+                answers: p.answers || [],
+                correct: (p.answers || []).filter((a: any) => a.is_correct).length,
+                total_question: p.questions_answered || 0,
+                accuracy: p.questions_answered > 0
+                  ? ((p.answers || []).filter((a: any) => a.is_correct).length / p.questions_answered * 100).toFixed(2)
+                  : "0.00",
+                completion: true,
+                duration: p.started && p.ended
+                  ? Math.round((new Date(p.ended).getTime() - new Date(p.started).getTime()) / 1000)
+                  : 0
+              }))
+
+            // Add to update data
+            updateData.participants = participantsForJsonb
+            updateData.responses = responsesForJsonb
+
+            console.log(`[SupabaseRoomManager] Synced ${playersFromB.length} players and ${responsesForJsonb.length} responses to main database`)
+          }
+        } catch (syncError) {
+          console.error('[SupabaseRoomManager] Error syncing players on game finish:', syncError)
+        }
+      }
+
+      // Update Supabase A (for historical data)
       const { error } = await supabase
         .from('game_sessions')
         .update(updateData)
@@ -468,24 +753,39 @@ class SupabaseRoomManager {
 
   async leaveRoom(roomCode: string, playerId: string): Promise<boolean> {
     try {
+      // 🔄 WRITE TO SUPABASE A (JSONB) - For Realtime updates to host
       const { data: sessionData } = await supabase
         .from('game_sessions')
         .select('participants')
         .eq('game_pin', roomCode)
         .single()
 
-      if (!sessionData) return false
+      if (sessionData) {
+        const participants = Array.isArray(sessionData.participants)
+          ? sessionData.participants.filter((p: any) => p.id !== playerId)
+          : []
 
-      const participants = Array.isArray(sessionData.participants)
-        ? sessionData.participants.filter((p: any) => p.id !== playerId)
-        : []
+        const { error } = await supabase
+          .from('game_sessions')
+          .update({ participants })
+          .eq('game_pin', roomCode)
 
-      const { error } = await supabase
-        .from('game_sessions')
-        .update({ participants })
-        .eq('game_pin', roomCode)
+        if (error) {
+          console.error('[SupabaseRoomManager] Error leaving room (JSONB):', error)
+        }
+      }
 
-      return !error
+      // 🚀 ALSO REMOVE FROM SUPABASE B (Players DB)
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          await participantsApi.removeParticipant(roomCode, playerId)
+          console.log(`[SupabaseRoomManager] Player ${playerId} removed from both databases`)
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Players DB remove failed (non-critical):', error)
+        }
+      }
+
+      return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error leaving room:', error)
       return false
@@ -502,6 +802,50 @@ class SupabaseRoomManager {
     return false
   }
 
+  /**
+   * Delete a room when host leaves
+   * This will remove the session from both Supabase A and B
+   * Players will be automatically kicked out when they detect room is null
+   */
+  async deleteRoom(roomCode: string, hostId: string): Promise<boolean> {
+    try {
+      console.log(`[SupabaseRoomManager] 🗑️ Host leaving - deleting room ${roomCode}`)
+
+      // 🚀 SUPABASE B FIRST: Delete session and all participants
+      if (isPlayersSupabaseConfigured()) {
+        try {
+          // Delete all participants first (foreign key constraint)
+          await participantsApi.clearSession(roomCode)
+          console.log(`[SupabaseRoomManager] ✅ Cleared participants from Supabase B`)
+
+          // Delete session
+          await sessionsApi.deleteSession(roomCode)
+          console.log(`[SupabaseRoomManager] ✅ Deleted session from Supabase B`)
+        } catch (error) {
+          console.warn('[SupabaseRoomManager] Supabase B cleanup failed (non-critical):', error)
+        }
+      }
+
+      // 🔄 DELETE FROM SUPABASE A (game_sessions)
+      const { error } = await supabase
+        .from('game_sessions')
+        .delete()
+        .eq('game_pin', roomCode)
+        .eq('host_id', hostId)
+
+      if (error) {
+        console.error('[SupabaseRoomManager] Error deleting room from Supabase A:', error)
+        return false
+      }
+
+      console.log(`[SupabaseRoomManager] ✅ Room ${roomCode} deleted successfully from all databases`)
+      return true
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Error deleting room:', error)
+      return false
+    }
+  }
+
   async subscribe(roomCode: string, callback: (room: Room | null) => void) {
     // Initialize lastRoomData with current room state
     const initialRoom = await this.getRoom(roomCode)
@@ -511,48 +855,36 @@ class SupabaseRoomManager {
       callback(initialRoom)
     }
 
-    const DEBOUNCE_DELAY = 50 // Reduced delay for snappier updates
+    // 🚀 INSTANT: No debounce - immediate callback for realtime updates
+    const instantCallback = (updatedRoom: Room | null) => {
+      const lastRoom = this.lastRoomData.get(roomCode)
 
-    const debouncedCallback = (updatedRoom: Room | null) => {
-      const existingTimer = this.debounceTimers.get(roomCode)
-      if (existingTimer) {
-        clearTimeout(existingTimer)
+      // Deep comparison to avoid unnecessary updates
+      const hasChanged = !lastRoom ||
+        lastRoom.status !== updatedRoom?.status ||
+        lastRoom.players?.length !== updatedRoom?.players?.length ||
+        lastRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
+        JSON.stringify(lastRoom.players?.map(p => p.id).sort()) !== JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
+        JSON.stringify(lastRoom.players?.map(p => ({
+          id: p.id,
+          quizScore: p.quizScore,
+          questionsAnswered: p.questionsAnswered,
+          memoryScore: p.memoryScore
+        })).sort((a, b) => a.id.localeCompare(b.id))) !==
+        JSON.stringify(updatedRoom?.players?.map(p => ({
+          id: p.id,
+          quizScore: p.quizScore,
+          questionsAnswered: p.questionsAnswered,
+          memoryScore: p.memoryScore
+        })).sort((a, b) => a.id.localeCompare(b.id)))
+
+      if (hasChanged && updatedRoom) {
+        this.lastRoomData.set(roomCode, updatedRoom)
+        callback(updatedRoom) // Immediate callback - no delay!
       }
-
-      const timer = setTimeout(() => {
-        const lastRoom = this.lastRoomData.get(roomCode)
-
-        // Deep comparison to avoid unnecessary updates
-        const hasChanged = !lastRoom ||
-          lastRoom.status !== updatedRoom?.status ||
-          lastRoom.players?.length !== updatedRoom?.players?.length ||
-          lastRoom.countdownStartTime !== updatedRoom?.countdownStartTime ||
-          JSON.stringify(lastRoom.players?.map(p => p.id).sort()) !== JSON.stringify(updatedRoom?.players?.map(p => p.id).sort()) ||
-          JSON.stringify(lastRoom.players?.map(p => ({
-            id: p.id,
-            quizScore: p.quizScore,
-            questionsAnswered: p.questionsAnswered,
-            memoryScore: p.memoryScore // Include memory score in comparison
-          })).sort((a, b) => a.id.localeCompare(b.id))) !==
-          JSON.stringify(updatedRoom?.players?.map(p => ({
-            id: p.id,
-            quizScore: p.quizScore,
-            questionsAnswered: p.questionsAnswered,
-            memoryScore: p.memoryScore
-          })).sort((a, b) => a.id.localeCompare(b.id)))
-
-        if (hasChanged && updatedRoom) {
-          this.lastRoomData.set(roomCode, updatedRoom)
-          callback(updatedRoom)
-        }
-
-        this.debounceTimers.delete(roomCode)
-      }, DEBOUNCE_DELAY)
-
-      this.debounceTimers.set(roomCode, timer)
     }
 
-    // Subscribe to game_sessions changes
+    // Subscribe to game_sessions changes (Supabase A - for status, settings)
     const roomSubscription = supabase
       .channel(`room-${roomCode}`)
       .on('postgres_changes',
@@ -563,28 +895,19 @@ class SupabaseRoomManager {
           filter: `game_pin=eq.${roomCode}`
         },
         async (payload) => {
-          // OPTIMIZATION: Use payload.new directly instead of fetching
-          if (payload.new && typeof payload.new === 'object') {
-            try {
-              // payload.new contains the updated row. We can parse it directly.
-              const updatedRoom = this._parseSessionDataToRoom(payload.new)
-              debouncedCallback(updatedRoom)
-            } catch (err) {
-              console.error('[SupabaseRoomManager] Error parsing payload:', err)
-              // Fallback to fetch if parsing fails
-              const fetchedRoom = await this.getRoom(roomCode)
-              if (fetchedRoom) debouncedCallback(fetchedRoom)
-            }
-          } else {
-            // Fallback for delete events or weird payloads
+          // Fetch complete room data to ensure we get players from both databases
+          try {
             const updatedRoom = await this.getRoom(roomCode)
-            if (updatedRoom) debouncedCallback(updatedRoom)
+            if (updatedRoom) {
+              instantCallback(updatedRoom)
+            }
+          } catch (err) {
+            console.error('[SupabaseRoomManager] Error fetching room on update:', err)
           }
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-
           this.connectionStatus = true
         } else if (status === 'CHANNEL_ERROR') {
           console.error('[SupabaseRoomManager] ❌ Subscription error:', roomCode)
@@ -596,6 +919,75 @@ class SupabaseRoomManager {
       })
 
     this.subscriptions.set(roomCode, roomSubscription)
+
+    // 🚀 SUPABASE B: Subscribe to sessions table for realtime session updates - INSTANT UPDATE
+    let sessionsUnsubscribe: (() => void) | null = null
+    if (isPlayersSupabaseConfigured()) {
+      sessionsUnsubscribe = sessionsApi.subscribeToSession(
+        roomCode,
+        async (session) => {
+          // 🚀 INSTANT UPDATE: Update session data directly from realtime payload
+          try {
+            const lastRoom = this.lastRoomData.get(roomCode)
+            if (lastRoom && session) {
+              // Update room with new session data directly - NO FULL FETCH!
+              const updatedRoom: Room = {
+                ...lastRoom,
+                status: this.mapSessionStatusToRoomStatus(session.status, session.countdown_started_at, session.started_at),
+                countdownStartTime: session.countdown_started_at || undefined,
+                startedAt: session.started_at || undefined,
+                gameStarted: session.status !== 'waiting'
+              }
+
+              instantCallback(updatedRoom)
+            } else {
+              // Fallback to full fetch if no lastRoom
+              const updatedRoom = await this.getRoom(roomCode)
+              if (updatedRoom) {
+                instantCallback(updatedRoom)
+              }
+            }
+          } catch (err) {
+            console.error('[SupabaseRoomManager] Error on session update:', err)
+          }
+        }
+      )
+    }
+
+    // 🚀 SUPABASE B: Subscribe to participants table for score updates - INSTANT UPDATE
+    let playersUnsubscribe: (() => void) | null = null
+    if (isPlayersSupabaseConfigured()) {
+      playersUnsubscribe = participantsApi.subscribeToParticipants(
+        roomCode,
+        async (participants) => {
+          // 🚀 INSTANT UPDATE: Use lastRoomData and update players directly from realtime data
+          try {
+            const lastRoom = this.lastRoomData.get(roomCode)
+            if (lastRoom) {
+              // 🔧 FIX: Always update players, even if empty (all players kicked)
+              // Convert participants to players directly - NO FETCH!
+              const updatedPlayers = participants.map(p => this._convertParticipantToPlayer(p))
+
+              const updatedRoom: Room = {
+                ...lastRoom,
+                players: updatedPlayers
+              }
+
+              instantCallback(updatedRoom)
+            } else {
+              // Fallback to fetch if no lastRoom
+              const updatedRoom = await this.getRoom(roomCode)
+              if (updatedRoom) {
+                instantCallback(updatedRoom)
+              }
+            }
+          } catch (err) {
+            console.error('[SupabaseRoomManager] Error on players update:', err)
+          }
+        }
+      )
+    }
+
     this.listeners.add(callback)
 
     return () => {
@@ -607,10 +999,19 @@ class SupabaseRoomManager {
 
       this.lastRoomData.delete(roomCode)
 
-
       roomSubscription.unsubscribe()
       this.subscriptions.delete(roomCode)
       this.listeners.delete(callback)
+
+      // Unsubscribe from Supabase B sessions
+      if (sessionsUnsubscribe) {
+        sessionsUnsubscribe()
+      }
+
+      // Unsubscribe from Supabase B participants
+      if (playersUnsubscribe) {
+        playersUnsubscribe()
+      }
     }
   }
 

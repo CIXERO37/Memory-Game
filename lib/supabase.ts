@@ -302,5 +302,85 @@ export const quizApi = {
     }
 
     return data || []
+  },
+
+  // Get quizzes with server-side offset-based pagination
+  async getQuizzesPaginated(options: {
+    page: number
+    limit: number
+    category?: string
+    searchQuery?: string
+  }): Promise<{ quizzes: Quiz[]; totalCount: number; totalPages: number }> {
+    try {
+      // Check if Supabase is properly configured
+      if (!isSupabaseConfigured()) {
+        const configStatus = getSupabaseConfigStatus()
+        console.error('Supabase configuration error:', configStatus)
+        throw new Error('Supabase not configured.')
+      }
+
+      const { page, limit, category, searchQuery } = options
+      const offset = (page - 1) * limit
+
+      // Build query for count (total items matching filters)
+      let countQuery = supabase
+        .from('quizzes')
+        .select('id', { count: 'exact', head: true })
+
+      // Build query for data
+      let dataQuery = supabase
+        .from('quizzes')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      // Apply category filter (server-side)
+      if (category && category !== 'all') {
+        countQuery = countQuery.ilike('category', category)
+        dataQuery = dataQuery.ilike('category', category)
+      }
+
+      // Apply search filter (server-side)
+      if (searchQuery && searchQuery.trim() !== '') {
+        const searchTerm = `%${searchQuery.trim()}%`
+        countQuery = countQuery.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
+        dataQuery = dataQuery.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
+      }
+
+      // Apply pagination with range (offset-based)
+      dataQuery = dataQuery.range(offset, offset + limit - 1)
+
+      // Execute both queries in parallel
+      const [countResult, dataResult] = await Promise.all([
+        countQuery,
+        dataQuery
+      ])
+
+      if (countResult.error) {
+        console.error('Error counting quizzes:', countResult.error)
+        throw countResult.error
+      }
+
+      if (dataResult.error) {
+        console.error('Error fetching paginated quizzes:', dataResult.error)
+        throw dataResult.error
+      }
+
+      // Filter public quizzes on client side (since is_public might be in metadata)
+      const publicQuizzes = (dataResult.data || []).filter(isQuizPublic)
+
+      // Note: total count might include non-public quizzes, but this is acceptable
+      // for pagination purposes. For exact count, a server-side function would be needed.
+      const totalCount = countResult.count || 0
+      const totalPages = Math.ceil(totalCount / limit)
+
+      return {
+        quizzes: publicQuizzes,
+        totalCount,
+        totalPages
+      }
+    } catch (err) {
+      console.error('Error in getQuizzesPaginated:', err)
+      throw err
+    }
   }
 }

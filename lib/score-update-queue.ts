@@ -24,8 +24,8 @@ interface QueuedUpdate {
 class ScoreUpdateQueue {
     private queue: Map<string, QueuedUpdate> = new Map()
     private flushTimeout: NodeJS.Timeout | null = null
-    private readonly FLUSH_INTERVAL = 2000 // 2 seconds - balance between responsiveness and rate limiting
-    private readonly MAX_QUEUE_SIZE = 50 // Force flush if queue gets too large
+    private readonly FLUSH_INTERVAL = 100 // 100ms - very fast updates
+    private readonly MAX_QUEUE_SIZE = 5 // Force flush with fewer items
     private isProcessing = false
 
     /**
@@ -116,7 +116,7 @@ class ScoreUpdateQueue {
 
             // Small delay between batches to be gentle on the server
             if (i + BATCH_SIZE < updates.length) {
-                await new Promise(resolve => setTimeout(resolve, 100))
+                await new Promise(resolve => setTimeout(resolve, 50))
             }
         }
 
