@@ -301,7 +301,7 @@ function ResultPageContent() {
             {/* MEMORYQUIZ Identity - Top Left Corner */}
             <div className="absolute top-4 left-4 flex items-center p-2">
               <img
-                src="/images/memoryquiz.webp"
+                src="/images/memoryquizv4.webp"
                 alt="Memory Quiz"
                 className="h-12 w-auto object-contain drop-shadow-lg"
                 draggable={false}

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: 'Memory Quiz',
     images: [
       {
-        url: '/images/memoryquiz.webp',
+        url: '/images/memoryquizv4.webp',
         width: 1200,
         height: 630,
         alt: 'Memory Quiz',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Memory Quiz',
     description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
-    images: ['/images/memoryquiz.webp'],
+    images: ['/images/memoryquizv4.webp'],
   },
   appleWebApp: {
     capable: true,

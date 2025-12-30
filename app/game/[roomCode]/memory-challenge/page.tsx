@@ -407,7 +407,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
           {/* Left side - Memory Quiz Image */}
           <div className="shrink-0">
             <img
-              src="/images/memoryquiz.webp"
+              src="/images/memoryquizv4.webp"
               alt="Memory Quiz"
               className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
             />
