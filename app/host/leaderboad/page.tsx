@@ -380,7 +380,7 @@ function LeaderboardHostPageContent() {
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 z-20">
         <img
           draggable={false}
-          src="/images/memoryquiz.webp"
+          src="/images/memoryquizv4.webp"
           alt="Memory Quiz"
           className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
         />

@@ -654,7 +654,7 @@ function MonitorPageContent() {
               <div>
                 <div className="flex flex-row sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                   <img
-                    src="/images/memoryquiz.webp"
+                    src="/images/memoryquizv4.webp"
                     alt="MEMORY QUIZ"
                     className="h-12 w-auto sm:h-16 md:h-20 object-contain"
                     draggable={false}
