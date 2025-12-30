@@ -22,7 +22,19 @@ export const isPlayersSupabaseConfigured = () => {
     const hasKey = !!process.env.NEXT_PUBLIC_SUPABASE_PLAYERS_ANON_KEY
     const isValidUrl = hasUrl && !process.env.NEXT_PUBLIC_SUPABASE_PLAYERS_URL?.includes('placeholder')
     const isValidKey = hasKey && !process.env.NEXT_PUBLIC_SUPABASE_PLAYERS_ANON_KEY?.includes('placeholder')
-    return isValidUrl && isValidKey
+    const result = isValidUrl && isValidKey
+
+    // 🔍 DEBUG: Log configuration status
+    console.log('[PlayersDB Config]', {
+        hasUrl,
+        hasKey,
+        isValidUrl,
+        isValidKey,
+        configured: result,
+        urlPreview: process.env.NEXT_PUBLIC_SUPABASE_PLAYERS_URL?.substring(0, 30) + '...'
+    })
+
+    return result
 }
 
 /**

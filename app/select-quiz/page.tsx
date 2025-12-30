@@ -588,7 +588,7 @@ export default function SelectQuizPage() {
             <div className="flex items-center gap-1 sm:gap-2 min-w-0 ">
               <img
                 draggable={false}
-                src="/images/memoryquiz.webp"
+                src="/images/memoryquizv4.webp"
                 alt="Memory Quiz"
                 className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain -mt-5"
                 style={{

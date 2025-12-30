@@ -182,7 +182,7 @@ export default function LoginPage() {
             <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6 sm:p-8">
               <div className="flex justify-center mb-4">
                 <img
-                  src="/images/memoryquiz.webp"
+                  src="/images/memoryquizv4.webp"
                   alt="Memory Quiz"
                   className="h-12 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto"
                 />

@@ -551,7 +551,7 @@ export default function WaitingRoomPage() {
               {/* Memory Quiz Logo with glow effect */}
               <img
                 draggable={false}
-                src="/images/memoryquiz.webp"
+                src="/images/memoryquizv4.webp"
                 alt="Memory Quiz"
                 className="h-8 sm:h-10 md:h-12 lg:h-16 xl:h-20 2xl:h-24 w-auto object-contain max-w-[45%] sm:max-w-none"
                 style={{
