@@ -20,6 +20,7 @@ import {
     DialogOverlay,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { useAdminGuard } from "@/lib/admin-guard";
 
 // Avatar styles using DiceBear API (same as test-100-players.html)
 const AVATAR_STYLES = ['adventurer', 'avataaars', 'bottts', 'fun-emoji', 'lorelei', 'micah', 'pixel-art', 'thumbs'];
@@ -55,6 +56,9 @@ interface SessionData {
 }
 
 export default function StressTestPage() {
+    // Admin guard - only admins can access this page
+    const { isAdmin, loading: adminLoading } = useAdminGuard();
+
     const [roomCode, setRoomCode] = useState("");
     const [userCount, setUserCount] = useState(100);
     const [isRunning, setIsRunning] = useState(false);
@@ -76,6 +80,7 @@ export default function StressTestPage() {
     const stopRef = useRef(false);
     const usersRef = useRef<TestUser[]>([]);
     const sessionChannelRef = useRef<any>(null);
+    const firstBotFinishedRef = useRef(false);
 
     const addLog = useCallback((message: string) => {
         const timestamp = new Date().toLocaleTimeString();
@@ -97,7 +102,7 @@ export default function StressTestPage() {
         let sessionB = await sessionsApi.getSession(code);
 
         if (sessionB) {
-            addLog(`✅ Session found in Supabase B`);
+            // Don't log every time - only first time is logged by caller
             return {
                 id: sessionB.id,
                 game_pin: sessionB.game_pin,
@@ -228,18 +233,19 @@ export default function StressTestPage() {
         addLog(`📊 Total joined: ${users.length} users`);
     };
 
-    // Phase 2: Lobby - Wait for game to start
+    // Phase 2: Lobby - Wait for game to start (silent polling)
     const waitForGameStart = async () => {
-        addLog("⏳ Waiting for game to start...");
+        addLog("⏳ Waiting for host to start game...");
 
         while (!stopRef.current) {
-            const sess = await fetchSession(roomCode);
+            // Silent check - don't log every poll
+            const sess = await sessionsApi.getSession(roomCode);
             if (sess?.status === "active") {
-                addLog("🎮 Game started! Bots ready to answer...");
+                addLog("🎮 Game started! Bots will answer...");
                 break;
             }
-            // Check every 2 seconds
-            await randomDelayRange(2000, 3000);
+            // Check every 3 seconds
+            await randomDelayRange(2500, 3500);
         }
     };
 
@@ -286,6 +292,9 @@ export default function StressTestPage() {
                     points_earned: pointsEarned
                 };
 
+                // Check if game already ended before submitting
+                if (stopRef.current) break;
+
                 try {
                     // Add answer to player's answers array
                     await participantsApi.addAnswer(
@@ -294,7 +303,10 @@ export default function StressTestPage() {
                         answerData
                     );
 
-                    // Update score
+                    // Check again after DB operation
+                    if (stopRef.current) break;
+
+                    // Update score (this updates questionsAnswered)
                     await participantsApi.updateScore(
                         roomCode,
                         user.id,
@@ -302,37 +314,149 @@ export default function StressTestPage() {
                         qIndex + 1
                     );
 
+                    // Check again - game might have ended
+                    if (stopRef.current) break;
+
                     user.currentQuestion = qIndex + 1;
                     user.correctAnswers = localCorrectAnswers;
                     user.score = localScore;
 
-                    addLog(`${user.nickname} → Q${qIndex + 1}${isCorrect ? ' ✓' : ''}`);
-                    setAnsweringCount(prev => Math.max(prev, qIndex + 1));
-
-                    // Check for memory game trigger (every 3 correct answers)
-                    // In stress test, we skip memory game but simulate the delay
-                    if (isCorrect && localCorrectAnswers > 0 && localCorrectAnswers % 3 === 0 && qIndex < totalQuestions - 1) {
-                        addLog(`🧠 ${user.nickname} triggering memory game... (skipped)`);
-                        // Simulate memory game completion time (1-3 seconds)
-                        await randomDelayRange(1000, 3000);
+                    // Only log every 5 answers or correct answers to reduce noise
+                    if (isCorrect || (qIndex + 1) % 5 === 0 || qIndex === totalQuestions - 1) {
+                        addLog(`${user.nickname}: Q${qIndex + 1}/${totalQuestions}${isCorrect ? ' ✓' : ''} (${localScore}pts)`);
                     }
+                    setAnsweringCount(prev => Math.max(prev, qIndex + 1));
 
                     if (qIndex === totalQuestions - 1) {
                         user.completed = true;
-                        // Mark player as finished
-                        await participantsApi.markFinished(roomCode, user.id, localScore);
                         setCompletedCount(prev => prev + 1);
-                        addLog(`🏁 ${user.nickname} finished! Score: ${localScore}`);
+
+                        // 🚀 TRIGGER GAME END: When first bot finishes, end game for all
+                        if (!firstBotFinishedRef.current && !stopRef.current) {
+                            firstBotFinishedRef.current = true;
+                            stopRef.current = true; // Stop all other bots IMMEDIATELY
+                            addLog(`🏁 ${user.nickname} finished first! Ending game...`);
+
+                            try {
+                                // Update game status to finished
+                                await sessionsApi.updateStatus(roomCode, 'finished');
+                                addLog(`🛑 Game ended`);
+
+                                // 🚀 SET COMPLETED COUNT TO ALL JOINED USERS
+                                // Since 1 finish = all finish, all joined users are "completed"
+                                setCompletedCount(usersRef.current.length);
+
+                                // 🚀 SYNC TO SUPABASE A: Forward final scores AND responses to main database
+                                addLog(`📤 Syncing to main database...`);
+                                const allParticipants = await participantsApi.getParticipants(roomCode);
+
+                                // Get current session from Supabase A
+                                const { data: sessionA } = await supabase
+                                    .from("game_sessions")
+                                    .select("participants, responses")
+                                    .eq("game_pin", roomCode)
+                                    .single();
+
+                                // Merge bot scores into participants JSONB
+                                const existingParticipants = Array.isArray(sessionA?.participants)
+                                    ? [...sessionA.participants]
+                                    : [];
+
+                                // Existing responses (keep real user responses)
+                                const existingResponses = Array.isArray(sessionA?.responses)
+                                    ? [...sessionA.responses]
+                                    : [];
+
+                                // Update or add bot participants AND build responses
+                                for (const bot of allParticipants) {
+                                    // Skip host
+                                    if (bot.is_host) continue;
+
+                                    // Participant data
+                                    const existingIndex = existingParticipants.findIndex(
+                                        (p: any) => p.id === bot.id || p.nickname === bot.nickname
+                                    );
+                                    const botData = {
+                                        id: bot.id,
+                                        nickname: bot.nickname,
+                                        avatar: bot.avatar,
+                                        is_host: bot.is_host,
+                                        is_ready: true,
+                                        score: bot.score,
+                                        questions_answered: bot.questions_answered,
+                                        joined_at: bot.joined_at
+                                    };
+                                    if (existingIndex >= 0) {
+                                        existingParticipants[existingIndex] = botData;
+                                    } else {
+                                        existingParticipants.push(botData);
+                                    }
+
+                                    // Response data (answers)
+                                    const answers = Array.isArray(bot.answers) ? bot.answers : [];
+                                    const correctCount = answers.filter((a: any) => a.is_correct).length;
+                                    const responseData = {
+                                        id: bot.id,
+                                        participant: bot.id,
+                                        nickname: bot.nickname,
+                                        score: bot.score,
+                                        answers: answers,
+                                        correct: correctCount,
+                                        accuracy: answers.length > 0
+                                            ? ((correctCount / answers.length) * 100).toFixed(2)
+                                            : "0.00",
+                                        duration: 0,
+                                        completion: true,
+                                        total_question: answers.length
+                                    };
+
+                                    // Update or add response
+                                    const responseIndex = existingResponses.findIndex(
+                                        (r: any) => r.id === bot.id || r.participant === bot.id
+                                    );
+                                    if (responseIndex >= 0) {
+                                        existingResponses[responseIndex] = responseData;
+                                    } else {
+                                        existingResponses.push(responseData);
+                                    }
+                                }
+
+                                // Update Supabase A with participants AND responses
+                                const { error: syncError } = await supabase
+                                    .from("game_sessions")
+                                    .update({
+                                        participants: existingParticipants,
+                                        responses: existingResponses,
+                                        status: 'finished'
+                                    })
+                                    .eq("game_pin", roomCode);
+
+                                if (syncError) {
+                                    addLog(`⚠️ Sync warning: ${syncError.message}`);
+                                } else {
+                                    addLog(`✅ ${allParticipants.length} participants + responses synced`);
+                                }
+
+                                setGameEnded(true);
+                            } catch (err) {
+                                console.error('Error ending game:', err);
+                                addLog(`❌ Error: ${err}`);
+                            }
+                        }
                     }
                 } catch (err) {
-                    setErrorCount(prev => prev + 1);
-                    console.error(`Error for ${user.nickname}:`, err);
+                    if (!stopRef.current) {
+                        setErrorCount(prev => prev + 1);
+                        console.error(`Error for ${user.nickname}:`, err);
+                    }
                 }
             }
         });
 
         await Promise.all(botPromises);
-        addLog(`🎉 All bots completed!`);
+        if (!firstBotFinishedRef.current) {
+            addLog(`🎉 All bots completed!`);
+        }
     };
 
     // Main test runner
@@ -439,6 +563,30 @@ export default function StressTestPage() {
         setShowCleanupDialog(false);
     };
 
+    // Show loading state while checking admin status
+    if (adminLoading) {
+        return (
+            <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-white text-lg">Checking permissions...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // If not admin, useAdminGuard will redirect - this is just a fallback
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+                <div className="text-center">
+                    <p className="text-red-400 text-lg">Access Denied</p>
+                    <p className="text-gray-400 text-sm mt-2">Admin role required</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
 
@@ -453,7 +601,7 @@ export default function StressTestPage() {
                 <div className="w-full px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Image
-                            src="/images/memoryquiz.webp"
+                            src="/images/memoryquizv4.webp"
                             alt="Memory Quiz"
                             width={150}
                             height={50}
@@ -477,7 +625,6 @@ export default function StressTestPage() {
                             <h1 className="text-4xl font-bold text-white drop-shadow-lg">
                                 Stress Test
                             </h1>
-                            {gameEnded && <span className="text-red-400 text-sm animate-pulse block mt-2">⛔ Game Ended</span>}
                         </div>
                     </div>
 
