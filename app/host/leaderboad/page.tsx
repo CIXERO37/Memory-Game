@@ -527,7 +527,6 @@ function LeaderboardHostPageContent() {
                       <h3 className="text-2xl font-bold text-slate-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[1].nickname)}</h3>
                       <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{sortedPlayers[1].quizScore || 0}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
                   </div>
@@ -588,11 +587,8 @@ function LeaderboardHostPageContent() {
 
                       {/* Points display box */}
                       <div className="mt-8 bg-gradient-to-br from-amber-600 to-yellow-700 rounded-2xl px-10 py-7 shadow-lg border-2 border-amber-700/40">
-                        <div className="text-5xl font-bold text-white text-center mb-1 leading-none">
+                        <div className="text-5xl font-bold text-white text-center leading-none">
                           {champion.quizScore || 0}
-                        </div>
-                        <div className="text-lg text-white text-center font-bold tracking-wide uppercase">
-                          {t('lobby.points')}
                         </div>
                       </div>
 
@@ -640,7 +636,6 @@ function LeaderboardHostPageContent() {
                       <h3 className="text-2xl font-bold text-amber-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[2].nickname)}</h3>
                       <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{sortedPlayers[2].quizScore || 0}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
                   </div>
@@ -655,17 +650,7 @@ function LeaderboardHostPageContent() {
           <div className="max-w-6xl mx-auto mb-16 hidden md:block">
             <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border-4 border-indigo-400/40 rounded-3xl p-8 backdrop-blur-sm relative overflow-hidden shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-3xl blur-xl"></div>
-              <div className="relative z-10 text-center mb-6">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full border-2 border-white shadow-xl flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-400 drop-shadow-lg">
-                    OTHERS
-                  </h3>
-                </div>
-              </div>
-              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {sortedPlayers.slice(3).map((player, index) => {
                   const totalScore = player.quizScore || 0
                   const rank = index + 4
@@ -708,7 +693,6 @@ function LeaderboardHostPageContent() {
                           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-2 py-1.5 shadow-sm group-hover:scale-105 transition-transform duration-300 flex-shrink-0 min-w-[60px]">
                             <div className="text-center">
                               <div className="text-base font-bold text-white leading-tight">{totalScore}</div>
-                              <div className="text-[10px] text-white/90 font-semibold uppercase tracking-wide">{t('lobby.points')}</div>
                             </div>
                           </div>
                         </div>

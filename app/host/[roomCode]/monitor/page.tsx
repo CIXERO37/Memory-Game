@@ -788,7 +788,6 @@ function MonitorPageContent() {
                             <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-2 py-1 flex-shrink-0 min-w-[50px]">
                               <div className="text-center">
                                 <span className="text-yellow-400 font-bold text-xs sm:text-sm block leading-tight">{totalScore}</span>
-                                <span className="text-yellow-300/80 font-semibold text-[9px] uppercase block leading-tight">{t('monitor.points')}</span>
                               </div>
                             </div>
                           </div>
