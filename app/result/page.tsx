@@ -357,7 +357,6 @@ function ResultPageContent() {
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/15 to-blue-400/15 rounded-lg blur-sm"></div>
               <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent rounded-lg"></div>
               <div className="text-4xl font-bold text-cyan-100 relative z-10 drop-shadow-lg">{playerRanking.totalScore}</div>
-              <div className="text-lg text-slate-200/80 relative z-10">{t('lobby.points')}</div>
             </div>
 
           </div>
