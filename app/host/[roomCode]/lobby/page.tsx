@@ -955,14 +955,12 @@ function LobbyPageContent() {
             <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
             <div className="relative bg-linear-to-br from-blue-500 to-purple-600 rounded-lg border-4 border-black shadow-2xl p-6">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
-                  <X className="h-8 w-8 text-red-600" />
-                </div>
+                
                 <DialogTitle className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.kickPlayer')}?</DialogTitle>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
                   {t('lobby.confirmKick')}<br />
-                  <span className="font-bold text-yellow-300">{playerToKick?.username?.toUpperCase()}</span><br />
-                  ?
+                  <span className="font-bold text-red-400 text-lg">{playerToKick?.nickname?.toUpperCase()}</span><br />
+                  
                 </p>
               </div>
 

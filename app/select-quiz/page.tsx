@@ -192,7 +192,7 @@ export default function SelectQuizPage() {
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [isSelectAllExpanded, setIsSelectAllExpanded] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 12 // 4 rows x 3 columns
+  const itemsPerPage = 12 // 4 columns x 3 rows
   const [favoriteQuizIds, setFavoriteQuizIds] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<"quiz" | "my-quiz" | "favorite">("quiz")
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null)
@@ -919,8 +919,8 @@ export default function SelectQuizPage() {
             </div>
           </div>
 
-          {/* Grid: 3 columns x 4 rows layout */}
-          <div className="flex flex-wrap justify-center gap-3">
+          {/* Grid: 4 columns x 3 rows layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 justify-items-center">
             {(loading || (activeTab === "my-quiz" && loadingMyQuizzes)) ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">

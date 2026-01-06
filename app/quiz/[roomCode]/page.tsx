@@ -1117,7 +1117,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           </div>
 
           <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-            <span className="text-yellow-400 font-bold text-sm">{t('lobby.points')}: {score}</span>
+            <span className="text-yellow-400 font-bold text-sm">{score}</span>
           </div>
 
           <div className={`${showTimeWarning ? 'bg-red-500/20 border-red-500/50 animate-pulse' : 'bg-green-500/20 border-green-500/50'} border-2 rounded-lg px-4 py-2 flex items-center gap-2`}>

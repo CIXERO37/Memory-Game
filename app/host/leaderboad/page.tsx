@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
+import { createPortal } from "react-dom"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Trophy, Users, Home, Star, Crown, Medal, Award, Zap, Sparkles, RotateCw } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
@@ -297,23 +298,19 @@ function LeaderboardHostPageContent() {
         </div>
       </div>
 
-      {/* Fixed Home Button - Left Side */}
-      <div
-        className="hidden md:block"
-        style={{
-          position: 'fixed',
-          left: '24px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 9999,
-        }}
-      >
+      {/* Fixed Home Button - Left Side - Using Portal to escape transform context */}
+      {typeof window !== 'undefined' && createPortal(
         <button
-          className="relative hover:scale-110 transition-all duration-200 group"
+          className="hidden md:flex fixed hover:scale-110 transition-all duration-200 group items-center justify-center"
           onClick={() => {
             router.push("/")
           }}
           style={{
+            position: 'fixed',
+            left: '24px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 99999,
             imageRendering: 'pixelated',
           }}
         >
@@ -334,25 +331,22 @@ function LeaderboardHostPageContent() {
           >
             <Home className="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
           </div>
-        </button>
-      </div>
+        </button>,
+        document.body
+      )}
 
-      {/* Fixed Restart Button - Right Side */}
-      <div
-        className="hidden md:block"
-        style={{
-          position: 'fixed',
-          right: '24px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 9999,
-        }}
-      >
+      {/* Fixed Restart Button - Right Side - Using Portal to escape transform context */}
+      {typeof window !== 'undefined' && createPortal(
         <button
-          className="relative hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="hidden md:flex fixed hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 items-center justify-center"
           onClick={handleRestart}
           disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
           style={{
+            position: 'fixed',
+            right: '24px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 99999,
             imageRendering: 'pixelated',
           }}
         >
@@ -373,8 +367,68 @@ function LeaderboardHostPageContent() {
           >
             <RotateCw className="w-6 h-6 text-white group-hover:rotate-180 transition-transform duration-300" />
           </div>
-        </button>
-      </div>
+        </button>,
+        document.body
+      )}
+
+      {/* Mobile Bottom Buttons - Using Portal to escape transform context */}
+      {typeof window !== 'undefined' && createPortal(
+        <div
+          className="md:hidden flex gap-4 justify-center"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '24px',
+            right: '24px',
+            zIndex: 99999,
+          }}
+        >
+          <button
+            onClick={() => router.push("/")}
+            className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95"
+            style={{
+              background: '#533483',
+              border: '3px solid #3d2562',
+              borderRadius: '4px',
+              boxShadow: `
+                inset -2px -2px 0px #6b4a9e,
+                inset 2px 2px 0px #3d2562,
+                0 0 0 2px #2a1a3d,
+                4px 4px 0px rgba(0, 0, 0, 0.3)
+              `,
+              imageRendering: 'pixelated',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <Home className="w-5 h-5 text-white" />
+              <span className="text-white font-bold uppercase tracking-wider text-sm">Home</span>
+            </div>
+          </button>
+          <button
+            onClick={handleRestart}
+            disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
+            className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95 disabled:opacity-50 disabled:grayscale"
+            style={{
+              background: '#4a90e2',
+              border: '3px solid #2c5f8d',
+              borderRadius: '4px',
+              boxShadow: `
+                inset -2px -2px 0px #6ba3e8,
+                inset 2px 2px 0px #2c5f8d,
+                0 0 0 2px #1a3d5f,
+                4px 4px 0px rgba(0, 0, 0, 0.3)
+              `,
+              imageRendering: 'pixelated',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <RotateCw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-300" />
+              <span className="text-white font-bold uppercase tracking-wider text-sm">Restart</span>
+            </div>
+          </button>
+        </div>,
+        document.body
+      )}
 
       {/* Top-left Memory Quiz Logo */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 z-20">
@@ -443,55 +497,9 @@ function LeaderboardHostPageContent() {
               )
             })}
           </div>
-
-          {/* Mobile Bottom Buttons */}
-          <div className="fixed bottom-6 left-0 right-0 px-6 flex gap-4 justify-center z-50">
-            <button
-              onClick={() => router.push("/")}
-              className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95"
-              style={{
-                background: '#533483',
-                border: '3px solid #3d2562',
-                borderRadius: '4px',
-                boxShadow: `
-                  inset -2px -2px 0px #6b4a9e,
-                  inset 2px 2px 0px #3d2562,
-                  0 0 0 2px #2a1a3d,
-                  4px 4px 0px rgba(0, 0, 0, 0.3)
-                `,
-                imageRendering: 'pixelated',
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <Home className="w-5 h-5 text-white" />
-                <span className="text-white font-bold uppercase tracking-wider text-sm">Home</span>
-              </div>
-            </button>
-            <button
-              onClick={handleRestart}
-              disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
-              className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95 disabled:opacity-50 disabled:grayscale"
-              style={{
-                background: '#4a90e2',
-                border: '3px solid #2c5f8d',
-                borderRadius: '4px',
-                boxShadow: `
-                  inset -2px -2px 0px #6ba3e8,
-                  inset 2px 2px 0px #2c5f8d,
-                  0 0 0 2px #1a3d5f,
-                  4px 4px 0px rgba(0, 0, 0, 0.3)
-                `,
-                imageRendering: 'pixelated',
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <RotateCw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-300" />
-                <span className="text-white font-bold uppercase tracking-wider text-sm">Restart</span>
-              </div>
-            </button>
-          </div>
         </div>
 
+        {/* Desktop Leaderboard View - moved here since mobile buttons are now using portal */}
         <div className="max-w-7xl mx-auto mb-16 hidden md:block">
           <div className="relative">
             <div className="flex justify-center items-center gap-6 sm:gap-12 relative">
