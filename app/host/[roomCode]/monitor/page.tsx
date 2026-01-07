@@ -101,11 +101,14 @@ function MonitorPageContent() {
     if (timeUpHandled || !roomCode) return
     setTimeUpHandled(true)
 
-
+    console.log('[Monitor] Time up - ending game...')
 
     try {
-      await roomManager.updateGameStatus(roomCode, "finished")
+      console.log('[Monitor] Calling updateGameStatus to finish game (time up)...')
+      const success = await roomManager.updateGameStatus(roomCode, "finished")
+      console.log('[Monitor] updateGameStatus result (time up):', success)
 
+      // 🚀 OPTIMIZED: No delay - immediate broadcast and redirect
       let broadcastChannel: BroadcastChannel | null = null
       try {
         if (typeof window !== 'undefined') {
@@ -115,7 +118,6 @@ function MonitorPageContent() {
             roomCode: roomCode,
             timestamp: Date.now()
           })
-
         }
       } finally {
         if (broadcastChannel) {
@@ -123,6 +125,7 @@ function MonitorPageContent() {
         }
       }
 
+      console.log('[Monitor] Redirecting to leaderboard (time up)...')
       window.location.href = `/host/leaderboad?roomCode=${roomCode}`
     } catch (error) {
       console.error("[Monitor] Error ending game due to timer expiration:", error)
@@ -192,29 +195,67 @@ function MonitorPageContent() {
       const broadcastChannel = new BroadcastChannel(`progress-update-${roomCode}`)
       let lastUpdateTime = 0
 
-      broadcastChannel.onmessage = (event) => {
+      broadcastChannel.onmessage = async (event) => {
         if (event.data.type === 'progress-update') {
           const now = Date.now()
-          if (now - lastUpdateTime < 1000) return
+          if (now - lastUpdateTime < 100) return // 🚀 OPTIMIZED: Debounce 100ms (was 500ms)
           lastUpdateTime = now
 
-
+          console.log('[Monitor] Received progress update from player:', event.data)
 
           if (redirecting) {
-
+            console.log('[Monitor] Already redirecting, ignoring progress update')
             return
           }
 
-          roomManager.getRoom(roomCode).then((updatedRoom) => {
-            if (updatedRoom?.status === 'finished') {
+          try {
+            // 🚀 CRITICAL: Get fresh room data and check for completion
+            const updatedRoom = await roomManager.getRoom(roomCode)
 
+            if (updatedRoom?.status === 'finished') {
+              console.log('[Monitor] Game already finished, redirecting...')
+              setRedirecting(true)
+              window.location.href = `/host/leaderboad?roomCode=${roomCode}`
               return
             }
 
             if (updatedRoom) {
               setForceRefresh(prev => prev + 1)
+
+              // 🚀 CRITICAL: Check if any player has completed
+              const nonHostPlayers = updatedRoom.players.filter(p => !p.isHost)
+              const totalQuestions = updatedRoom.questions?.length || updatedRoom.settings.questionCount || 10
+
+              const hasPlayerCompleted = nonHostPlayers.some(player => {
+                const answered = player.questionsAnswered || 0
+                return answered >= totalQuestions
+              })
+
+              if (hasPlayerCompleted && nonHostPlayers.length > 0 && !redirecting && !lastVerifiedCompletion) {
+                console.log('[Monitor] 🎮 Player completed! Triggering game end from broadcast...')
+
+                // 🚀 Trigger the auto-end game logic - NO DELAY
+                setLastVerifiedCompletion(true)
+                setRedirecting(true)
+
+                // 🚀 OPTIMIZED: Call updateGameStatus immediately - no delay needed
+                console.log('[Monitor] Host calling updateGameStatus to finish game...')
+                const success = await roomManager.updateGameStatus(roomCode, "finished")
+                console.log('[Monitor] updateGameStatus result:', success)
+
+                // 🚀 OPTIMIZED: Broadcast game end immediately
+                const gameEndChannel = new BroadcastChannel(`game-end-${roomCode}`)
+                gameEndChannel.postMessage({ type: 'game-ended', roomCode, timestamp: Date.now() })
+                gameEndChannel.close()
+
+                // 🚀 OPTIMIZED: Redirect immediately - no delay
+                console.log('[Monitor] Redirecting to leaderboard...')
+                window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+              }
             }
-          })
+          } catch (error) {
+            console.error('[Monitor] Error processing progress update:', error)
+          }
         }
       }
 
@@ -222,7 +263,7 @@ function MonitorPageContent() {
         broadcastChannel.close()
       }
     }
-  }, [roomCode, redirecting])
+  }, [roomCode, redirecting, lastVerifiedCompletion])
 
   // 🚀 CRITICAL: Listen for game-ended broadcast for immediate redirect
   useEffect(() => {
@@ -269,6 +310,82 @@ function MonitorPageContent() {
 
     return () => clearInterval(interval)
   }, [roomCode, redirecting])
+
+  // 🚀 CRITICAL: Aggressive polling for player completion (works across different browsers)
+  // BroadcastChannel doesn't work across different browsers, so we need polling
+  // NOTE: We're on /host/[roomCode]/monitor page, so we ARE the host - no need to check isHost
+  useEffect(() => {
+    // 🔧 FIX: Remove isHost/isHostDetected conditions - we're definitely the host on this page
+    if (!roomCode || redirecting || lastVerifiedCompletion) {
+      console.log('[Monitor] Polling disabled:', { roomCode, redirecting, lastVerifiedCompletion })
+      return
+    }
+
+    console.log('[Monitor] 🔄 Starting player completion polling...')
+
+    const checkPlayerCompletion = async () => {
+      try {
+        const currentRoom = await roomManager.getRoom(roomCode)
+        if (!currentRoom) {
+          console.log('[Monitor] Polling: Room not found')
+          return
+        }
+
+        const nonHostPlayers = currentRoom.players.filter(p => !p.isHost)
+        const totalQuestions = currentRoom.questions?.length || currentRoom.settings.questionCount || 10
+
+        // Debug log
+        console.log('[Monitor] Polling check:', {
+          nonHostPlayers: nonHostPlayers.length,
+          totalQuestions,
+          players: nonHostPlayers.map(p => ({ id: p.id, nickname: p.nickname, answered: p.questionsAnswered }))
+        })
+
+        const hasPlayerCompleted = nonHostPlayers.some(player => {
+          const answered = player.questionsAnswered || 0
+          return answered >= totalQuestions
+        })
+
+        if (hasPlayerCompleted && nonHostPlayers.length > 0 && !redirecting && !lastVerifiedCompletion) {
+          console.log('[Monitor] 🎮 Polling detected player completed! Triggering game end...')
+
+          setLastVerifiedCompletion(true)
+          setRedirecting(true)
+
+          // Call updateGameStatus as HOST
+          console.log('[Monitor] Host calling updateGameStatus to finish game (from polling)...')
+          const success = await roomManager.updateGameStatus(roomCode, "finished")
+          console.log('[Monitor] updateGameStatus result:', success)
+
+          // Broadcast game end for same-browser windows
+          try {
+            const gameEndChannel = new BroadcastChannel(`game-end-${roomCode}`)
+            gameEndChannel.postMessage({ type: 'game-ended', roomCode, timestamp: Date.now() })
+            gameEndChannel.close()
+          } catch (e) {
+            // BroadcastChannel might not be supported or fail
+          }
+
+          // Redirect to leaderboard
+          console.log('[Monitor] Redirecting to leaderboard (from polling)...')
+          window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+        }
+      } catch (error) {
+        console.error('[Monitor] Error in player completion polling:', error)
+      }
+    }
+
+    // 🚀 AGGRESSIVE: Poll every 1 second for player completion
+    const interval = setInterval(checkPlayerCompletion, 1000)
+
+    // Also check immediately
+    checkPlayerCompletion()
+
+    return () => {
+      console.log('[Monitor] Stopping player completion polling')
+      clearInterval(interval)
+    }
+  }, [roomCode, redirecting, lastVerifiedCompletion])
 
   useEffect(() => {
     if (room) {
@@ -358,14 +475,13 @@ function MonitorPageContent() {
       if (hasPlayerCompleted && nonHostPlayers.length > 0) {
 
 
-        // 🚀 IMPROVED: Multiple verification attempts with faster delays
+        // 🚀 OPTIMIZED: Faster verification with minimal delays
         const verifyAndForceFinish = async (attempt = 1, maxAttempts = 3) => {
           if (!roomCode) return
           try {
 
-
-            // Reduced delays for faster redirect
-            const delay = attempt === 1 ? 500 : attempt === 2 ? 1000 : 1500
+            // 🚀 OPTIMIZED: Much faster delays - 50ms, 100ms, 150ms (was 500ms, 1000ms, 1500ms)
+            const delay = attempt === 1 ? 50 : attempt === 2 ? 100 : 150
             await new Promise(resolve => setTimeout(resolve, delay))
 
             const verifiedRoom = await roomManager.getRoom(roomCode!)
@@ -406,8 +522,8 @@ function MonitorPageContent() {
               console.warn("[Monitor] Some force finish updates failed, but continuing...")
             }
 
-            // Verifikasi lagi setelah force finish (reduced delay)
-            await new Promise(resolve => setTimeout(resolve, 300))
+            // 🚀 OPTIMIZED: Reduced delay to 100ms (was 300ms)
+            await new Promise(resolve => setTimeout(resolve, 100))
             const finalRoom = await roomManager.getRoom(roomCode!)
 
             if (!finalRoom) {
@@ -438,9 +554,12 @@ function MonitorPageContent() {
             setLastVerifiedCompletion(true)
             setRedirecting(true)
 
-            // Update game status ke finished
-            await roomManager.updateGameStatus(roomCode!, "finished")
+            // Update game status ke finished - MUST AWAIT and verify
+            console.log('[Monitor] Calling updateGameStatus to finish game...')
+            const updateSuccess = await roomManager.updateGameStatus(roomCode!, "finished")
+            console.log('[Monitor] updateGameStatus result:', updateSuccess)
 
+            // 🚀 OPTIMIZED: No delay - immediate broadcast and redirect
 
             // Broadcast game end untuk memberitahu semua player
             const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
@@ -451,26 +570,9 @@ function MonitorPageContent() {
             })
             broadcastChannel.close()
 
-
-
-            // Redirect host ke leaderboard IMMEDIATELY - tidak perlu tunggu
-
-
-            // Use setTimeout with 0 delay to ensure redirect happens after state updates
-            setTimeout(() => {
-              try {
-
-                window.location.href = `/host/leaderboad?roomCode=${roomCode}`
-              } catch (error) {
-                console.error("[Monitor] Error with window.location.href, trying window.location.replace...")
-                try {
-                  window.location.replace(`/host/leaderboad?roomCode=${roomCode}`)
-                } catch (error2) {
-                  console.error("[Monitor] Error with window.location.replace, trying router.push...")
-                  router.push(`/host/leaderboad?roomCode=${roomCode}`)
-                }
-              }
-            }, 100) // Very short delay just to ensure state is set
+            // 🚀 OPTIMIZED: Redirect immediately - no delay
+            console.log('[Monitor] Data synced, redirecting to leaderboard...')
+            window.location.href = `/host/leaderboad?roomCode=${roomCode}`
 
           } catch (error) {
             console.error(`[Monitor] Error during force finish attempt ${attempt}:`, error)
@@ -526,19 +628,30 @@ function MonitorPageContent() {
   const endGame = async () => {
     if (!roomCode) return
 
+    console.log('[Monitor] End game button clicked...')
+
     try {
+      console.log('[Monitor] Calling updateGameStatus to finish game (manual end)...')
       const success = await roomManager.updateGameStatus(roomCode, "finished")
+      console.log('[Monitor] updateGameStatus result (manual end):', success)
+
       if (success) {
+        // Small delay to ensure Supabase write is committed
+        await new Promise(resolve => setTimeout(resolve, 500))
+
         const broadcastChannel = new BroadcastChannel(`game-end-${roomCode}`)
         broadcastChannel.postMessage({ type: 'game-ended', roomCode, timestamp: Date.now() })
         broadcastChannel.close()
 
-        router.push(`/host/leaderboad?roomCode=${roomCode}`)
+        console.log('[Monitor] Redirecting to leaderboard (manual end)...')
+
+        // Redirect with slightly longer delay to ensure commit
         setTimeout(() => {
-          if (window.location.pathname !== `/host/leaderboad`) {
-            window.location.href = `/host/leaderboad?roomCode=${roomCode}`
-          }
-        }, 1000)
+          window.location.href = `/host/leaderboad?roomCode=${roomCode}`
+        }, 300)
+      } else {
+        console.error('[Monitor] Failed to update game status')
+        window.location.href = `/host/leaderboad?roomCode=${roomCode}`
       }
     } catch (error) {
       console.error("Error ending game:", error)

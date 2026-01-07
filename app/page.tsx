@@ -301,9 +301,14 @@ export default function HomePage() {
           </div>
 
           {/* Pixel Description */}
-          <div className="max-w-2xl mx-auto mb-6 sm:mb-12">
-            <div className="bg-black/20 border-2 border-white/30 rounded-lg px-4 sm:px-6 py-3 sm:py-4 pixel-description">
-              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white font-medium">
+          <div className="flex justify-center mb-6 sm:mb-12">
+            <div className="inline-flex bg-black/30 border-2 border-white/40 rounded-xl px-6 sm:px-10 py-3 sm:py-5 pixel-description backdrop-blur-sm">
+              <p
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white font-bold whitespace-nowrap tracking-wide"
+                style={{
+                  textShadow: '0 0 10px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.8)'
+                }}
+              >
                 {t('home.description')}
               </p>
             </div>

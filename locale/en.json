@@ -1,7 +1,7 @@
 {
   "home": {
     "title": "MEMORY QUIZ",
-    "description": "CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES",
+    "description": "TEST YOUR MEMORY!",
     "host": "HOST",
     "join": "JOIN"
   },
@@ -158,4 +158,3 @@
     "champion": "CHAMPION"
   }
 }
-

@@ -177,35 +177,39 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     setTimeUpHandled(true)
     setRedirecting(true)
 
-
+    console.log('[Quiz] Time up - handling game end, isHost:', isHost)
 
     try {
       // 🚀 OPTIMIZED: Flush all pending queue updates before game ends
       await scoreUpdateQueue.flushNow()
 
-      await roomManager.updateGameStatus(params.roomCode, "finished")
+      // 🔧 FIX: Only HOST should call updateGameStatus to avoid race condition
+      // Player calling this would overwrite the host's synced data
+      if (isHost) {
+        console.log('[Quiz] Host calling updateGameStatus to finish game...')
+        await roomManager.updateGameStatus(params.roomCode, "finished")
 
-      let broadcastChannel: BroadcastChannel | null = null
-      try {
-        if (typeof window !== 'undefined') {
-          broadcastChannel = new BroadcastChannel(`game-end-${params.roomCode}`)
-          broadcastChannel.postMessage({
-            type: 'game-ended',
-            roomCode: params.roomCode,
-            timestamp: Date.now()
-          })
-
+        let broadcastChannel: BroadcastChannel | null = null
+        try {
+          if (typeof window !== 'undefined') {
+            broadcastChannel = new BroadcastChannel(`game-end-${params.roomCode}`)
+            broadcastChannel.postMessage({
+              type: 'game-ended',
+              roomCode: params.roomCode,
+              timestamp: Date.now()
+            })
+          }
+        } finally {
+          if (broadcastChannel) {
+            broadcastChannel.close()
+          }
         }
-      } finally {
-        if (broadcastChannel) {
-          broadcastChannel.close()
-        }
-      }
 
-      if (!isHost) {
-        window.location.href = `/result?roomCode=${params.roomCode}`
-      } else {
         window.location.href = `/host/leaderboad?roomCode=${params.roomCode}`
+      } else {
+        // Player: Just redirect, don't update game status
+        console.log('[Quiz] Player redirecting to result page...')
+        window.location.href = `/result?roomCode=${params.roomCode}`
       }
     } catch (error) {
       console.error("[Quiz] ❌ Error ending game due to timer expiration:", error)
@@ -606,22 +610,21 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         const currentQuestionsAnswered = questionsAnswered || 0
 
         if (currentQuestionsAnswered >= totalQuestions) {
-
+          console.log('[Quiz] All questions completed after memory return')
 
           if (redirecting) return
           setRedirecting(true)
 
           try {
-            await roomManager.updateGameStatus(params.roomCode, "finished")
-
-            if (!isHostDetected) {
-              await new Promise(resolve => setTimeout(resolve, 500))
-            }
-
-            if (!isHost) {
-              window.location.href = `/result?roomCode=${params.roomCode}`
-            } else {
+            // 🔧 FIX: Only HOST should call updateGameStatus to avoid race condition
+            if (isHost) {
+              console.log('[Quiz] Host calling updateGameStatus after memory return...')
+              await roomManager.updateGameStatus(params.roomCode, "finished")
               window.location.href = `/host/leaderboad?roomCode=${params.roomCode}`
+            } else {
+              // Player: Just redirect, don't update game status
+              console.log('[Quiz] Player redirecting to result after memory return...')
+              window.location.href = `/result?roomCode=${params.roomCode}`
             }
           } catch (error) {
             console.error("[Quiz] ❌ Error ending game after memory return:", error)
@@ -896,24 +899,46 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           }
         }
 
-        // 🚀 CRITICAL: Update room status to finished - MUST await this!
-        try {
-          const statusUpdated = await roomManager.updateGameStatus(params.roomCode, "finished")
-          if (statusUpdated) {
-            console.log("[Quiz] ✅ Game status updated to finished")
-          } else {
-            console.warn("[Quiz] ⚠️ Failed to update game status to finished")
-          }
-        } catch (error) {
-          console.error("[Quiz] Error updating game status:", error)
-        }
-
-        // Small delay to allow Realtime to propagate
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
+        // 🔧 FIX: Only HOST should call updateGameStatus to avoid race condition
         if (isHost) {
+          try {
+            console.log("[Quiz] Host calling updateGameStatus to finish game (final sync)...")
+            const statusUpdated = await roomManager.updateGameStatus(params.roomCode, "finished")
+            if (statusUpdated) {
+              console.log("[Quiz] ✅ Game status updated to finished")
+            } else {
+              console.warn("[Quiz] ⚠️ Failed to update game status to finished")
+            }
+          } catch (error) {
+            console.error("[Quiz] Error updating game status:", error)
+          }
+
+          // 🚀 OPTIMIZED: No delay - immediate redirect
           window.location.href = `/host/leaderboad?roomCode=${params.roomCode}`
         } else {
+          // Player: Wait for host to finish the game, then redirect
+          console.log("[Quiz] Player waiting for host to finish game...")
+
+          // 🚀 OPTIMIZED: Reduced polling - 100ms interval, max 1 second wait
+          let attempts = 0
+          const maxAttempts = 10 // 10 * 100ms = 1 second max wait
+
+          while (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+            attempts++
+
+            try {
+              const currentRoom = await roomManager.getRoom(params.roomCode)
+              if (currentRoom?.status === 'finished') {
+                console.log("[Quiz] Game finished by host, redirecting to result...")
+                break
+              }
+            } catch (error) {
+              console.error("[Quiz] Error checking game status:", error)
+            }
+          }
+
+          console.log("[Quiz] Player redirecting to result page (final sync)...")
           window.location.href = `/result?roomCode=${params.roomCode}`
         }
       } catch (error) {
