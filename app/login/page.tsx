@@ -302,7 +302,7 @@ export default function LoginPage() {
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="relative w-full h-12 sm:h-14 bg-gradient-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-black text-lg sm:text-xl pixel-button-host transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="relative w-full h-12 sm:h-14 bg-gradient-to-br from-green-500 to-emerald-500 border-2 sm:border-4 border-black rounded-lg shadow-2xl font-bold text-white text-lg sm:text-xl pixel-button-host transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
