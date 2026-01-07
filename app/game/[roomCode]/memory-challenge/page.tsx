@@ -227,20 +227,22 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
     if (questionsAnswered >= totalQuestions) {
       // Player has completed all questions - end the game
-
+      console.log('[Memory Challenge] All questions completed, ending game...')
 
       try {
-        await roomManager.updateGameStatus(params.roomCode, "finished")
-
         // Get player info to determine if they're host
         const playerData = localStorage.getItem("currentPlayer")
         const isHost = playerData ? JSON.parse(playerData).isHost : false
 
-        // Redirect based on user type
-        if (!isHost) {
-          window.location.href = `/result?roomCode=${params.roomCode}`
-        } else {
+        // 🔧 FIX: Only HOST should call updateGameStatus to avoid race condition
+        if (isHost) {
+          console.log('[Memory Challenge] Host calling updateGameStatus...')
+          await roomManager.updateGameStatus(params.roomCode, "finished")
           window.location.href = `/host/leaderboad?roomCode=${params.roomCode}`
+        } else {
+          // Player: Just redirect, don't update game status
+          console.log('[Memory Challenge] Player redirecting to result...')
+          window.location.href = `/result?roomCode=${params.roomCode}`
         }
       } catch (error) {
         console.error("[Memory Challenge] Error ending game:", error)
@@ -249,7 +251,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
       }
     } else {
       // Continue to quiz for remaining questions
-
+      console.log('[Memory Challenge] Returning to quiz for remaining questions...')
       try {
         window.location.href = `/quiz/${params.roomCode}`
       } catch (error) {

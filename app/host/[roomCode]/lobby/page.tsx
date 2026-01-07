@@ -360,13 +360,13 @@ function LobbyPageContent() {
 
   const copyRoomCode = async () => {
     if (!roomCode) return;
-    const textToCopy = shareUrl || `${window.location.origin}/join/${roomCode}`;
+    const textToCopy = roomCode; // Only copy the room code, not the full URL
 
     try {
       await navigator.clipboard.writeText(textToCopy);
       toast({
-        title: t('lobby.shareLinkCopied'),
-        description: "Send this link to your friends",
+        title: t('lobby.roomCodeCopied') || "Room Code Copied!",
+        description: "Share this code with your friends",
       });
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 1500);
@@ -385,8 +385,8 @@ function LobbyPageContent() {
         document.body.removeChild(textArea);
 
         toast({
-          title: t('lobby.shareLinkCopied'),
-          description: "Send this link to your friends",
+          title: t('lobby.roomCodeCopied') || "Room Code Copied!",
+          description: "Share this code with your friends",
         });
         setCopiedCode(true);
         setTimeout(() => setCopiedCode(false), 1500);
@@ -955,12 +955,12 @@ function LobbyPageContent() {
             <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
             <div className="relative bg-linear-to-br from-blue-500 to-purple-600 rounded-lg border-4 border-black shadow-2xl p-6">
               <div className="text-center mb-6">
-                
+
                 <DialogTitle className="text-xl font-bold text-white mb-2 pixel-font">{t('lobby.kickPlayer')}?</DialogTitle>
                 <p className="text-white/90 text-sm pixel-font-sm leading-relaxed">
                   {t('lobby.confirmKick')}<br />
                   <span className="font-bold text-red-400 text-lg">{playerToKick?.nickname?.toUpperCase()}</span><br />
-                  
+
                 </p>
               </div>
 

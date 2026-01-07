@@ -66,6 +66,7 @@ export interface GameParticipant {
     id: string              // XID format (e.g., "d3fmdnp53dtg000j5r30")
     session_id: string      // session id from sessions table
     game_pin: string        // game pin for easy lookup
+    user_id: string | null  // user_id from profiles table (for logged-in users)
     nickname: string
     avatar: string | null
     score: number           // quiz score
@@ -93,13 +94,15 @@ export const participantsApi = {
      * @param nickname - Player's display name
      * @param avatar - Player's avatar URL
      * @param isHost - Whether this is the host
+     * @param userId - Optional user_id from profiles table
      */
     async addParticipant(
         gamePin: string,
         playerId: string,
         nickname: string,
         avatar: string,
-        isHost: boolean = false
+        isHost: boolean = false,
+        userId: string | null = null
     ): Promise<GameParticipant | null> {
         try {
             // First, get the session_id from sessions table
@@ -130,6 +133,7 @@ export const participantsApi = {
                     id: playerId,
                     session_id: sessionId,
                     game_pin: gamePin,
+                    user_id: userId,
                     nickname,
                     avatar,
                     is_host: isHost,
@@ -478,6 +482,7 @@ export interface GameSessionB {
     questions: any[]
     created_at: string
     started_at: string | null
+    ended_at: string | null
     countdown_started_at: string | null
     countdown_duration_seconds: number
 }
@@ -579,6 +584,8 @@ export const sessionsApi = {
 
             if (status === 'active') {
                 updates.started_at = new Date().toISOString()
+            } else if (status === 'finished') {
+                updates.ended_at = new Date().toISOString()
             }
 
             const { error } = await supabasePlayers

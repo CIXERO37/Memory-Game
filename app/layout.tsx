@@ -13,13 +13,13 @@ export const viewport = {
 
 export const metadata: Metadata = {
   title: 'Memory Quiz',
-  description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
+  description: 'TEST YOUR MEMORY!',
   generator: 'v0.app',
   manifest: '/site.webmanifest',
   metadataBase: new URL('https://memorygame-quiz.vercel.app'),
   openGraph: {
     title: 'Memory Quiz',
-    description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
+    description: 'TEST YOUR MEMORY!',
     url: 'https://memorygame-quiz.vercel.app',
     siteName: 'Memory Quiz',
     images: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Memory Quiz',
-    description: 'CHALLENGE YOUR MIND WITH MEMORY GAMES AND QUIZZES',
+    description: 'TEST YOUR MEMORY!',
     images: ['/images/memoryquizv4.webp'],
   },
   appleWebApp: {

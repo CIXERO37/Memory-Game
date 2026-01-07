@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
-import { supabase } from "@/lib/supabase"
 import { QRScanner } from "@/components/qr-scanner"
 import { useToast } from "@/hooks/use-toast"
 
@@ -339,26 +338,31 @@ function JoinPageContent() {
       }
     }
 
-    // Get user ID for joinRoom/rejoinRoom
-    const { data: { user } } = await supabase.auth.getUser()
-    const userId = user?.id
+    // 🆕 FIX: Get profile ID from profiles table by email (not auth user id)
+    // This ensures user_id in participants matches the id from profiles table
+    let profileId: string | null = null
+    if (isAuthenticated && userProfile?.email) {
+      console.log('[Join] Getting profile ID for email:', userProfile.email)
+      profileId = await roomManager.getProfileIdByEmail(userProfile.email)
+      console.log('[Join] Profile ID from profiles table:', profileId)
+    }
 
     let success: boolean
     if (existingPlayer) {
       // Player exists, use rejoinRoom with existing player ID
-
+      console.log('[Join] Rejoining room with profile ID:', profileId)
       success = await roomManager.rejoinRoom(roomCode, {
         id: existingPlayer.id,
         nickname: nickname.trim(),
         avatar: selectedAvatar,
-      }, userId)
+      }, profileId || undefined)
     } else {
       // New player, use joinRoom
-
+      console.log('[Join] Joining room with profile ID:', profileId)
       success = await roomManager.joinRoom(roomCode, {
         nickname: nickname.trim(),
         avatar: selectedAvatar,
-      }, userId)
+      }, profileId || undefined)
     }
 
 
