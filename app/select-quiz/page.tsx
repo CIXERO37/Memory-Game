@@ -920,7 +920,7 @@ export default function SelectQuizPage() {
           </div>
 
           {/* Grid: 4 columns x 3 rows layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
             {(loading || (activeTab === "my-quiz" && loadingMyQuizzes)) ? (
               <div className="col-span-full text-center py-12">
                 <div className="relative inline-block mb-6">
