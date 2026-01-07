@@ -320,14 +320,11 @@ export const quizApi = {
       }
 
       const { page, limit, category, searchQuery } = options
-      const offset = (page - 1) * limit
 
-      // Build query for count (total items matching filters)
-      let countQuery = supabase
-        .from('quizzes')
-        .select('id', { count: 'exact', head: true })
+      // First, fetch ALL quizzes matching filters to get accurate public count
+      // Then slice for pagination. This ensures accurate pagination for public quizzes.
 
-      // Build query for data
+      // Build query for all data (we'll filter and paginate client-side for accuracy)
       let dataQuery = supabase
         .from('quizzes')
         .select('*')
@@ -335,46 +332,36 @@ export const quizApi = {
 
       // Apply category filter (server-side)
       if (category && category !== 'all') {
-        countQuery = countQuery.ilike('category', category)
         dataQuery = dataQuery.ilike('category', category)
       }
 
       // Apply search filter (server-side)
       if (searchQuery && searchQuery.trim() !== '') {
         const searchTerm = `%${searchQuery.trim()}%`
-        countQuery = countQuery.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
         dataQuery = dataQuery.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
       }
 
-      // Apply pagination with range (offset-based)
-      dataQuery = dataQuery.range(offset, offset + limit - 1)
-
-      // Execute both queries in parallel
-      const [countResult, dataResult] = await Promise.all([
-        countQuery,
-        dataQuery
-      ])
-
-      if (countResult.error) {
-        console.error('Error counting quizzes:', countResult.error)
-        throw countResult.error
-      }
+      // Execute query
+      const dataResult = await dataQuery
 
       if (dataResult.error) {
         console.error('Error fetching paginated quizzes:', dataResult.error)
         throw dataResult.error
       }
 
-      // Filter public quizzes on client side (since is_public might be in metadata)
-      const publicQuizzes = (dataResult.data || []).filter(isQuizPublic)
+      // Filter public quizzes FIRST to get accurate count
+      const allPublicQuizzes = (dataResult.data || []).filter(isQuizPublic)
 
-      // Note: total count might include non-public quizzes, but this is acceptable
-      // for pagination purposes. For exact count, a server-side function would be needed.
-      const totalCount = countResult.count || 0
+      // Calculate accurate pagination based on PUBLIC quizzes only
+      const totalCount = allPublicQuizzes.length
       const totalPages = Math.ceil(totalCount / limit)
 
+      // Apply client-side pagination on filtered public quizzes
+      const offset = (page - 1) * limit
+      const paginatedQuizzes = allPublicQuizzes.slice(offset, offset + limit)
+
       return {
-        quizzes: publicQuizzes,
+        quizzes: paginatedQuizzes,
         totalCount,
         totalPages
       }
