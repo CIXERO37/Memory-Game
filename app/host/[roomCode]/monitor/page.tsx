@@ -151,42 +151,62 @@ function MonitorPageContent() {
 
   useEffect(() => {
     const roomCodeParam = typeof params?.roomCode === "string" ? params.roomCode : Array.isArray(params?.roomCode) ? params.roomCode[0] : null
-    if (roomCodeParam) {
-      setRoomCode(roomCodeParam)
-    } else {
-      const loadHostData = async () => {
-        try {
-          const sessionId = sessionManager.getSessionIdFromStorage()
-          if (sessionId) {
+
+    const verifyHostAccess = async () => {
+      try {
+        // 1. Check Supabase Session first (most reliable)
+        const sessionId = sessionManager.getSessionIdFromStorage()
+        if (sessionId) {
+          try {
+            const sessionData = await sessionManager.getSessionData(sessionId)
+            // Check if session matches the requested room
+            if (sessionData &&
+              sessionData.user_type === 'host' &&
+              sessionData.room_code === roomCodeParam) {
+              setRoomCode(roomCodeParam)
+              setIsHost(true)
+              setIsHostDetected(true)
+              return
+            }
+          } catch (error) {
+            console.warn("Error verifying host session:", error)
+          }
+        }
+
+        // 2. Check LocalStorage (fallback)
+        if (typeof window !== 'undefined') {
+          const hostDataStr = localStorage.getItem("currentHost")
+          if (hostDataStr) {
             try {
-              const sessionData = await sessionManager.getSessionData(sessionId)
-              if (sessionData && sessionData.user_type === 'host' && sessionData.room_code) {
-                setRoomCode(sessionData.room_code)
-                setIsHost(true)
+              const hostData = JSON.parse(hostDataStr)
+              // Verify room code matches
+              if (hostData.roomCode === roomCodeParam) {
+                setRoomCode(roomCodeParam)
+                setIsHost(hostData.isHost || true)
                 setIsHostDetected(true)
                 return
               }
-            } catch (error) {
-              console.warn("Error getting host session:", error)
+            } catch (e) {
+              console.error("Error parsing host data", e)
             }
           }
-        } catch (error) {
-          console.warn("Error accessing session manager:", error)
         }
 
-        const hostData = localStorage.getItem("currentHost")
-        if (hostData) {
-          const { roomCode: storedRoomCode, isHost } = JSON.parse(hostData)
-          setRoomCode(storedRoomCode)
-          setIsHost(isHost || false)
-          setIsHostDetected(true)
+        // 3. If we get here, verification failed
+        console.warn(`[Monitor] Unauthorized access attempt for room ${roomCodeParam}`)
+        if (roomCodeParam) {
+          // Redirect unauthorized users to join page or select quiz
+          router.push(`/join`)
         } else {
           router.push("/select-quiz")
         }
+      } catch (error) {
+        console.error("Error in host verification:", error)
+        router.push("/select-quiz")
       }
-
-      loadHostData()
     }
+
+    verifyHostAccess()
   }, [params, router])
 
   // 🚀 Broadcast listener for progress updates

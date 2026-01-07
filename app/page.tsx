@@ -352,7 +352,7 @@ export default function HomePage() {
         isOpen={showLogoutConfirmation}
         onConfirm={logout}
         onCancel={cancelLogout}
-        userName={userProfile?.name || userProfile?.username}
+        userName={userProfile?.nickname || userProfile?.name || userProfile?.username}
       />
 
       {showPrompt && pathname === "/" && (

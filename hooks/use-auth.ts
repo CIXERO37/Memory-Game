@@ -10,6 +10,7 @@ export interface UserProfile {
   name: string
   avatar_url?: string
   username: string
+  nickname?: string
 }
 
 // Cache key for localStorage
@@ -224,6 +225,7 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
   // Start with metadata values (fast fallback)
   let username = ''
   let avatar_url = user.user_metadata?.avatar_url
+  let nickname: string | undefined = undefined
 
   // Extract username from metadata first (as fallback)
   if (name && name.trim()) {
@@ -318,6 +320,12 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
 
         }
 
+        // Extract nickname
+        // Extract nickname
+        if ((profileData as any).nickname) {
+          nickname = (profileData as any).nickname
+        }
+
         // If username still empty, try to derive from full_name/fullname
         if (!username && profileData.full_name) {
           username = profileData.full_name
@@ -343,7 +351,8 @@ async function createUserProfileWithDatabase(user: User): Promise<UserProfile> {
       email,
       name: name || username, // prefer DB full_name or Google metadata name, fallback to username
       avatar_url,
-      username
+      username,
+      nickname
     }
   })()
 
@@ -376,6 +385,7 @@ function createUserProfile(user: User): UserProfile {
     email,
     name,
     avatar_url: user.user_metadata?.avatar_url,
-    username
+    username,
+    nickname: undefined
   }
 }

@@ -61,41 +61,85 @@ function LeaderboardHostPageContent() {
   const [resolvingCode, setResolvingCode] = useState(true)
 
   useEffect(() => {
-    if (roomCodeFromQuery) {
-      setRoomCode(roomCodeFromQuery)
-      setResolvingCode(false)
-      return
-    }
-    const loadFromSession = async () => {
+    const verifyHostAccess = async () => {
+      // 1. If no room code in query, try to restore from session (host returning to page)
+      if (!roomCodeFromQuery) {
+        const loadFromSession = async () => {
+          try {
+            const sessionId = sessionManager.getSessionIdFromStorage()
+            if (sessionId) {
+              const sessionData = await sessionManager.getSessionData(sessionId).catch(() => null)
+              if (sessionData && sessionData.user_type === 'host') {
+                const code = sessionData.user_data?.roomCode || sessionData.room_code
+                if (code) {
+                  setRoomCode(code)
+                  setResolvingCode(false)
+                  return
+                }
+              }
+            }
+          } catch { }
+
+          try {
+            const hostData = localStorage.getItem("currentHost")
+            if (hostData) {
+              const parsed = JSON.parse(hostData)
+              if (parsed?.roomCode) {
+                setRoomCode(parsed.roomCode)
+                setResolvingCode(false)
+                return
+              }
+            }
+          } catch { }
+
+          // No credentials found
+          setResolvingCode(false)
+          router.push("/")
+        }
+        loadFromSession()
+        return
+      }
+
+      // 2. Room code is in query - VERIFY we are the host
+      let verified = false
+
       try {
+        // Check Supabase Session
         const sessionId = sessionManager.getSessionIdFromStorage()
         if (sessionId) {
           const sessionData = await sessionManager.getSessionData(sessionId).catch(() => null)
-          if (sessionData && sessionData.user_type === 'host') {
-            const code = sessionData.user_data?.roomCode || sessionData.room_code
-            if (code) {
-              setRoomCode(code)
-              setResolvingCode(false)
-              return
+          if (sessionData &&
+            sessionData.user_type === 'host' &&
+            (sessionData.user_data?.roomCode === roomCodeFromQuery || sessionData.room_code === roomCodeFromQuery)) {
+            verified = true
+          }
+        }
+
+        // Check LocalStorage
+        if (!verified && typeof window !== 'undefined') {
+          const hostData = localStorage.getItem("currentHost")
+          if (hostData) {
+            const parsed = JSON.parse(hostData)
+            if (parsed?.roomCode === roomCodeFromQuery && (parsed.isHost || true)) {
+              verified = true
             }
           }
         }
-      } catch { }
-      try {
-        const hostData = localStorage.getItem("currentHost")
-        if (hostData) {
-          const parsed = JSON.parse(hostData)
-          if (parsed?.roomCode) {
-            setRoomCode(parsed.roomCode)
-            setResolvingCode(false)
-            return
-          }
-        }
-      } catch { }
-      setResolvingCode(false)
+      } catch (e) {
+        console.error("Verification error", e)
+      }
+
+      if (verified) {
+        setRoomCode(roomCodeFromQuery)
+        setResolvingCode(false)
+      } else {
+        console.warn(`[Leaderboard] Access denied for room ${roomCodeFromQuery}`)
+        router.push("/")
+      }
     }
-    loadFromSession()
-  }, [roomCodeFromQuery])
+
+    verifyHostAccess()
+  }, [roomCodeFromQuery, router])
 
   useEffect(() => {
     if (!roomCode && !resolvingCode) {
