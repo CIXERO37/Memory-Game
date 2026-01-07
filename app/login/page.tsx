@@ -53,9 +53,7 @@ export default function LoginPage() {
     const newErrors: { [key: string]: string } = {}
 
     if (!formData.email) {
-      newErrors.email = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email"
+      newErrors.email = "Email or Username is required"
     }
 
     if (!formData.password) {
@@ -78,21 +76,42 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
+      let emailToUse = formData.email
+
+      // Check if input is likely a username (not an email)
+      const isEmail = /\S+@\S+\.\S+/.test(formData.email)
+
+      if (!isEmail) {
+        // Look up email by username in profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('username', formData.email)
+          .single()
+
+        if (profileError || !profile) {
+          console.error("Username lookup error:", profileError)
+          setErrors({ general: "Kata salah" })
+          setIsLoading(false)
+          return
+        }
+        emailToUse = profile.email
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email: emailToUse,
         password: formData.password,
       })
 
       if (error) {
         console.error("Login error:", error)
-        setErrors({ general: "Invalid email or password. Please try again." })
+        setErrors({ general: "Kata salah" })
       } else if (data.user) {
         // Successfully logged in, redirect will happen via useEffect
-
       }
     } catch (error) {
       console.error("Login error:", error)
-      setErrors({ general: "An error occurred during login. Please try again." })
+      setErrors({ general: "Kata salah" })
     } finally {
       setIsLoading(false)
     }
@@ -248,9 +267,9 @@ export default function LoginPage() {
                       <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                     </div>
                     <Input
-                      type="email"
+                      type="text"
                       name="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter your email or username"
                       value={formData.email}
                       onChange={handleInputChange}
                       className={`pl-10 sm:pl-12 h-10 sm:h-12 bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-blue-600 ${errors.email ? 'border-red-500' : ''

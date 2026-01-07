@@ -245,76 +245,60 @@ function LobbyPageContent() {
 
     const initializeHostSession = async () => {
       try {
+        // 1. Check Supabase Session
         const sessionId = sessionManager.getSessionIdFromStorage()
         if (sessionId) {
           const sessionData = await sessionManager.getSessionData(sessionId).catch(() => null)
-          if (sessionData && sessionData.user_type === 'host') {
+          if (sessionData && sessionData.user_type === 'host' && sessionData.user_data?.roomCode === paramCode) {
             try {
               const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = sessionData.user_data
               setHostId(storedHostId)
               setQuizId(storedQuizId)
+              setRoomCode(storedRoomCode)
 
-              if (!paramCode) {
-                setRoomCode(storedRoomCode)
-                const loadRoom = async () => {
-                  try {
-                    await roomManager.getRoom(storedRoomCode)
-                  } catch (error) { }
-                }
-                loadRoom()
-              } else if (paramCode === storedRoomCode) {
-                setRoomCode(paramCode)
-                const loadRoom = async () => {
-                  try {
-                    await roomManager.getRoom(paramCode)
-                  } catch (error) { }
-                }
-                loadRoom()
-              } else {
-                await sessionManager.clearSession().catch(() => { })
-                setRoomCode(paramCode)
-              }
+              // Load room data
+              try {
+                await roomManager.getRoom(storedRoomCode)
+              } catch (error) { }
               return
             } catch (error) {
+              console.error("Error setting host session logic", error)
             }
           }
         }
 
+        // 2. Check LocalStorage
         if (typeof window !== 'undefined') {
           const hostData = localStorage.getItem("currentHost")
           if (hostData) {
             try {
               const { hostId: storedHostId, roomCode: storedRoomCode, quizId: storedQuizId } = JSON.parse(hostData)
-              setHostId(storedHostId)
-              setQuizId(storedQuizId)
 
-              if (!paramCode) {
+              // VERIFY that the stored code matches the URL code
+              if (storedRoomCode === paramCode) {
+                setHostId(storedHostId)
+                setQuizId(storedQuizId)
                 setRoomCode(storedRoomCode)
-              } else if (paramCode === storedRoomCode) {
-                setRoomCode(paramCode)
-              } else {
-                localStorage.removeItem("currentHost")
-                setRoomCode(paramCode)
+                return // VALID HOST
               }
             } catch (error) {
-              localStorage.removeItem("currentHost")
-              if (paramCode) {
-                setRoomCode(paramCode)
-              } else {
-                router.push("/select-quiz")
-              }
-            }
-          } else {
-            if (paramCode) {
-              setRoomCode(paramCode)
-            } else {
-              router.push("/select-quiz")
+              console.error("Error parsing host data", error)
             }
           }
         }
-      } catch (error) {
+
+        // 3. UNAUTHORIZED / NO MATCH
+        console.warn(`[Lobby] Access denied for room ${paramCode} - No matching host credentials`)
         if (paramCode) {
-          setRoomCode(paramCode)
+          router.replace(`/join/${paramCode}`) // Redirect to join as player
+        } else {
+          router.push("/select-quiz")
+        }
+
+      } catch (error) {
+        console.error("Error in host initialization:", error)
+        if (paramCode) {
+          router.replace(`/join/${paramCode}`)
         } else {
           router.push("/select-quiz")
         }
@@ -837,7 +821,7 @@ function LobbyPageContent() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lobby-players">
                       {currentPlayers.map((player: any) => (
-                        <div key={player.id} className="bg-white border-2 border-black rounded p-2 pixel-player-card relative">
+                        <div key={player.id} className="bg-white border-2 border-black rounded p-2 pixel-player-card relative overflow-visible">
                           {hostId && (
                             <button
                               onClick={() => handleKickPlayer(player)}
@@ -857,9 +841,21 @@ function LobbyPageContent() {
                                 height={48}
                               />
                             </div>
-                            <div className="text-center">
-                              <div className="font-bold text-black pixel-font-sm text-xs leading-tight player-username">
+                            {/* Name with Tooltip */}
+                            <div className="text-center w-full relative group">
+                              <div
+                                className="font-bold text-black pixel-font-sm text-xs leading-tight player-username truncate max-w-full px-1 cursor-pointer group-hover:text-purple-600 transition-colors"
+                              >
                                 {player.nickname.toUpperCase()}
+                              </div>
+                              {/* Custom Styled Tooltip - appears above */}
+                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] pointer-events-none">
+                                <div className="relative bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg border-2 border-black shadow-lg whitespace-nowrap">
+                                  {player.nickname}
+                                  {/* Arrow pointing down */}
+                                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-black"></div>
+                                  <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-blue-600"></div>
+                                </div>
                               </div>
                             </div>
                           </div>

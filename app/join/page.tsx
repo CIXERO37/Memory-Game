@@ -115,7 +115,7 @@ function JoinPageContent() {
 
     if (!loading && isAuthenticated && userProfile) {
       // Get nickname from Google - prioritize name field, then username
-      const authNickname = userProfile.name || userProfile.username || ""
+      const authNickname = userProfile.nickname || userProfile.name || userProfile.username || ""
 
       // If user is authenticated, ALWAYS use Google nickname unless user manually changed it
       if (authNickname) {
@@ -157,7 +157,7 @@ function JoinPageContent() {
   useEffect(() => {
     // If user becomes authenticated and nickname is empty or doesn't match Google nickname, update it
     if (!loading && isAuthenticated && userProfile && !userChangedNickname) {
-      const authNickname = userProfile.name || userProfile.username || ""
+      const authNickname = userProfile.nickname || userProfile.name || userProfile.username || ""
       if (authNickname) {
         // If nickname is empty or different from Google nickname, update it
         if (!nickname || nickname.trim() === "" || nickname !== authNickname) {
@@ -173,7 +173,7 @@ function JoinPageContent() {
     if (!loading && !nickname.trim() && !userChangedNickname) {
       // Try to restore from auth first (highest priority)
       if (isAuthenticated && userProfile) {
-        const authNickname = userProfile.name || userProfile.username || ""
+        const authNickname = userProfile.nickname || userProfile.name || userProfile.username || ""
         if (authNickname) {
 
           setNickname(authNickname)
