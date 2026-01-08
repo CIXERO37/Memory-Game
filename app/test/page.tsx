@@ -84,7 +84,7 @@ interface SessionData {
     questions: any[];
 }
 
-export default function StressTestPage() {
+export default function TestPage() {
     // Admin guard - only admins can access this page
     const { isAdmin, loading: adminLoading } = useAdminGuard();
 
@@ -521,7 +521,7 @@ export default function StressTestPage() {
         setErrorCount(0);
         usersRef.current = [];
 
-        addLog(`🧪 Starting stress test: ${roomCode}`);
+        addLog(`🧪 Starting test: ${roomCode}`);
 
         const sess = await fetchSession(roomCode);
         if (!sess) {
@@ -565,7 +565,7 @@ export default function StressTestPage() {
         addLog("🧹 Cleaning up bots...");
 
         // Delete non-host participants from Supabase B
-        // This removes all bots created by stress test (they are not hosts)
+        // This removes all bots created by test (they are not hosts)
         const botIds = usersRef.current.map(u => u.id);
 
         if (botIds.length > 0) {
