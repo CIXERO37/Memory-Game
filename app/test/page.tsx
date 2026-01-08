@@ -742,7 +742,7 @@ export default function TestPage() {
                                         onClick={startTest}
                                         className="flex-1 bg-cyan-500/20 border-2 border-cyan-500 text-cyan-400 hover:bg-cyan-500/40"
                                     >
-                                        <Play className="w-4 h-4 mr-2" /> Start Test
+                                        <Play className="w-4 h-4 mr-2" /> Start
                                     </Button>
                                 ) : (
                                     <Button
