@@ -22,18 +22,47 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminGuard } from "@/lib/admin-guard";
 
-// Avatar styles using DiceBear API (same as test-100-players.html)
-const AVATAR_STYLES = ['adventurer', 'avataaars', 'bottts', 'fun-emoji', 'lorelei', 'micah', 'pixel-art', 'thumbs'];
+// Static local avatars (ava1-16.webp)
+const LOCAL_AVATARS = Array.from({ length: 16 }, (_, i) => `/ava${i + 1}.webp`);
 
-// Generate random avatar URL using DiceBear API
-const generateAvatarUrl = (seed: string) => {
-    const style = AVATAR_STYLES[Math.floor(Math.random() * AVATAR_STYLES.length)];
-    return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}`;
+// Pick random local avatar
+const getRandomAvatar = (): string => {
+    return LOCAL_AVATARS[Math.floor(Math.random() * LOCAL_AVATARS.length)];
 };
 
-// Random name generators (same as test-100-players.html)
-const adjectives = ['Happy', 'Swift', 'Brave', 'Clever', 'Mighty', 'Silent', 'Cosmic', 'Thunder', 'Shadow', 'Golden'];
-const nouns = ['Tiger', 'Dragon', 'Phoenix', 'Wolf', 'Eagle', 'Lion', 'Hawk', 'Bear', 'Shark', 'Falcon'];
+// Combined name list (Indonesian + Foreign, all mixed)
+const NAMES = [
+    // Indonesian
+    "Andi", "Budi", "Cahya", "Dewi", "Eka", "Fajar", "Gita", "Hendra", "Indra", "Joko",
+    "Kartika", "Lina", "Maya", "Nia", "Putra", "Rahmat", "Sari", "Tono", "Wati", "Yudi",
+    "Zahra", "Agus", "Bayu", "Dian", "Firman", "Galih", "Hesti", "Iwan", "Kevin", "Luna",
+    "Mega", "Nova", "Okta", "Prima", "Rio", "Tiara", "Vino", "Wulan", "Yoga", "Zara",
+    "Ahmad", "Bambang", "Cinta", "Deni", "Elsa", "Fandi", "Gilang", "Hana", "Irfan", "Jihan",
+    "Nur", "Dwi", "Tri", "Sri", "Adi", "Bima", "Candra", "Dewa", "Rama", "Perdana",
+    "Pratama", "Wijaya", "Saputra", "Kusuma", "Hidayat", "Santoso", "Nugraha", "Permana",
+    "Setiawan", "Wibowo", "Anggraini", "Lestari", "Putri", "Rahayu", "Utami", "Purnama",
+    // Foreign
+    "John", "James", "Michael", "David", "Chris", "Alex", "Ryan", "Daniel", "Matthew", "Andrew",
+    "Emma", "Olivia", "Sophia", "Mia", "Isabella", "Charlotte", "Amelia", "Harper", "Evelyn", "Abigail",
+    "Tom", "Jack", "Harry", "Oliver", "George", "Noah", "Liam", "Ethan", "Mason", "Lucas",
+    "William", "Benjamin", "Henry", "Sebastian", "Alexander", "Emily", "Ava", "Grace", "Chloe", "Lily",
+    "Robert", "Joseph", "Thomas", "Charles", "Edward", "Victoria", "Elizabeth", "Margaret", "Catherine", "Alice",
+    "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia", "Wilson", "Moore",
+    "Taylor", "Anderson", "Jackson", "White", "Harris", "Martin", "Thompson", "Lee", "Walker", "King"
+];
+
+// Helper to pick random from array
+const pickRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+// Generate random nickname with 1-4 words (pure random, with spaces)
+const generateRandomNickname = (): string => {
+    const wordCount = Math.floor(Math.random() * 4) + 1; // 1 to 4 words
+    const words: string[] = [];
+    for (let i = 0; i < wordCount; i++) {
+        words.push(pickRandom(NAMES));
+    }
+    return words.join(" ");
+};
 
 interface TestUser {
     id: string;
@@ -187,6 +216,10 @@ export default function StressTestPage() {
     const joinUsersConcurrently = async (gamePin: string) => {
         addLog(`🚀 Joining ${userCount} users concurrently (1-10s delays)...`);
 
+        // Get session_id first (one time fetch)
+        const sessionData = await sessionsApi.getSession(gamePin);
+        const sessionId = sessionData?.id || gamePin;
+
         const joinPromises = Array.from({ length: userCount }, async (_, i) => {
             // Each bot has random delay 1-10 seconds
             await randomDelayRange(1000, 10000);
@@ -194,22 +227,29 @@ export default function StressTestPage() {
             if (stopRef.current) return null;
 
             const playerId = participantsApi.generatePlayerId();
-            // Generate random nickname like test-100-players.html
-            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-            const noun = nouns[Math.floor(Math.random() * nouns.length)];
-            const num = Math.floor(Math.random() * 1000);
-            const nickname = `${adj}${noun}${num}`;
-            const avatar = generateAvatarUrl(`bot-${playerId}`);
+            // Generate random nickname (1-4 word name, like real full names)
+            const nickname = generateRandomNickname();
+            const avatar = getRandomAvatar();
 
-            const result = await participantsApi.addParticipant(
-                gamePin,
-                playerId,
-                nickname,
-                avatar,
-                false // not host
-            );
+            // 🚀 DIRECT INSERT - bypass wrapper for speed (no duplicate check, no extra fetch)
+            const { data, error } = await supabasePlayers
+                .from('game_participants')
+                .insert({
+                    id: playerId,
+                    session_id: sessionId,
+                    game_pin: gamePin,
+                    nickname,
+                    avatar,
+                    is_host: false,
+                    score: 0,
+                    questions_answered: 0,
+                    started: null,
+                    ended: null
+                })
+                .select()
+                .single();
 
-            if (!result) {
+            if (error) {
                 setErrorCount(prev => prev + 1);
                 addLog(`❌ ${nickname} failed to join`);
                 return null;
@@ -588,7 +628,7 @@ export default function StressTestPage() {
     }
 
     return (
-        <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="min-h-screen relative overflow-hidden font-sans" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
 
             {/* Pixel Grid Overlay */}
             <div className="absolute inset-0 opacity-20">
@@ -623,14 +663,14 @@ export default function StressTestPage() {
                     <div className="text-center">
                         <div className="inline-block pb-2">
                             <h1 className="text-4xl font-bold text-white drop-shadow-lg">
-                                Stress Test
+                                TEST
                             </h1>
                         </div>
                     </div>
 
                     {/* Control Panel */}
                     <Card className="bg-[#1a1a2e]/80 border-purple-500/50 backdrop-blur-sm">
-                        <CardContent className="space-y-4 pt-6">
+                        <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-sm text-cyan-400 font-medium">Room Code</label>
@@ -649,9 +689,9 @@ export default function StressTestPage() {
                                     <Slider
                                         value={[userCount]}
                                         onValueChange={([v]) => setUserCount(v)}
-                                        min={50}
-                                        max={500}
-                                        step={50}
+                                        min={100}
+                                        max={1000}
+                                        step={100}
                                         disabled={isRunning}
                                         className="mt-3"
                                     />
@@ -725,25 +765,25 @@ export default function StressTestPage() {
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <Card className="bg-[#1a1a2e]/80 border-cyan-500/50">
+                        <Card className="bg-[#1a1a2e]/80 border-cyan-500/50 py-3">
                             <CardContent className="p-3 text-center">
                                 <div className="text-3xl font-bold text-cyan-400">{joinedCount}</div>
                                 <div className="text-xs text-cyan-400/70">Joined</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-[#1a1a2e]/80 border-purple-500/50">
+                        <Card className="bg-[#1a1a2e]/80 border-purple-500/50 py-3">
                             <CardContent className="p-3 text-center">
                                 <div className="text-3xl font-bold text-purple-400">{answeringCount}</div>
                                 <div className="text-xs text-purple-400/70">Question</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-[#1a1a2e]/80 border-green-500/50">
+                        <Card className="bg-[#1a1a2e]/80 border-green-500/50 py-3">
                             <CardContent className="p-3 text-center">
                                 <div className="text-3xl font-bold text-green-400">{completedCount}</div>
                                 <div className="text-xs text-green-400/70">Completed</div>
                             </CardContent>
                         </Card>
-                        <Card className="bg-[#1a1a2e]/80 border-red-500/50">
+                        <Card className="bg-[#1a1a2e]/80 border-red-500/50 py-3">
                             <CardContent className="p-3 text-center">
                                 <div className="text-3xl font-bold text-red-400">{errorCount}</div>
                                 <div className="text-xs text-red-400/70">Errors</div>
@@ -754,7 +794,7 @@ export default function StressTestPage() {
                     {/* Logs */}
                     <Card className="bg-[#1a1a2e]/80 border-purple-500/30 gap-3">
                         <CardHeader>
-                            <CardTitle className="text-sm text-purple-400">📜 Live Logs</CardTitle>
+                            <CardTitle className="text-sm text-purple-400">📜 Logs</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="h-64 overflow-y-auto bg-black/60 rounded-lg p-3 font-mono text-xs space-y-0.5 border border-purple-500/20 custom-scrollbar">

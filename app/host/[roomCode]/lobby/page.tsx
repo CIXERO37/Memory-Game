@@ -821,7 +821,7 @@ function LobbyPageContent() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 lobby-players">
                       {currentPlayers.map((player: any) => (
-                        <div key={player.id} className="bg-white border-2 border-black rounded p-2 pixel-player-card relative overflow-visible">
+                        <div key={player.id} className="bg-white border-2 border-black rounded p-2 pixel-player-card relative group/card hover:z-50">
                           {hostId && (
                             <button
                               onClick={() => handleKickPlayer(player)}
@@ -842,14 +842,14 @@ function LobbyPageContent() {
                               />
                             </div>
                             {/* Name with Tooltip */}
-                            <div className="text-center w-full relative group">
+                            <div className="text-center w-full relative group/name">
                               <div
-                                className="font-bold text-black pixel-font-sm text-xs leading-tight player-username truncate max-w-full px-1 cursor-pointer group-hover:text-purple-600 transition-colors"
+                                className="font-bold text-black pixel-font-sm text-xs leading-tight player-username truncate max-w-full px-1 cursor-pointer group-hover/name:text-purple-600 transition-colors"
                               >
                                 {player.nickname.toUpperCase()}
                               </div>
                               {/* Custom Styled Tooltip - appears above */}
-                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] pointer-events-none">
+                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 opacity-0 invisible group-hover/name:opacity-100 group-hover/name:visible transition-all duration-300 z-[9999] pointer-events-none">
                                 <div className="relative bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg border-2 border-black shadow-lg whitespace-nowrap">
                                   {player.nickname}
                                   {/* Arrow pointing down */}
