@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { roomManager } from "@/lib/room-manager"
 import { sessionManager } from "@/lib/supabase-session-manager"
-import { supabase } from "@/lib/supabase"
 import { QRScanner } from "@/components/qr-scanner"
 import { useToast } from "@/hooks/use-toast"
 
@@ -116,7 +115,7 @@ function JoinPageContent() {
 
     if (!loading && isAuthenticated && userProfile) {
       // Get nickname from Google - prioritize name field, then username
-      const authNickname = userProfile.name || userProfile.username || ""
+      const authNickname = userProfile.nickname || userProfile.name || userProfile.username || ""
 
       // If user is authenticated, ALWAYS use Google nickname unless user manually changed it
       if (authNickname) {
@@ -158,7 +157,7 @@ function JoinPageContent() {
   useEffect(() => {
     // If user becomes authenticated and nickname is empty or doesn't match Google nickname, update it
     if (!loading && isAuthenticated && userProfile && !userChangedNickname) {
-      const authNickname = userProfile.name || userProfile.username || ""
+      const authNickname = userProfile.nickname || userProfile.name || userProfile.username || ""
       if (authNickname) {
         // If nickname is empty or different from Google nickname, update it
         if (!nickname || nickname.trim() === "" || nickname !== authNickname) {
@@ -174,7 +173,7 @@ function JoinPageContent() {
     if (!loading && !nickname.trim() && !userChangedNickname) {
       // Try to restore from auth first (highest priority)
       if (isAuthenticated && userProfile) {
-        const authNickname = userProfile.name || userProfile.username || ""
+        const authNickname = userProfile.nickname || userProfile.name || userProfile.username || ""
         if (authNickname) {
 
           setNickname(authNickname)
@@ -339,26 +338,31 @@ function JoinPageContent() {
       }
     }
 
-    // Get user ID for joinRoom/rejoinRoom
-    const { data: { user } } = await supabase.auth.getUser()
-    const userId = user?.id
+    // 🆕 FIX: Get profile ID from profiles table by email (not auth user id)
+    // This ensures user_id in participants matches the id from profiles table
+    let profileId: string | null = null
+    if (isAuthenticated && userProfile?.email) {
+      console.log('[Join] Getting profile ID for email:', userProfile.email)
+      profileId = await roomManager.getProfileIdByEmail(userProfile.email)
+      console.log('[Join] Profile ID from profiles table:', profileId)
+    }
 
     let success: boolean
     if (existingPlayer) {
       // Player exists, use rejoinRoom with existing player ID
-
+      console.log('[Join] Rejoining room with profile ID:', profileId)
       success = await roomManager.rejoinRoom(roomCode, {
         id: existingPlayer.id,
         nickname: nickname.trim(),
         avatar: selectedAvatar,
-      }, userId)
+      }, profileId || undefined)
     } else {
       // New player, use joinRoom
-
+      console.log('[Join] Joining room with profile ID:', profileId)
       success = await roomManager.joinRoom(roomCode, {
         nickname: nickname.trim(),
         avatar: selectedAvatar,
-      }, userId)
+      }, profileId || undefined)
     }
 
 

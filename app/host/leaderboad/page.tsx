@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
+import { createPortal } from "react-dom"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Trophy, Users, Home, Star, Crown, Medal, Award, Zap, Sparkles, RotateCw } from "lucide-react"
 import { roomManager } from "@/lib/room-manager"
@@ -60,41 +61,85 @@ function LeaderboardHostPageContent() {
   const [resolvingCode, setResolvingCode] = useState(true)
 
   useEffect(() => {
-    if (roomCodeFromQuery) {
-      setRoomCode(roomCodeFromQuery)
-      setResolvingCode(false)
-      return
-    }
-    const loadFromSession = async () => {
+    const verifyHostAccess = async () => {
+      // 1. If no room code in query, try to restore from session (host returning to page)
+      if (!roomCodeFromQuery) {
+        const loadFromSession = async () => {
+          try {
+            const sessionId = sessionManager.getSessionIdFromStorage()
+            if (sessionId) {
+              const sessionData = await sessionManager.getSessionData(sessionId).catch(() => null)
+              if (sessionData && sessionData.user_type === 'host') {
+                const code = sessionData.user_data?.roomCode || sessionData.room_code
+                if (code) {
+                  setRoomCode(code)
+                  setResolvingCode(false)
+                  return
+                }
+              }
+            }
+          } catch { }
+
+          try {
+            const hostData = localStorage.getItem("currentHost")
+            if (hostData) {
+              const parsed = JSON.parse(hostData)
+              if (parsed?.roomCode) {
+                setRoomCode(parsed.roomCode)
+                setResolvingCode(false)
+                return
+              }
+            }
+          } catch { }
+
+          // No credentials found
+          setResolvingCode(false)
+          router.push("/")
+        }
+        loadFromSession()
+        return
+      }
+
+      // 2. Room code is in query - VERIFY we are the host
+      let verified = false
+
       try {
+        // Check Supabase Session
         const sessionId = sessionManager.getSessionIdFromStorage()
         if (sessionId) {
           const sessionData = await sessionManager.getSessionData(sessionId).catch(() => null)
-          if (sessionData && sessionData.user_type === 'host') {
-            const code = sessionData.user_data?.roomCode || sessionData.room_code
-            if (code) {
-              setRoomCode(code)
-              setResolvingCode(false)
-              return
+          if (sessionData &&
+            sessionData.user_type === 'host' &&
+            (sessionData.user_data?.roomCode === roomCodeFromQuery || sessionData.room_code === roomCodeFromQuery)) {
+            verified = true
+          }
+        }
+
+        // Check LocalStorage
+        if (!verified && typeof window !== 'undefined') {
+          const hostData = localStorage.getItem("currentHost")
+          if (hostData) {
+            const parsed = JSON.parse(hostData)
+            if (parsed?.roomCode === roomCodeFromQuery && (parsed.isHost || true)) {
+              verified = true
             }
           }
         }
-      } catch { }
-      try {
-        const hostData = localStorage.getItem("currentHost")
-        if (hostData) {
-          const parsed = JSON.parse(hostData)
-          if (parsed?.roomCode) {
-            setRoomCode(parsed.roomCode)
-            setResolvingCode(false)
-            return
-          }
-        }
-      } catch { }
-      setResolvingCode(false)
+      } catch (e) {
+        console.error("Verification error", e)
+      }
+
+      if (verified) {
+        setRoomCode(roomCodeFromQuery)
+        setResolvingCode(false)
+      } else {
+        console.warn(`[Leaderboard] Access denied for room ${roomCodeFromQuery}`)
+        router.push("/")
+      }
     }
-    loadFromSession()
-  }, [roomCodeFromQuery])
+
+    verifyHostAccess()
+  }, [roomCodeFromQuery, router])
 
   useEffect(() => {
     if (!roomCode && !resolvingCode) {
@@ -297,23 +342,19 @@ function LeaderboardHostPageContent() {
         </div>
       </div>
 
-      {/* Fixed Home Button - Left Side */}
-      <div
-        className="hidden md:block"
-        style={{
-          position: 'fixed',
-          left: '24px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 9999,
-        }}
-      >
+      {/* Fixed Home Button - Left Side - Using Portal to escape transform context */}
+      {typeof window !== 'undefined' && createPortal(
         <button
-          className="relative hover:scale-110 transition-all duration-200 group"
+          className="hidden md:flex fixed hover:scale-110 transition-all duration-200 group items-center justify-center"
           onClick={() => {
             router.push("/")
           }}
           style={{
+            position: 'fixed',
+            left: '24px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 99999,
             imageRendering: 'pixelated',
           }}
         >
@@ -334,25 +375,22 @@ function LeaderboardHostPageContent() {
           >
             <Home className="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300" />
           </div>
-        </button>
-      </div>
+        </button>,
+        document.body
+      )}
 
-      {/* Fixed Restart Button - Right Side */}
-      <div
-        className="hidden md:block"
-        style={{
-          position: 'fixed',
-          right: '24px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 9999,
-        }}
-      >
+      {/* Fixed Restart Button - Right Side - Using Portal to escape transform context */}
+      {typeof window !== 'undefined' && createPortal(
         <button
-          className="relative hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="hidden md:flex fixed hover:scale-110 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 items-center justify-center"
           onClick={handleRestart}
           disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
           style={{
+            position: 'fixed',
+            right: '24px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 99999,
             imageRendering: 'pixelated',
           }}
         >
@@ -373,8 +411,68 @@ function LeaderboardHostPageContent() {
           >
             <RotateCw className="w-6 h-6 text-white group-hover:rotate-180 transition-transform duration-300" />
           </div>
-        </button>
-      </div>
+        </button>,
+        document.body
+      )}
+
+      {/* Mobile Bottom Buttons - Using Portal to escape transform context */}
+      {typeof window !== 'undefined' && createPortal(
+        <div
+          className="md:hidden flex gap-4 justify-center"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '24px',
+            right: '24px',
+            zIndex: 99999,
+          }}
+        >
+          <button
+            onClick={() => router.push("/")}
+            className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95"
+            style={{
+              background: '#533483',
+              border: '3px solid #3d2562',
+              borderRadius: '4px',
+              boxShadow: `
+                inset -2px -2px 0px #6b4a9e,
+                inset 2px 2px 0px #3d2562,
+                0 0 0 2px #2a1a3d,
+                4px 4px 0px rgba(0, 0, 0, 0.3)
+              `,
+              imageRendering: 'pixelated',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <Home className="w-5 h-5 text-white" />
+              <span className="text-white font-bold uppercase tracking-wider text-sm">Home</span>
+            </div>
+          </button>
+          <button
+            onClick={handleRestart}
+            disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
+            className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95 disabled:opacity-50 disabled:grayscale"
+            style={{
+              background: '#4a90e2',
+              border: '3px solid #2c5f8d',
+              borderRadius: '4px',
+              boxShadow: `
+                inset -2px -2px 0px #6ba3e8,
+                inset 2px 2px 0px #2c5f8d,
+                0 0 0 2px #1a3d5f,
+                4px 4px 0px rgba(0, 0, 0, 0.3)
+              `,
+              imageRendering: 'pixelated',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <RotateCw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-300" />
+              <span className="text-white font-bold uppercase tracking-wider text-sm">Restart</span>
+            </div>
+          </button>
+        </div>,
+        document.body
+      )}
 
       {/* Top-left Memory Quiz Logo */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 z-20">
@@ -443,55 +541,9 @@ function LeaderboardHostPageContent() {
               )
             })}
           </div>
-
-          {/* Mobile Bottom Buttons */}
-          <div className="fixed bottom-6 left-0 right-0 px-6 flex gap-4 justify-center z-50">
-            <button
-              onClick={() => router.push("/")}
-              className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95"
-              style={{
-                background: '#533483',
-                border: '3px solid #3d2562',
-                borderRadius: '4px',
-                boxShadow: `
-                  inset -2px -2px 0px #6b4a9e,
-                  inset 2px 2px 0px #3d2562,
-                  0 0 0 2px #2a1a3d,
-                  4px 4px 0px rgba(0, 0, 0, 0.3)
-                `,
-                imageRendering: 'pixelated',
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <Home className="w-5 h-5 text-white" />
-                <span className="text-white font-bold uppercase tracking-wider text-sm">Home</span>
-              </div>
-            </button>
-            <button
-              onClick={handleRestart}
-              disabled={isRestarting || !room || !hostId || !room.quizId || !room.quizTitle}
-              className="flex-1 py-3 flex items-center justify-center group transition-transform active:scale-95 disabled:opacity-50 disabled:grayscale"
-              style={{
-                background: '#4a90e2',
-                border: '3px solid #2c5f8d',
-                borderRadius: '4px',
-                boxShadow: `
-                  inset -2px -2px 0px #6ba3e8,
-                  inset 2px 2px 0px #2c5f8d,
-                  0 0 0 2px #1a3d5f,
-                  4px 4px 0px rgba(0, 0, 0, 0.3)
-                `,
-                imageRendering: 'pixelated',
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <RotateCw className="w-5 h-5 text-white group-hover:rotate-180 transition-transform duration-300" />
-                <span className="text-white font-bold uppercase tracking-wider text-sm">Restart</span>
-              </div>
-            </button>
-          </div>
         </div>
 
+        {/* Desktop Leaderboard View - moved here since mobile buttons are now using portal */}
         <div className="max-w-7xl mx-auto mb-16 hidden md:block">
           <div className="relative">
             <div className="flex justify-center items-center gap-6 sm:gap-12 relative">
@@ -527,7 +579,6 @@ function LeaderboardHostPageContent() {
                       <h3 className="text-2xl font-bold text-slate-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[1].nickname)}</h3>
                       <div className="bg-gradient-to-r from-slate-400 to-slate-600 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{sortedPlayers[1].quizScore || 0}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
                   </div>
@@ -588,11 +639,8 @@ function LeaderboardHostPageContent() {
 
                       {/* Points display box */}
                       <div className="mt-8 bg-gradient-to-br from-amber-600 to-yellow-700 rounded-2xl px-10 py-7 shadow-lg border-2 border-amber-700/40">
-                        <div className="text-5xl font-bold text-white text-center mb-1 leading-none">
+                        <div className="text-5xl font-bold text-white text-center leading-none">
                           {champion.quizScore || 0}
-                        </div>
-                        <div className="text-lg text-white text-center font-bold tracking-wide uppercase">
-                          {t('lobby.points')}
                         </div>
                       </div>
 
@@ -640,7 +688,6 @@ function LeaderboardHostPageContent() {
                       <h3 className="text-2xl font-bold text-amber-200 mb-6 text-center whitespace-pre-line">{formatPlayerName(sortedPlayers[2].nickname)}</h3>
                       <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl px-8 py-6 shadow-2xl">
                         <div className="text-5xl font-bold text-white text-center">{sortedPlayers[2].quizScore || 0}</div>
-                        <div className="text-lg text-black text-center font-bold" style={{ textShadow: '1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff' }}>{t('lobby.points')}</div>
                       </div>
                     </div>
                   </div>
@@ -655,17 +702,7 @@ function LeaderboardHostPageContent() {
           <div className="max-w-6xl mx-auto mb-16 hidden md:block">
             <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border-4 border-indigo-400/40 rounded-3xl p-8 backdrop-blur-sm relative overflow-hidden shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/10 to-purple-400/10 rounded-3xl blur-xl"></div>
-              <div className="relative z-10 text-center mb-6">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full border-2 border-white shadow-xl flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-400 drop-shadow-lg">
-                    OTHERS
-                  </h3>
-                </div>
-              </div>
-              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {sortedPlayers.slice(3).map((player, index) => {
                   const totalScore = player.quizScore || 0
                   const rank = index + 4
@@ -708,7 +745,6 @@ function LeaderboardHostPageContent() {
                           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg px-2 py-1.5 shadow-sm group-hover:scale-105 transition-transform duration-300 flex-shrink-0 min-w-[60px]">
                             <div className="text-center">
                               <div className="text-base font-bold text-white leading-tight">{totalScore}</div>
-                              <div className="text-[10px] text-white/90 font-semibold uppercase tracking-wide">{t('lobby.points')}</div>
                             </div>
                           </div>
                         </div>

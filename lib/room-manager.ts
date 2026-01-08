@@ -72,6 +72,11 @@ class RoomManager {
     return await supabaseRoomManager.isPlayerKicked(roomCode, nickname)
   }
 
+  // 🆕 NEW: Get profile ID from profiles table by email
+  async getProfileIdByEmail(email: string): Promise<string | null> {
+    return await supabaseRoomManager.getProfileIdByEmail(email)
+  }
+
   isChannelConnected(): boolean {
     return true // Supabase is always connected
   }

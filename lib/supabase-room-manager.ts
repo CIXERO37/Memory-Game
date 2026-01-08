@@ -73,6 +73,29 @@ class SupabaseRoomManager {
     return 'waiting'
   }
 
+  // 🆕 NEW: Get profile ID from profiles table by email
+  async getProfileIdByEmail(email: string): Promise<string | null> {
+    try {
+      if (!email) return null
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+      if (error) {
+        console.warn('[SupabaseRoomManager] Error fetching profile by email:', error)
+        return null
+      }
+
+      return profile?.id || null
+    } catch (error) {
+      console.error('[SupabaseRoomManager] Exception getting profile by email:', error)
+      return null
+    }
+  }
+
   // Helper function untuk mendapatkan user info dari profiles
   private async getUserInfo(userId?: string): Promise<{ user_id: string | null; nickname: string; avatar: string }> {
     try {
@@ -465,6 +488,7 @@ class SupabaseRoomManager {
       // Create player object for JSONB
       const newPlayer = {
         id: playerId,
+        user_id: userId || null, // Include user_id from profiles table
         nickname: player.nickname,
         avatar: player.avatar,
         joined_at: new Date().toISOString(),
@@ -484,9 +508,10 @@ class SupabaseRoomManager {
             playerId,
             player.nickname,
             player.avatar,
-            false // not host
+            false, // not host
+            userId || null // user_id from profiles table
           )
-          console.log(`[SupabaseRoomManager] Player ${player.nickname} added to Supabase B`)
+          console.log(`[SupabaseRoomManager] Player ${player.nickname} added to Supabase B with user_id: ${userId || 'null'}`)
         } catch (error) {
           console.error('[SupabaseRoomManager] Players DB insert failed:', error)
           // Try to continue with Supabase A
@@ -685,6 +710,8 @@ class SupabaseRoomManager {
         updateData.countdown_started_at = new Date().toISOString()
       } else if (status === 'quiz') {
         updateData.started_at = new Date().toISOString()
+      } else if (status === 'finished') {
+        updateData.ended_at = new Date().toISOString()
       }
 
       // 🚀 GAME FINISHED: Sync all player data from Supabase B to Supabase A
@@ -694,11 +721,13 @@ class SupabaseRoomManager {
 
           // Get all players from Supabase B
           const playersFromB = await participantsApi.getParticipants(roomCode)
+          console.log('[SupabaseRoomManager] Players from Supabase B:', playersFromB.length, playersFromB)
 
           if (playersFromB.length > 0) {
             // Convert to JSONB format for participants field
             const participantsForJsonb = playersFromB.map(p => ({
               id: p.id,
+              user_id: p.user_id || null, // Include user_id from profiles table
               nickname: p.nickname,
               avatar: p.avatar || '/avatars/default.webp',
               joined_at: p.joined_at,
@@ -715,6 +744,7 @@ class SupabaseRoomManager {
               .filter(p => !p.is_host) // Exclude host from responses
               .map(p => ({
                 id: p.id,
+                user_id: p.user_id || null, // Include user_id from profiles table
                 participant: p.id,
                 nickname: p.nickname,
                 score: p.score || 0,
@@ -734,20 +764,40 @@ class SupabaseRoomManager {
             updateData.participants = participantsForJsonb
             updateData.responses = responsesForJsonb
 
-            console.log(`[SupabaseRoomManager] Synced ${playersFromB.length} players and ${responsesForJsonb.length} responses to main database`)
+            console.log(`[SupabaseRoomManager] ✅ Prepared ${playersFromB.length} players and ${responsesForJsonb.length} responses for sync`)
+            console.log('[SupabaseRoomManager] Responses data:', JSON.stringify(responsesForJsonb, null, 2))
+          } else {
+            console.warn('[SupabaseRoomManager] ⚠️ No players found in Supabase B for room:', roomCode)
           }
         } catch (syncError) {
-          console.error('[SupabaseRoomManager] Error syncing players on game finish:', syncError)
+          console.error('[SupabaseRoomManager] ❌ Error syncing players on game finish:', syncError)
         }
       }
 
       // Update Supabase A (for historical data)
-      const { error } = await supabase
+      console.log('[SupabaseRoomManager] Updating Supabase A with data:', {
+        roomCode,
+        status: updateData.status,
+        hasParticipants: !!updateData.participants,
+        hasResponses: !!updateData.responses,
+        participantsCount: updateData.participants?.length,
+        responsesCount: updateData.responses?.length,
+        ended_at: updateData.ended_at
+      })
+
+      const { error, data } = await supabase
         .from('game_sessions')
         .update(updateData)
         .eq('game_pin', roomCode)
+        .select()
 
-      return !error
+      if (error) {
+        console.error('[SupabaseRoomManager] ❌ Error updating Supabase A:', error)
+        return false
+      }
+
+      console.log('[SupabaseRoomManager] ✅ Supabase A updated successfully:', data)
+      return true
     } catch (error) {
       console.error('[SupabaseRoomManager] Error updating game status:', error)
       return false
