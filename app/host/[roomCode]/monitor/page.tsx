@@ -827,17 +827,17 @@ function MonitorPageContent() {
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-slate-900 border-2 border-white/20 text-white">
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Akhiri Game?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('monitor.endGameTitle')}</AlertDialogTitle>
                   <AlertDialogDescription className="text-slate-300">
-                    Apakah Anda yakin ingin mengakhiri game ini?
+                    {t('monitor.endGameDescription')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel className="bg-slate-800 text-white border-slate-600 hover:bg-slate-700 hover:text-white">
-                    Batal
+                    {t('monitor.endGameCancel')}
                   </AlertDialogCancel>
                   <AlertDialogAction onClick={endGame} className="bg-red-600 hover:bg-red-700 text-white border-none">
-                    Ya, Akhiri
+                    {t('monitor.endGameConfirm')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

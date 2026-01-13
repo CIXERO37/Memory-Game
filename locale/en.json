@@ -45,7 +45,12 @@
     "retry": "RETRY",
     "supabaseDashboard": "SUPABASE DASHBOARD",
     "noQuizzesFound": "NO QUIZZES FOUND",
-    "noQuizzesDescription": "TRY ADJUSTING YOUR SEARCH TERMS OR CATEGORY FILTER"
+    "noQuizzesDescription": "TRY ADJUSTING YOUR SEARCH TERMS OR CATEGORY FILTER",
+    "tabs": {
+      "quiz": "Quiz",
+      "myQuiz": "My Quiz",
+      "favorite": "Favorite"
+    }
   },
   "quizSettings": {
     "title": "SETTINGS",
@@ -74,7 +79,11 @@
     "gameWillEnd": "Game will end automatically...",
     "gameWillEndWhenTimeUp": "Game will end automatically when time is up!",
     "noPlayers": "NO PLAYERS HAVE JOINED THE GAME YET",
-    "points": "POINTS"
+    "points": "POINTS",
+    "endGameTitle": "End Game?",
+    "endGameDescription": "Are you sure you want to end this game?",
+    "endGameCancel": "Cancel",
+    "endGameConfirm": "Yes, End"
   },
   "lobby": {
     "title": "GAME LOBBY",

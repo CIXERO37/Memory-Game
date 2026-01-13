@@ -45,7 +45,12 @@
     "retry": "重试",
     "supabaseDashboard": "SUPABASE 仪表板",
     "noQuizzesFound": "未找到测验",
-    "noQuizzesDescription": "尝试调整搜索词或类别筛选"
+    "noQuizzesDescription": "尝试调整搜索词或类别筛选",
+    "tabs": {
+      "quiz": "测验",
+      "myQuiz": "我的测验",
+      "favorite": "收藏"
+    }
   },
   "quizSettings": {
     "title": "设置",
@@ -72,7 +77,11 @@
     "gameWillEnd": "游戏将自动结束...",
     "gameWillEndWhenTimeUp": "时间到时游戏将自动结束！",
     "noPlayers": "还没有玩家加入游戏",
-    "points": "积分"
+    "points": "积分",
+    "endGameTitle": "结束游戏？",
+    "endGameDescription": "您确定要结束这个游戏吗？",
+    "endGameCancel": "取消",
+    "endGameConfirm": "是的，结束"
   },
   "lobby": {
     "title": "游戏大厅",
