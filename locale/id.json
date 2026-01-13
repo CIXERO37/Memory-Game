@@ -45,7 +45,12 @@
     "retry": "COBA LAGI",
     "supabaseDashboard": "DASHBOARD SUPABASE",
     "noQuizzesFound": "TIDAK ADA KUIS DITEMUKAN",
-    "noQuizzesDescription": "COBA SESUAIKAN KATA KUNCI PENCARIAN ATAU FILTER KATEGORI"
+    "noQuizzesDescription": "COBA SESUAIKAN KATA KUNCI PENCARIAN ATAU FILTER KATEGORI",
+    "tabs": {
+      "quiz": "Kuis",
+      "myQuiz": "Kuis Saya",
+      "favorite": "Favorit"
+    }
   },
   "quizSettings": {
     "title": "PENGATURAN",
@@ -74,7 +79,11 @@
     "gameWillEnd": "Game akan berakhir secara otomatis...",
     "gameWillEndWhenTimeUp": "Game akan berakhir secara otomatis ketika waktu habis!",
     "noPlayers": "BELUM ADA PEMAIN YANG BERGABUNG",
-    "points": "POIN"
+    "points": "POIN",
+    "endGameTitle": "Akhiri Game?",
+    "endGameDescription": "Apakah Anda yakin ingin mengakhiri game ini?",
+    "endGameCancel": "Batal",
+    "endGameConfirm": "Ya, Akhiri"
   },
   "lobby": {
     "title": "LOBBY PERMAINAN",
