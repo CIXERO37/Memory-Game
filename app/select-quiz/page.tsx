@@ -656,7 +656,7 @@ export default function SelectQuizPage() {
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Pixel Search Input */}
               <div className="relative flex-1 ">
-                <div className="relative">
+                <div className="relative group">
 
                   <Input
                     placeholder={t('selectQuiz.searchPlaceholder')}
@@ -665,7 +665,7 @@ export default function SelectQuizPage() {
                     onKeyDown={handleSearch}
                     className="pl-10 sm:pl-12 px-2 sm:px-2 pr-20 sm:pr-24 lg:h-10 h-13 bg-white border-2 border-black rounded-none shadow-lg font-mono text-sm sm:text-base text-black placeholder:text-gray-500 focus:border-blue-600 w-full"
                   />
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 p-0.5 sm:p-3">
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 p-0.5 sm:p-3 opacity-0 invisible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200">
                     <Button
                       onClick={executeSearch}
                       className=" lg:h-8  bg-blue-500 hover:bg-blue-600 text-white font-bold py-0 sm:py-1  sm:px-3 border-2 border-black  "
@@ -1059,7 +1059,7 @@ export default function SelectQuizPage() {
                     </div>
 
                     {/* Cinematic Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/30" />
 
                     {/* Content Container */}
                     <div className="absolute inset-0 p-4 flex flex-col justify-between z-10">
