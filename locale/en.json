@@ -99,7 +99,7 @@
     "players": "PLAYERS",
     "waiting": "WAITING FOR HOST TO START...",
     "minPlayers": "Need at least 1 player to start",
-    "kickPlayer": "Kick Player",
+    "kickPlayer": "Kick",
     "confirmKick": "Are you sure you want to kick",
     "confirm": "CONFIRM",
     "playerKicked": "Player Kicked!",

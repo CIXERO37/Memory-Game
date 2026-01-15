@@ -617,9 +617,7 @@ export default function WaitingRoomPage() {
                       <AlertDialogContent className="bg-linear-to-br from-blue-500 to-purple-500 border-2 sm:border-4 border-black shadow-2xl pixel-dialog max-w-[90vw] sm:max-w-md">
                         <AlertDialogHeader>
                           <div className="text-center mb-3 sm:mb-4">
-                            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-2 sm:mb-3">
-                              <span className="text-xl sm:text-2xl">⚠️</span>
-                            </div>
+                          
                             <div className="inline-block bg-white border-2 border-black rounded px-3 py-1.5 sm:px-4 sm:py-2 mb-2 sm:mb-3">
                               <AlertDialogTitle className="text-black font-bold text-sm sm:text-base md:text-lg pixel-font">LEAVE ROOM?</AlertDialogTitle>
                             </div>
@@ -634,7 +632,7 @@ export default function WaitingRoomPage() {
                           <div className="relative pixel-button-container w-full sm:w-auto">
                             <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
                             <AlertDialogCancel className="relative bg-linear-to-br from-gray-500 to-gray-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-gray-400 hover:to-gray-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]">
-                              STAY IN ROOM
+                              CLOSE
                             </AlertDialogCancel>
                           </div>
                           <div className="relative pixel-button-container w-full sm:w-auto">
@@ -643,7 +641,7 @@ export default function WaitingRoomPage() {
                               onClick={handleLeaveRoom}
                               className="relative bg-linear-to-br from-red-500 to-red-600 border-2 border-black rounded-lg text-white hover:bg-linear-to-br hover:from-red-400 hover:to-red-500 transform hover:scale-105 transition-all duration-200 font-bold pixel-font-sm w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 min-h-[44px]"
                             >
-                              LEAVE ROOM
+                              LEAVE
                             </AlertDialogAction>
                           </div>
                         </AlertDialogFooter>
@@ -674,9 +672,9 @@ export default function WaitingRoomPage() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-black pixel-font-sm text-xs sm:text-sm truncate">
+                          <div className="font-bold text-black  text-xs sm:text-sm truncate">
                             <span className="truncate block">{playerInfo.nickname.toUpperCase()}</span>
-                            <span className="text-blue-600 text-[10px] sm:text-xs">(YOU)</span>
+                          
                           </div>
                         </div>
                       </div>
@@ -701,9 +699,7 @@ export default function WaitingRoomPage() {
 
                 {/* Pixel Status Section */}
                 <div className="bg-black/20 border border-white/30 rounded p-3 sm:p-4 text-center">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 mx-auto bg-white border border-black rounded flex items-center justify-center mb-2 sm:mb-3">
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-black" />
-                  </div>
+                  
                   <p className="text-white text-xs sm:text-sm pixel-font-sm leading-tight sm:leading-normal">
                     {room.gameStarted ? "GAME STARTING SOON..." : "WAITING FOR HOST TO START THE GAME..."}
                   </p>

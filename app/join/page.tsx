@@ -1,6 +1,6 @@
 "use client"
 // ikan
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useCallback } from "react"
 import { useSearchParams, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +21,13 @@ function JoinPageContent() {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
+
+  // Calculate if coming from URL synchronously to avoid flash
+  const roomCodeParam = searchParams.get("room")
+  const pathParts = pathname?.split('/').filter(Boolean) || []
+  const roomCodePath = (pathParts[0] === 'join' && pathParts[1] && /^[A-Z0-9]{6}$/i.test(pathParts[1])) ? pathParts[1] : null
+  const isFromUrlDirect = !!(roomCodeParam || roomCodePath)
+
   const { toast } = useToast()
   const { userProfile, isAuthenticated, loading } = useAuth()
   const [nickname, setNickname] = useState("")
@@ -33,6 +40,10 @@ function JoinPageContent() {
   const [playerId, setPlayerId] = useState<string>("")
   const [sessionId, setSessionId] = useState<string>("")
   const [hasClickedJoin, setHasClickedJoin] = useState(false)
+  const [isFromUrl, setIsFromUrl] = useState(isFromUrlDirect)
+  const [sessionChecked, setSessionChecked] = useState(false)
+  const [showAutoJoinScreen, setShowAutoJoinScreen] = useState(isFromUrlDirect)
+  const [autoJoinAttempted, setAutoJoinAttempted] = useState(false)
   const [nicknameError, setNicknameError] = useState("")
   const [roomCodeError, setRoomCodeError] = useState("")
   const [showScanner, setShowScanner] = useState(false)
@@ -56,14 +67,17 @@ function JoinPageContent() {
   }, [searchParams, toast])
 
   useEffect(() => {
+    // Only set room code from URL, validation/auto-join handled separately
     const roomFromUrl = searchParams.get("room")
     if (roomFromUrl) {
       setRoomCode(roomFromUrl.toUpperCase())
+      setIsFromUrl(true)
     } else if (typeof pathname === 'string') {
       // Fallback: extract code from /join/<code>
       const parts = pathname.split('/').filter(Boolean)
       if (parts[0] === 'join' && parts[1] && /^[A-Z0-9]{6}$/i.test(parts[1])) {
         setRoomCode(parts[1].toUpperCase())
+        setIsFromUrl(true)
       }
     }
 
@@ -95,7 +109,6 @@ function JoinPageContent() {
           }
         }
 
-        // Generate new player ID if no valid session
         const newPlayerId = Math.random().toString(36).substr(2, 9)
         setPlayerId(newPlayerId)
 
@@ -103,6 +116,8 @@ function JoinPageContent() {
         console.error("Error initializing session:", error)
         const newPlayerId = Math.random().toString(36).substr(2, 9)
         setPlayerId(newPlayerId)
+      } finally {
+        setSessionChecked(true)
       }
     }
 
@@ -257,7 +272,7 @@ function JoinPageContent() {
     }
   }
 
-  const handleJoinRoom = async () => {
+  const handleJoinRoom = useCallback(async () => {
     // Clear previous validation errors
     setNicknameError("")
     setRoomCodeError("")
@@ -296,6 +311,7 @@ function JoinPageContent() {
       setRoomError("Room not found. Please check the room code.")
       setIsJoining(false)
       setHasClickedJoin(false)
+      setShowAutoJoinScreen(false) // Show form on error
       return
     }
 
@@ -303,6 +319,7 @@ function JoinPageContent() {
       setRoomError("This game has already started. Please join a new room.")
       setIsJoining(false)
       setHasClickedJoin(false)
+      setShowAutoJoinScreen(false) // Show form on error
       return
     }
 
@@ -442,9 +459,69 @@ function JoinPageContent() {
     } else {
       setRoomError("Failed to join room. Please try again.")
       setHasClickedJoin(false)
+      setShowAutoJoinScreen(false) // Show form on error
     }
 
     setIsJoining(false)
+  }, [nickname, roomCode, selectedAvatar, isJoining, hasClickedJoin, isAuthenticated, userProfile, playerId, router, toast])
+
+  // Auto-join effect for users coming from Link/QR
+  useEffect(() => {
+    // Only attempt auto-join if:
+    // 1. User came from a URL (Link/QR)
+    // 2. We haven't attempted yet
+    // 3. User hasn't manually changed nickname (implies they are ready)
+    // 4. Checking is done (auth not loading, session checked)
+    if (isFromUrl && !autoJoinAttempted && !userChangedNickname && sessionChecked && !loading) {
+      // If we have all data, try to join
+      if (roomCode && nickname && selectedAvatar && nickname.trim().length > 0 && roomCode.length === 6) {
+        console.log("[AutoJoin] Triggering auto-join...")
+        setAutoJoinAttempted(true)
+        handleJoinRoom()
+      } else {
+        // If data is missing after checks are done, show the form
+        // But give a small buffer for state updates if needed, though effects should be settled
+        const timer = setTimeout(() => {
+          setShowAutoJoinScreen(false)
+        }, 500)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [
+    isFromUrl,
+    autoJoinAttempted,
+    userChangedNickname,
+    roomCode,
+    nickname,
+    selectedAvatar,
+    loading,
+    sessionChecked,
+    handleJoinRoom
+  ])
+
+  if (showAutoJoinScreen && isFromUrl) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        <div className="relative z-10 text-center">
+          <div className="relative inline-block mb-6">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-button-shadow"></div>
+            <div className="relative bg-linear-to-br from-blue-500 to-purple-500 rounded-lg border-4 border-black shadow-2xl p-6">
+              <div className="w-16 h-16 mx-auto bg-white border-2 border-black rounded flex items-center justify-center mb-4">
+                {isJoining ? (
+                  <Play className="h-8 w-8 text-black animate-spin" />
+                ) : (
+                  <div className="h-8 w-8 text-black animate-bounce">🔍</div>
+                )}
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 pixel-font">
+                {isJoining ? "JOINING ROOM..." : "CHECKING ID..."}
+              </h3>
+              <p className="text-white/80 pixel-font-sm">PLEASE WAIT</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
