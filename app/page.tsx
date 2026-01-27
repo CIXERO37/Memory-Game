@@ -360,7 +360,7 @@ export default function HomePage() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-white font-bold text-base leading-tight">Install MemoryQuiz now!</p>
-              <p className="text-sm text-purple-100/80 mt-1">Get faster access and better experience.</p>
+             
             </div>
             <button
               onClick={dismissPrompt}

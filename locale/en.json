@@ -46,6 +46,7 @@
     "supabaseDashboard": "SUPABASE DASHBOARD",
     "noQuizzesFound": "NO QUIZZES FOUND",
     "noQuizzesDescription": "TRY ADJUSTING YOUR SEARCH TERMS OR CATEGORY FILTER",
+    "resetFilters": "RESET FILTERS",
     "tabs": {
       "quiz": "Quiz",
       "myQuiz": "My Quiz",

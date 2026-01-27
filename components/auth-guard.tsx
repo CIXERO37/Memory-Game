@@ -14,7 +14,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const pathname = usePathname()
 
   // Routes that don't require authentication
-  const publicRoutes = ['/login', '/auth/callback']
+  const publicRoutes = ['/', '/login', '/auth/callback']
   const isPublicRoute = publicRoutes.includes(pathname)
 
   // Check if this is a join route with possible room code (supports /join and /join/<code>)
