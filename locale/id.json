@@ -46,6 +46,7 @@
     "supabaseDashboard": "DASHBOARD SUPABASE",
     "noQuizzesFound": "TIDAK ADA KUIS DITEMUKAN",
     "noQuizzesDescription": "COBA SESUAIKAN KATA KUNCI PENCARIAN ATAU FILTER KATEGORI",
+    "resetFilters": "RESET FILTER",
     "tabs": {
       "quiz": "Kuis",
       "myQuiz": "Kuis Saya",

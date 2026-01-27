@@ -62,6 +62,62 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     loadPlayerData()
   }, [])
 
+  // 🔒 PROTECTION: Prevent back button / navigation until game is completed
+  useEffect(() => {
+    if (gameCompleted) return // Allow navigation after game is done
+
+    // Push multiple dummy states to history to trap back navigation
+    const currentUrl = window.location.href
+
+    // Clear any existing history manipulation and start fresh
+    window.history.replaceState({ memoryGame: true, index: 0 }, '', currentUrl)
+
+    // Push additional states to create a "buffer"  
+    for (let i = 1; i <= 3; i++) {
+      window.history.pushState({ memoryGame: true, index: i }, '', currentUrl)
+    }
+
+    // Handle back button press
+    const handlePopState = (event: PopStateEvent) => {
+      // Immediately go forward to prevent leaving
+      window.history.forward()
+
+      // Also push state to ensure we stay
+      window.history.pushState({ memoryGame: true, index: Date.now() }, '', currentUrl)
+
+      console.log('[Memory Challenge] Back navigation blocked - complete the game first!')
+    }
+
+    // Handle before unload (refresh/close tab)
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = 'You must complete the memory game before leaving!'
+      return 'You must complete the memory game before leaving!'
+    }
+
+    // Handle keyboard shortcuts
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Block Alt+Left (back), Backspace (back in some browsers)
+      if (
+        (event.altKey && event.key === 'ArrowLeft') ||
+        (event.key === 'Backspace' && (event.target as HTMLElement).tagName !== 'INPUT')
+      ) {
+        event.preventDefault()
+        console.log('[Memory Challenge] Back shortcut blocked!')
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [gameCompleted])
+
   // Monitor room status for game end
   useEffect(() => {
     if (room && room.status === "finished") {
@@ -112,36 +168,52 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     }
   }, [params.roomCode])
 
-  // Initialize progress from Supabase on component mount
+  // Initialize progress from localStorage/Supabase on component mount
   useEffect(() => {
     const loadProgress = async () => {
       if (!playerId) return
 
       try {
-        // Always start memory game from 0 - don't load previous progress
-        // This ensures each memory game session is fresh
-
-        setCorrectMatches(0)
-
-        // Clear any previous memory game progress
-        localStorage.removeItem(`memory-progress-${params.roomCode}`)
-
-        // Also clear from Supabase to ensure fresh start
-        if (playerId) {
+        // 🔄 UPDATED: Load saved progress instead of resetting to 0
+        // First try to load from localStorage (card state)
+        const savedCardsState = localStorage.getItem(`memory-cards-state-${params.roomCode}`)
+        if (savedCardsState) {
           try {
-            await supabaseRoomManager.updateGameProgress(params.roomCode, playerId, {
-              memoryProgress: {
-                correct_matches: 0,
-                last_updated: new Date().toISOString()
+            const parsed = JSON.parse(savedCardsState)
+            if (parsed.cards && Array.isArray(parsed.cards)) {
+              const matchedCount = parsed.cards.filter((c: any) => c.isMatched).length / 2
+              console.log('[Memory Challenge] Loaded saved progress:', matchedCount, 'matches')
+              setCorrectMatches(matchedCount)
+
+              // Check if game was already completed
+              if (matchedCount >= 6) {
+                setGameCompleted(true)
               }
-            })
-          } catch (error) {
-            console.error("[Memory Challenge] Error clearing Supabase progress:", error)
+              return
+            }
+          } catch (e) {
+            console.error('[Memory Challenge] Error parsing saved cards state:', e)
           }
         }
+
+        // Fallback: try to load from Supabase
+        if (playerId) {
+          try {
+            const supabaseProgress = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
+            if (supabaseProgress?.memoryProgress?.correct_matches > 0) {
+              console.log('[Memory Challenge] Loaded Supabase progress:', supabaseProgress.memoryProgress.correct_matches)
+              setCorrectMatches(supabaseProgress.memoryProgress.correct_matches)
+              return
+            }
+          } catch (error) {
+            console.error("[Memory Challenge] Error loading Supabase progress:", error)
+          }
+        }
+
+        // No saved progress - start fresh
+        setCorrectMatches(0)
       } catch (error) {
-        console.error("[Memory Challenge] Error initializing fresh memory game:", error)
-        // Fallback: just start from 0
+        console.error("[Memory Challenge] Error loading progress:", error)
         setCorrectMatches(0)
       }
     }
@@ -212,7 +284,10 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     localStorage.setItem(
       `memory-return-${params.roomCode}`,
       JSON.stringify({
-        score: 0, // No score from memory game
+        score: progressData.quizScore || 0, // Pass back the existing score
+        quizScore: progressData.quizScore || 0,
+        correctAnswers: progressData.correctAnswers || 0,
+        questionsAnswered: progressData.questionsAnswered || 0,
         resumeQuestion: progressData.currentQuestion || 0,
       }),
     )
@@ -220,6 +295,7 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
     // Clean up progress data
     localStorage.removeItem(`quiz-progress-${params.roomCode}`)
     localStorage.removeItem(`memory-progress-${params.roomCode}`)
+    localStorage.removeItem(`memory-cards-state-${params.roomCode}`) // Clean up matched cards state
 
     // Check if player has completed all quiz questions
     const totalQuestions = room?.settings.questionCount || 10
@@ -256,15 +332,34 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         window.location.href = `/quiz/${params.roomCode}`
       } catch (error) {
         console.error("[Memory Challenge] Redirect failed:", error)
+        console.error("[Memory Challenge] Redirect failed:", error)
+        console.error("[Memory Challenge] Redirect failed:", error)
         // Fallback redirect
         window.location.replace(`/quiz/${params.roomCode}`)
       }
     }
   }
 
+  // Visual delay execution for game end
+  useEffect(() => {
+    if (gameCompleted) {
+      const timeout = setTimeout(() => {
+        handleGameEnd()
+      }, 2000) // 2 seconds delay to show victory screen
+      return () => clearTimeout(timeout)
+    }
+  }, [gameCompleted])
+
+  // Backup: Check if we somehow reached 6 matches but gameCompleted isn't true
+  useEffect(() => {
+    if (correctMatches >= 6 && !gameCompleted) {
+      setGameCompleted(true)
+    }
+  }, [correctMatches, gameCompleted])
+
+
   const handleCorrectMatch = async () => {
     const newCount = correctMatches + 1
-
 
     // Save progress to Supabase to prevent reset on refresh
     if (playerId) {
@@ -287,11 +382,12 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
 
     // Check if game is completed after this match
     if (newCount >= 6) {
-
-      // Direct redirect without showing completion modal
-      handleGameEnd()
+      setGameCompleted(true)
+      // Delay navigation slightly to let the final particle explosion finish
+      // The useEffect above will handle the actual redirect
     }
   }
+
 
   if (loading) {
     return (
@@ -403,37 +499,60 @@ export default function MemoryChallengePage({ params }: MemoryChallengePageProps
         </svg>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header with responsive layout */}
-        <div className="flex items-center justify-between gap-2 mb-6">
-          {/* Left side - Memory Quiz Image */}
-          <div className="shrink-0">
-            <img
-              src="/images/memoryquizv4.webp"
-              alt="Memory Quiz"
-              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
-            />
-          </div>
+      {/* Fixed Corner Logos */}
+      {/* Top-left Memory Quiz Logo */}
+      <div className="fixed top-4 left-4 z-20">
+        <img
+          src="/images/memoryquizv4.webp"
+          alt="Memory Quiz"
+          className="h-12 sm:h-16 md:h-20 lg:h-24 w-auto object-contain drop-shadow-lg"
+        />
+      </div>
 
-          {/* Right side - GameForSmart Logo */}
-          <div className="shrink-0">
-            <img
-              src="/images/gameforsmartlogo.webp"
-              alt="GameForSmart Logo"
-              className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
-            />
-          </div>
-        </div>
+      {/* Top-right GameForSmart Logo */}
+      <div className="fixed top-4 right-4 z-20">
+        <img
+          src="/images/gameforsmartlogo.webp"
+          alt="GameForSmart Logo"
+          className="h-12 sm:h-16 md:h-20 lg:h-24 w-auto object-contain drop-shadow-lg"
+        />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8 pt-24 sm:pt-28 md:pt-32">
 
 
         {/* Game Result modal removed - direct redirect after completion */}
 
         {/* Memory Game */}
-        {!gameCompleted && (
+        {!gameCompleted ? (
           <div className="max-w-2xl mx-auto">
-            <MemoryGame onCorrectMatch={handleCorrectMatch} disabled={gameCompleted} />
+            <MemoryGame onCorrectMatch={handleCorrectMatch} disabled={gameCompleted} roomCode={params.roomCode} />
+          </div>
+        ) : (
+          <div className="max-w-md mx-auto text-center animate-fade-in-up">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-50 animate-pulse"></div>
+              <div className="w-24 h-24 bg-linear-to-br from-yellow-300 to-orange-500 rounded-2xl flex items-center justify-center border-4 border-white shadow-2xl relative z-10 mx-auto rotate-3">
+                <Target className="w-12 h-12 text-white animate-bounce" />
+              </div>
+            </div>
+            <h2 className="text-4xl font-black text-white mb-2 drop-shadow-[0_4px_0_rgba(0,0,0,0.5)] tracking-wider">
+              UNLOCKED!
+            </h2>
+            <div className="flex flex-col items-center gap-2">
+              <div className="bg-blue-500/20 text-blue-100 px-4 py-2 rounded-lg border border-blue-400/30 backdrop-blur-sm">
+                <p className="font-bold">Returning to quiz...</p>
+              </div>
+              {/* Loading spinner pixel art style */}
+              <div className="flex gap-1 mt-4">
+                <div className="w-3 h-3 bg-white animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-3 h-3 bg-white animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-3 h-3 bg-white animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
+            </div>
           </div>
         )}
+
 
       </div>
 

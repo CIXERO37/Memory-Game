@@ -1026,6 +1026,22 @@ export default function SelectQuizPage() {
                             {t('selectQuiz.noQuizzesDescription')}
                           </p>
                         </div>
+
+                        {/* Reset Filters Button */}
+                        {searchTerm !== "" && (
+                          <div className="mt-6 animate-text-slide-up">
+                            <button
+                              onClick={() => {
+                                setSearchInput("")
+                                setSearchTerm("")
+                              }}
+                              className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 border-2 border-white/40 rounded-xl text-white font-bold text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-white/20 backdrop-blur-sm"
+                            >
+                              <Filter className="h-4 w-4" />
+                              {t('selectQuiz.resetFilters', { defaultValue: 'Reset Filters' })}
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Interactive floating elements */}

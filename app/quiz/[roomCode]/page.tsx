@@ -171,6 +171,50 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
     loadPlayerData()
   }, [])
 
+  // 🔒 PROTECTION: Redirect back to memory game if player hasn't completed it
+  useEffect(() => {
+    const checkMemoryGameStatus = () => {
+      if (typeof window === 'undefined') return
+
+      // Check if there's an unfinished memory game
+      const memoryCardsState = localStorage.getItem(`memory-cards-state-${params.roomCode}`)
+      const quizProgress = localStorage.getItem(`quiz-progress-${params.roomCode}`)
+
+      if (memoryCardsState && quizProgress) {
+        try {
+          const cardsState = JSON.parse(memoryCardsState)
+          const progress = JSON.parse(quizProgress)
+
+          // Count matched cards
+          const matchedCount = cardsState.cards?.filter((c: any) => c.isMatched).length / 2 || 0
+
+          // If memory game was started but not completed (less than 6 matches)
+          // AND player was sent to memory game (correctAnswers is multiple of 3)
+          if (matchedCount < 6 && progress.correctAnswers > 0 && progress.correctAnswers % 3 === 0) {
+            console.log('[Quiz] 🔒 Unfinished memory game detected! Redirecting back...')
+            console.log('[Quiz] Matched:', matchedCount, '/ 6, Progress:', progress)
+
+            // Redirect back to memory game
+            window.location.href = `/game/${params.roomCode}/memory-challenge`
+            return
+          }
+        } catch (e) {
+          console.error('[Quiz] Error checking memory game status:', e)
+        }
+      }
+    }
+
+    // Check immediately and also on focus (in case user uses back button)
+    checkMemoryGameStatus()
+
+    const handleFocus = () => {
+      checkMemoryGameStatus()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [params.roomCode])
+
   // Handle timer expiration
   const handleTimeUp = useCallback(async () => {
     if (timeUpHandled || redirecting) return
@@ -585,21 +629,33 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
         const data = JSON.parse(memoryReturn)
 
-        // Restore progress data from Supabase
+        // Initialize with local data from memory-return first (Fastest & Guaranteed)
+        // This fixes the issue where score/correctAnswers reset if Supabase fetch is slow or fails
+        if (data) {
+          console.log('[Quiz] Restoring state from memory-return:', data)
+          if (data.resumeQuestion !== undefined) setCurrentQuestion(data.resumeQuestion)
+          if (data.quizScore !== undefined) setScore(data.quizScore)
+          if (data.correctAnswers !== undefined) setCorrectAnswers(data.correctAnswers)
+          if (data.questionsAnswered !== undefined) setQuestionsAnswered(data.questionsAnswered)
+        }
+
+        // Then try to sync with Supabase for truth (background update)
         if (playerId) {
           const progressData = await supabaseRoomManager.getPlayerGameProgress(params.roomCode, playerId)
           if (progressData && progressData.game_progress) {
             const progress = progressData.game_progress
 
-            setCurrentQuestion(progress.current_question || data.resumeQuestion || currentQuestion)
-            setScore(progress.quiz_score || 0)
-            setCorrectAnswers(progress.correct_answers || 0)
-            setQuestionsAnswered(progress.questions_answered || 0)
-          } else {
-            setCurrentQuestion(data.resumeQuestion || currentQuestion)
+            // Log for debugging
+            console.log('[Quiz] Supabase progress found:', progress)
+
+            // Only overwrite if Supabase has advanced data (prevent rollback)
+            if ((progress.questions_answered || 0) >= (data.questionsAnswered || 0)) {
+              setCurrentQuestion(progress.current_question || data.resumeQuestion || currentQuestion)
+              setScore(progress.quiz_score || 0)
+              setCorrectAnswers(progress.correct_answers || 0)
+              setQuestionsAnswered(progress.questions_answered || 0)
+            }
           }
-        } else {
-          setCurrentQuestion(data.resumeQuestion || currentQuestion)
         }
 
         localStorage.removeItem(`memory-return-${params.roomCode}`)
@@ -1138,7 +1194,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         {/* Timer, Score, and Correct Answers */}
         <div className="flex justify-center gap-4 mb-6">
           <div className="bg-blue-500/20 border-2 border-blue-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
-            <span className="text-blue-400 font-bold text-sm">{t('lobby.question')} {questionsAnswered + 1} of {room?.settings.questionCount || questions.length}</span>
+            <span className="text-blue-400 font-bold text-sm">{t('lobby.question')} {Math.min(questionsAnswered + 1, room?.settings.questionCount || questions.length)} of {room?.settings.questionCount || questions.length}</span>
           </div>
 
           <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg px-4 py-2 flex items-center gap-2">
@@ -1210,7 +1266,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       </div>
 
       <PixelBackgroundElements />
-    </div>
+    </div >
   )
 }
 

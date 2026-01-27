@@ -46,6 +46,7 @@
     "supabaseDashboard": "SUPABASE 仪表板",
     "noQuizzesFound": "未找到测验",
     "noQuizzesDescription": "尝试调整搜索词或类别筛选",
+    "resetFilters": "重置筛选",
     "tabs": {
       "quiz": "测验",
       "myQuiz": "我的测验",
