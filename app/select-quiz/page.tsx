@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check, Book, BookOpen, Beaker, Calculator, Clock, Globe, Languages, Laptop, Dumbbell, Film, Briefcase, ChevronLeft, ChevronRight, Heart } from "lucide-react"
+import { ArrowLeft, FileSearch, Search, Filter, Loader2, ChevronUp, ChevronDown, Check, Book, BookOpen, Beaker, Calculator, Clock, Globe, Languages, Laptop, Dumbbell, Film, Briefcase, ChevronLeft, ChevronRight, Heart, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQuizzes, useQuizzesPaginated, preloadCategoryImages } from "@/hooks/use-quiz"
@@ -631,22 +631,23 @@ export default function SelectQuizPage() {
               </button>
               <button
                 onClick={() => setActiveTab("my-quiz")}
-                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] shadow-lg ${activeTab === "my-quiz"
+                className={`px-3 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center shadow-lg ${activeTab === "my-quiz"
                   ? "bg-blue-500 text-white"
                   : "bg-white text-black hover:bg-gray-100"
                   }`}
               >
-                {t('selectQuiz.tabs.myQuiz', { defaultValue: 'My Quiz' })}
+                <User className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">{t('selectQuiz.tabs.myQuiz', { defaultValue: 'My Quiz' })}</span>
               </button>
               <button
                 onClick={() => setActiveTab("favorite")}
-                className={`px-4 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] flex items-center gap-1 sm:gap-2 shadow-lg ${activeTab === "favorite"
+                className={`px-3 sm:px-6 py-2 sm:py-3 border-2 border-black rounded-none font-bold text-xs sm:text-sm transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center gap-1 sm:gap-2 shadow-lg ${activeTab === "favorite"
                   ? "bg-blue-500 text-white"
                   : "bg-white text-black hover:bg-gray-100"
                   }`}
               >
-                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-pink-500" fill={activeTab === "favorite" ? "currentColor" : "none"} strokeWidth={2.5} />
-                {t('selectQuiz.tabs.favorite', { defaultValue: 'Favorite' })}
+                <Heart className="h-4 w-4 sm:h-4 sm:w-4 text-pink-500" fill={activeTab === "favorite" ? "currentColor" : "none"} strokeWidth={2.5} />
+                <span className="hidden sm:inline">{t('selectQuiz.tabs.favorite', { defaultValue: 'Favorite' })}</span>
               </button>
             </div>
           </div>

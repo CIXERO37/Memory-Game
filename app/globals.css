@@ -2209,8 +2209,8 @@ button,
   font-weight: 900;
   text-align: center;
   letter-spacing: 0.5em;
-  font-size: 1.5rem;
-  padding: 1rem;
+  font-size: 1rem;
+  padding: 0.5rem 0.75rem;
   border: 3px solid #000;
   border-radius: 8px;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);

@@ -258,11 +258,9 @@ function QuizSettingsPageContent() {
         <PixelBackgroundElements />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-1">
         {/* Pixel Header */}
-        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
-
-
+        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-2">
           <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <img
               draggable={false}
@@ -274,10 +272,9 @@ function QuizSettingsPageContent() {
               }}
             />
           </div>
-
         </div>
 
-        <div className="flex-shrink-0 -mt-2 sm:-mt-2 absolute top-4 right-4">
+        <div className="flex-shrink-0 -mt-2 sm:-mt-2 absolute top-4 sm:top-2 right-4">
           <img
             draggable={false}
             src="/images/gameforsmartlogo.webp"
