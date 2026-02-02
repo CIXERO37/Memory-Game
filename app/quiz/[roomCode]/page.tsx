@@ -1135,16 +1135,28 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header with responsive layout */}
-        <div className="flex items-center justify-between gap-2 mb-6">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="relative shrink-0">
-            </div>
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="shrink-0">
             <div className="min-w-0">
               <img
                 draggable={false}
                 src="/images/memoryquizv4.webp"
                 alt="Memory Quiz"
                 className="h-8 sm:h-12 md:h-16 lg:h-20 xl:h-24 w-auto object-contain drop-shadow-lg"
+              />
+            </div>
+          </div>
+
+          {/* Progress Bar in Header */}
+          <div className="flex-1 px-4 sm:px-8">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs sm:text-sm font-bold text-white">PROGRESS</span>
+              <span className="text-xs sm:text-sm text-blue-300">{Math.round(progress)}%</span>
+            </div>
+            <div className="w-full bg-black/30 border border-white/30 rounded-lg h-3">
+              <div
+                className="h-full bg-linear-to-r from-blue-400 to-purple-400 rounded-lg transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
             </div>
           </div>
@@ -1177,19 +1189,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           </div>
         )}
 
-        {/* Progress */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-bold text-white">PROGRESS</span>
-            <span className="text-sm text-blue-300">{Math.round(progress)}%</span>
-          </div>
-          <div className="w-full bg-black/30 border border-white/30 rounded-lg h-3">
-            <div
-              className="h-full bg-linear-to-r from-blue-400 to-purple-400 rounded-lg transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
+
 
         {/* Timer, Score, and Correct Answers */}
         <div className="flex justify-center gap-4 mb-6">

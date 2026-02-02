@@ -541,7 +541,7 @@ function JoinPageContent() {
         <div className="scanlines"></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8">
+      <div className="relative z-10 container mx-auto px-4 py-2 sm:py-4">
         {/* Top-right GameForSmart Logo */}
         <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-20">
           <Image
@@ -554,7 +554,7 @@ function JoinPageContent() {
           />
         </div>
         {/* Header */}
-        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link href="/">
             <div className="relative pixel-button-container">
               <div className="absolute inset-0 bg-linear-to-br from-gray-600 to-gray-700 rounded-lg transform rotate-1 pixel-button-shadow"></div>
@@ -575,7 +575,7 @@ function JoinPageContent() {
 
         </div>
 
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto mt-6 sm:-mt-10">
           <div className="relative pixel-card-container">
             {/* Pixel Card Background */}
             <div className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg transform rotate-1 pixel-card-shadow"></div>

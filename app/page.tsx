@@ -4,7 +4,7 @@ import { Users, Play, Lightbulb, HelpCircle, Server, Menu, LogIn, Languages, X, 
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { UserProfileComponent } from "@/components/user-profile"
 import { LogoutConfirmationDialog } from "@/components/logout-confirmation-dialog"
@@ -13,13 +13,23 @@ import { LanguageSelector } from "@/components/language-selector"
 import { usePwaInstall } from "@/hooks/use-pwa-install"
 
 export default function HomePage() {
+  const router = useRouter()
   const dragCardRef = useRef<HTMLDivElement | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation } = useAuth()
+  const { userProfile, isAuthenticated, logout, showLogoutDialog, cancelLogout, showLogoutConfirmation, loading } = useAuth()
   const { t } = useTranslation()
   const pathname = usePathname()
   const { canInstall, hasInstallEvent, showPrompt, triggerInstall, dismissPrompt } = usePwaInstall()
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login')
+    }
+  }, [loading, isAuthenticated, router])
+
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -103,6 +113,35 @@ export default function HomePage() {
     }
   }
 
+
+
+  // Show loading screen while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
+        {/* Pixel Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="pixel-grid"></div>
+        </div>
+
+        {/* Loading Spinner */}
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white text-xl font-bold tracking-widest animate-pulse">LOADING...</p>
+        </div>
+
+        {/* Floating Pixel Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <PixelBackgroundElements />
+        </div>
+      </div>
+    )
+  }
+
+  // If not authenticated (and redirecting), don't render content
+  if (!isAuthenticated) {
+    return null
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #533483)' }}>
@@ -360,7 +399,7 @@ export default function HomePage() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-white font-bold text-base leading-tight">Install MemoryQuiz now!</p>
-             
+
             </div>
             <button
               onClick={dismissPrompt}
