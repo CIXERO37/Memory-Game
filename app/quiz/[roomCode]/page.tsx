@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Trophy, Users, Target } from "lucide-react"
+import { Clock, Trophy, Users, Target, Maximize2, X } from "lucide-react"
 import { getQuizById, getRandomQuestions, type Question } from "@/lib/quiz-data"
 import { useRoom } from "@/hooks/use-room"
 import { roomManager } from "@/lib/room-manager"
@@ -102,6 +103,15 @@ function getOptionFontSize(text: string): string {
   }
 }
 
+
+/**
+ * Helper function to detect if text is an image URL
+ */
+function isImageUrl(text: string): boolean {
+  if (!text) return false
+  return /\.(jpeg|jpg|gif|png|webp|svg|bmp)($|\?)/i.test(text) || text.startsWith('data:image/')
+}
+
 export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const { t } = useTranslation()
   const [questions, setQuestions] = useState<Question[]>([])
@@ -121,7 +131,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [timeUpHandled, setTimeUpHandled] = useState(false)
   const [countdownToNext, setCountdownToNext] = useState(0)
   const [isShowingResult, setIsShowingResult] = useState(false)
-  const [shuffledOptions, setShuffledOptions] = useState<{ [questionIndex: number]: { shuffled: string[], originalIndices: number[] } }>({})
+  const [shuffledOptions, setShuffledOptions] = useState<{ [questionIndex: number]: { shuffled: (string | { text: string; image?: string })[], originalIndices: number[] } }>({})
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [playerData, setPlayerData] = useState<any>(null)
   const [isHost, setIsHost] = useState(false)
@@ -129,9 +139,22 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
   const [redirecting, setRedirecting] = useState(false)
   const [previousRankings, setPreviousRankings] = useState<{ [key: string]: number }>({})
   const [rankingChanges, setRankingChanges] = useState<{ [key: string]: "up" | "down" | null }>({})
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
   const isUpdatingScore = useRef(false)
   const { room, loading } = useRoom(params.roomCode)
   const questionsInitialized = useRef(false)
+
+  // Lock body scroll when image is zoomed
+  useEffect(() => {
+    if (zoomedImage) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [zoomedImage])
 
   // CRITICAL: Reset initialization flag on room change
   useEffect(() => {
@@ -437,8 +460,15 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           if (Array.isArray(opts)) {
             opts.forEach((o: any) => {
               if (typeof o === 'object' && o !== null) {
-                const val = o.answer || o.text || o.value || o.label
-                if (val) allPotentialAnswers.add(String(val))
+                // Check for image properties first
+                const imageVal = o.image || o.img || o.imageUrl || o.src || o.url
+                const textVal = o.answer || o.text || o.value || o.label
+
+                if (imageVal && (!textVal || textVal === '.' || textVal.trim() === '')) {
+                  allPotentialAnswers.add(String(imageVal))
+                } else {
+                  if (textVal) allPotentialAnswers.add(String(textVal))
+                }
               } else {
                 allPotentialAnswers.add(String(o))
               }
@@ -450,15 +480,35 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         return rawQuestions.map((q: any, index) => {
           // 1. Robust Option Extraction
           let rawOptions = q.options || q.choices || q.answers || []
-          let options: string[] = []
+          let options: (string | { text: string; image?: string })[] = []
 
           if (Array.isArray(rawOptions)) {
             options = rawOptions.map((opt: any) => {
               if (typeof opt === 'object' && opt !== null) {
-                return String(opt.answer || opt.text || opt.value || opt.label || "")
+                // Check for explicit properties
+                const imageVal = opt.image || opt.img || opt.imageUrl || opt.src || opt.url
+                const textVal = opt.answer || opt.text || opt.value || opt.label || ""
+
+                // Case A: Both Text and Image
+                if (imageVal && textVal && textVal !== '.' && textVal.trim() !== '') {
+                  return { text: String(textVal), image: String(imageVal) }
+                }
+
+                // Case B: Only Image (or text is placeholder)
+                if (imageVal && (!textVal || textVal === '.' || textVal.trim() === '')) {
+                  // If just image, return URL string OR object with empty text if checking for object elsewhere
+                  // To be consistent with rendering logic that checks `typeof option === 'object'`, let's return object is safer if we want to ensure image prop is seen
+                  return { text: "", image: String(imageVal) }
+                }
+
+                // Case C: Only Text
+                return String(textVal || imageVal || "")
               }
               return String(opt)
-            }).filter(opt => opt !== "")
+            }).filter(opt => {
+              if (typeof opt === 'string') return opt !== ""
+              return true
+            })
           }
 
           // Handle True/False without explicit options
@@ -472,10 +522,29 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
 
           if (rawCorrectAnswer !== undefined && rawCorrectAnswer !== null) {
             const correctStr = String(rawCorrectAnswer).trim()
-            correctIndex = options.findIndex(opt => opt.trim() === correctStr)
-            if (correctIndex === -1) {
-              correctIndex = options.findIndex(opt => opt.toLowerCase().trim() === correctStr.toLowerCase())
+            // Helper to get text from option
+            const getOptText = (o: string | { text: string; image?: string }) => {
+              if (typeof o === 'string') return o
+              return o.text || ""
             }
+
+            correctIndex = options.findIndex(opt => getOptText(opt).trim() === correctStr)
+
+            if (correctIndex === -1) {
+              correctIndex = options.findIndex(opt => getOptText(opt).toLowerCase().trim() === correctStr.toLowerCase())
+            }
+
+            // If not found in transformed options, check original raw objects (in case we used image but answer key is text)
+            if (correctIndex === -1 && Array.isArray(rawOptions)) {
+              correctIndex = rawOptions.findIndex((opt: any) => {
+                if (typeof opt === 'object' && opt !== null) {
+                  const textVal = String(opt.answer || opt.text || opt.value || opt.label || "").trim()
+                  return textVal === correctStr || textVal.toLowerCase() === correctStr.toLowerCase()
+                }
+                return String(opt).trim() === correctStr
+              })
+            }
+
             if (correctIndex === -1 && !isNaN(Number(rawCorrectAnswer))) {
               const idx = Number(rawCorrectAnswer)
               if (idx >= 0 && idx < options.length) {
@@ -523,6 +592,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           return {
             id: index + 1,
             question: q.question,
+            image: q.image || q.img || q.imageUrl,
             options: options,
             correct: correctIndex,
             explanation: q.explanation
@@ -589,7 +659,7 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
         setTotalTimeSelected(timeLimit)
 
         // Create shuffled options for each question
-        const shuffledOptionsMap: { [questionIndex: number]: { shuffled: string[], originalIndices: number[] } } = {}
+        const shuffledOptionsMap: { [questionIndex: number]: { shuffled: (string | { text: string; image?: string })[], originalIndices: number[] } } = {}
         quizQuestions.forEach((question, index) => {
           const shuffled = shuffleArrayWithIndices(question.options)
           shuffledOptionsMap[index] = shuffled
@@ -1214,10 +1284,34 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           <div className="bg-linear-to-br from-white/10 to-white/5 border-2 border-white/30 rounded-lg p-6 pixel-lobby-card">
             <div className="text-center mb-6">
               {/* Auto-sizing question text based on length */}
-              <div className={needsScrollableContainer(question.question) ? 'max-h-48 overflow-y-auto custom-scrollbar' : ''}>
-                <h2 className={`font-bold text-white mb-3 leading-relaxed ${getQuestionFontSize(question.question)}`}>
-                  {question.question}
-                </h2>
+              {/* Auto-sizing question text based on length */}
+              {/* Auto-sizing question text based on length */}
+              <div className="flex flex-col">
+                {/* Render Image from explicit image field OR if question text is an image URL */}
+                {/* MOVED TO TOP */}
+                {(question.image || isImageUrl(question.question)) && (
+                  <div className="flex justify-center mb-6 order-first relative group">
+                    <img
+                      src={question.image || question.question}
+                      alt="Question"
+                      className="max-h-64 max-w-full rounded-lg object-contain shadow-lg bg-black/20 cursor-zoom-in hover:brightness-110 transition-all"
+                      onClick={() => setZoomedImage(question.image || question.question)}
+                    />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-1 pointer-events-none">
+                      <Maximize2 className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Render Text if valid (and not just an image URL) */}
+                {/* SCROLLABLE ONLY HERE */}
+                {!isImageUrl(question.question) && (
+                  <div className={needsScrollableContainer(question.question) ? 'max-h-48 overflow-y-auto custom-scrollbar px-2' : 'px-2'}>
+                    <h2 className={`font-bold text-white mb-3 leading-relaxed ${getQuestionFontSize(question.question)}`}>
+                      {question.question}
+                    </h2>
+                  </div>
+                )}
               </div>
             </div>
             <div className="grid gap-3">
@@ -1254,7 +1348,43 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
                         }`}>
                         {String.fromCharCode(65 + index)}
                       </div>
-                      <span className={`font-medium ${getOptionFontSize(option)}`}>{option}</span>
+                      {/* Option Rendering Logic */}
+                      <div className="flex-1 flex flex-col justify-start gap-2">
+                        {/* Render Image if exists (either in object.image OR if the string option is an URL) */}
+                        {(() => {
+                          const imgUrl = typeof option === 'object' ? option.image : (isImageUrl(option) ? option : null)
+
+                          if (imgUrl) return (
+                            <div className="relative group w-full flex justify-start">
+                              <img
+                                src={imgUrl}
+                                alt={`Option ${index + 1}`}
+                                className="h-24 w-auto rounded object-contain bg-white/5 cursor-zoom-in hover:brightness-110 transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setZoomedImage(imgUrl)
+                                }}
+                              />
+                              <div className="absolute top-1 left-20 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-1 pointer-events-none">
+                                <Maximize2 className="w-3 h-3 text-white" />
+                              </div>
+                            </div>
+                          )
+                          return null
+                        })()}
+
+                        {/* Render Text if exists (object.text or string option if not purely image) */}
+                        {(() => {
+                          const text = typeof option === 'object' ? option.text : option
+                          const isImg = typeof option === 'string' && isImageUrl(option)
+
+                          // Display text if it's NOT just an image URL, or if it's an object with explicit text
+                          if (text && (!isImg || (typeof option === 'object' && (option as any).text))) {
+                            return <span className={`font-medium ${getOptionFontSize(text)}`}>{text}</span>
+                          }
+                          return null
+                        })()}
+                      </div>
                     </div>
                   </button>
                 )
@@ -1266,6 +1396,33 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
       </div>
 
       <PixelBackgroundElements />
+
+      {/* Search Image Zoom Modal */}
+      {zoomedImage && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setZoomedImage(null)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
+          <div
+            className="relative max-w-5xl max-h-[90vh] flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute -top-12 right-0 md:-right-12 text-white bg-black/50 hover:bg-white/20 rounded-full p-2 transition-colors z-50"
+              onClick={() => setZoomedImage(null)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={zoomedImage}
+              alt="Zoomed"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+        </div>,
+        document.body
+      )}
     </div >
   )
 }
