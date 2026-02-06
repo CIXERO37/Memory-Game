@@ -207,7 +207,7 @@ export default function HomePage() {
                     className="w-full px-4 py-3 text-left hover:bg-purple-800/60 transition-colors duration-200 flex items-center gap-3"
                   >
                     <Download className="w-5 h-5 text-white" />
-                    <span className="text-white font-medium">Install App</span>
+                    <span className="text-white font-medium">{t('pwa.installApp')}</span>
                   </button>
 
                   <div className="border-t border-purple-500/40 my-1"></div>
@@ -398,7 +398,7 @@ export default function HomePage() {
         <div className="fixed bottom-4 right-4 z-50 w-full max-w-xs rounded-2xl border border-purple-400/40 bg-purple-900/90 p-4 shadow-[0_12px_30px_rgba(0,0,0,0.35)] backdrop-blur">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-white font-bold text-base leading-tight">Install MemoryQuiz now!</p>
+              <p className="text-white font-bold text-base leading-tight">{t('pwa.installPrompt')}</p>
 
             </div>
             <button
@@ -415,13 +415,13 @@ export default function HomePage() {
               disabled={!hasInstallEvent}
               className="flex-1 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 px-3 py-2 text-sm font-semibold text-black shadow-inner transition hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Install
+              {t('pwa.install')}
             </button>
             <button
               onClick={dismissPrompt}
               className="flex-1 rounded-xl border border-purple-300/60 px-3 py-2 text-sm font-semibold text-white/90 transition hover:bg-purple-800/70"
             >
-              Later
+              {t('pwa.later')}
             </button>
           </div>
         </div>

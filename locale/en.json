@@ -166,5 +166,11 @@
     "preparingResults": "Preparing results",
     "gameResults": "GAME RESULTS",
     "champion": "CHAMPION"
+  },
+  "pwa": {
+    "installApp": "Install App",
+    "installPrompt": "Install MemoryQuiz now!",
+    "install": "Install",
+    "later": "Later"
   }
 }

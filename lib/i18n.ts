@@ -5,11 +5,13 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import en from '../locale/en.json';
 import id from '../locale/id.json';
 import zh from '../locale/zh.json';
+import ar from '../locale/ar.json';
 
 const resources = {
   en: { translation: en },
   id: { translation: id },
-  zh: { translation: zh }
+  zh: { translation: zh },
+  ar: { translation: ar }
 };
 
 i18n

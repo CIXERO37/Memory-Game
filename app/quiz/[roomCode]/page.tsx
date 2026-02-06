@@ -1218,16 +1218,18 @@ export default function QuizPage({ params, searchParams }: QuizPageProps) {
           </div>
 
           {/* Progress Bar in Header */}
-          <div className="flex-1 px-4 sm:px-8">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs sm:text-sm font-bold text-white">PROGRESS</span>
-              <span className="text-xs sm:text-sm text-blue-300">{Math.round(progress)}%</span>
-            </div>
-            <div className="w-full bg-black/30 border border-white/30 rounded-lg h-3">
-              <div
-                className="h-full bg-linear-to-r from-blue-400 to-purple-400 rounded-lg transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+          <div className="flex-1 flex justify-center px-4">
+            <div className="w-full max-w-xl">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs sm:text-sm font-bold text-white">PROGRESS</span>
+                <span className="text-xs sm:text-sm text-blue-300">{Math.round(progress)}%</span>
+              </div>
+              <div className="w-full bg-black/30 border border-white/30 rounded-lg h-2">
+                <div
+                  className="h-full bg-linear-to-r from-blue-400 to-purple-400 rounded-lg transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
           </div>
 
