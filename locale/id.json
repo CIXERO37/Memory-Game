@@ -166,5 +166,11 @@
     "preparingResults": "Mempersiapkan hasil",
     "gameResults": "HASIL PERMAINAN",
     "champion": "JUARA"
+  },
+  "pwa": {
+    "installApp": "Pasang Aplikasi",
+    "installPrompt": "Pasang MemoryQuiz sekarang!",
+    "install": "Pasang",
+    "later": "Nanti"
   }
 }

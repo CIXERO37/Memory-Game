@@ -161,5 +161,11 @@
     "preparingResults": "准备结果中",
     "gameResults": "游戏结果",
     "champion": "冠军"
+  },
+  "pwa": {
+    "installApp": "安装应用",
+    "installPrompt": "立即安装 MemoryQuiz！",
+    "install": "安装",
+    "later": "稍后"
   }
 }

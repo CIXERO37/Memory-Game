@@ -8,7 +8,8 @@ import Image from "next/image"
 const languages = [
   { code: 'en', name: 'English', flag: '/flag/US.webp' },
   { code: 'id', name: 'Bahasa Indonesia', flag: '/flag/idn.webp' },
-  { code: 'zh', name: '中文', flag: '/flag/cn.webp' }
+  { code: 'zh', name: '中文', flag: '/flag/cn.webp' },
+  { code: 'ar', name: 'العربية', flag: '/flag/ar.webp' }
 ]
 
 interface LanguageSelectorProps {
